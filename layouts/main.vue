@@ -170,9 +170,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-dark-950 border-t border-dark-700 p-4">
-      <p class="text-white text-center">Footer is working</p>
-    </footer>
+    <FooterComponent />
   </div>
 </template>
 
