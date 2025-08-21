@@ -5,5 +5,5 @@
 </template>
 
 <script setup>
-// Clean app.vue setup
+// Auth initialization will be handled by individual components that need it
 </script>

@@ -15,9 +15,6 @@
             <NuxtLink to="/features" class="btn-outline text-lg px-8 py-4">
               Learn More
             </NuxtLink>
-            <NuxtLink to="/pricing" class="btn-primary text-lg px-8 py-4">
-              Test Layout
-            </NuxtLink>
           </div>
         </div>
       </div>
