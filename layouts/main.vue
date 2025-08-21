@@ -178,12 +178,9 @@
 const showSolutions = ref(false)
 const mobileMenuOpen = ref(false)
 
-let hoverTimeout: ReturnType<typeof setTimeout> | null = null
+let hoverTimeout: NodeJS.Timeout | null = null
 
 const handleSolutionsLeave = () => {
-  if (hoverTimeout) {
-    clearTimeout(hoverTimeout)
-  }
   hoverTimeout = setTimeout(() => {
     showSolutions.value = false
   }, 300)
