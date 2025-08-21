@@ -1,7 +1,12 @@
 <template>
   <div class="min-h-screen bg-black">
+    <!-- TEST: Layout is working -->
+    <div style="position: fixed; top: 0; left: 0; width: 100%; background: red; color: white; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; z-index: 9999;">
+      🔴 DEFAULT LAYOUT IS WORKING! 🔴
+    </div>
+
     <!-- Header Navigation -->
-    <header class="bg-black border-b border-dark-700 sticky top-0 z-50">
+    <header class="bg-black border-b border-dark-700 sticky top-0 z-50" style="margin-top: 60px;">
       <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <!-- Logo and brand -->
