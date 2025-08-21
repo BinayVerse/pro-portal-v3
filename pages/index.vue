@@ -131,7 +131,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: 'main'
+  layout: 'default'
 })
 
 const industries = [
