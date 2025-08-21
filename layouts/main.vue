@@ -1,8 +1,8 @@
 <template>
   <div class="min-h-screen bg-black">
     <!-- DEBUG: Layout is rendering -->
-    <div class="bg-red-500 text-white p-2 text-center font-bold">
-      DEBUG: MAIN LAYOUT IS WORKING!
+    <div style="position: fixed; top: 0; left: 0; width: 100%; background: red; color: white; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; z-index: 9999;">
+      DEBUG: MAIN LAYOUT IS WORKING! IF YOU SEE THIS, LAYOUT IS APPLIED!
     </div>
 
     <!-- Header Navigation -->
