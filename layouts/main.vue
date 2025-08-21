@@ -1,5 +1,10 @@
 <template>
   <div class="min-h-screen bg-black">
+    <!-- DEBUG: Layout is rendering -->
+    <div class="bg-red-500 text-white p-2 text-center font-bold">
+      DEBUG: MAIN LAYOUT IS WORKING!
+    </div>
+
     <!-- Header Navigation -->
     <header class="bg-black border-b border-dark-700 sticky top-0 z-50">
       <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
