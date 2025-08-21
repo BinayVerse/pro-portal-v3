@@ -1,10 +1,5 @@
 <template>
   <div class="min-h-screen bg-black">
-    <!-- DEBUG: Layout is rendering -->
-    <div style="position: fixed; top: 0; left: 0; width: 100%; background: red; color: white; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; z-index: 9999;">
-      DEBUG: MAIN LAYOUT IS WORKING! IF YOU SEE THIS, LAYOUT IS APPLIED!
-    </div>
-
     <!-- Header Navigation -->
     <header class="bg-black border-b border-dark-700 sticky top-0 z-50">
       <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
