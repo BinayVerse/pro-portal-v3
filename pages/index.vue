@@ -130,9 +130,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({
-  layout: 'default'
-})
+// Using default layout automatically
 
 const industries = [
   {
