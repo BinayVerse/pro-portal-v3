@@ -135,7 +135,7 @@
 <script setup lang="ts">
 // Define page meta first
 definePageMeta({
-  layout: 'main'
+  layout: 'default'
 })
 
 console.log('Index page loading with main layout...')
