@@ -174,6 +174,8 @@
 </template>
 
 <script setup lang="ts">
+console.log('Default layout is loading!')
+
 const showSolutions = ref(false)
 const mobileMenuOpen = ref(false)
 
