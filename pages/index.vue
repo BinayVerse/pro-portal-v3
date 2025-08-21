@@ -134,6 +134,10 @@ definePageMeta({
   layout: 'main'
 })
 
+definePageMeta({
+  layout: 'main'
+})
+
 const industries = [
   {
     name: 'Education',
