@@ -133,8 +133,9 @@
 </template>
 
 <script setup lang="ts">
-// Remove definePageMeta to use default layout automatically
-console.log('Index page loading...')
+definePageMeta({
+  layout: 'main'
+})
 
 const industries = [
   {
