@@ -5,9 +5,5 @@
 </template>
 
 <script setup>
-// Initialize auth on app start
-const authStore = useAuthStore()
-onMounted(() => {
-  authStore.initializeAuth()
-})
+// Auth initialization will be handled by individual components that need it
 </script>
