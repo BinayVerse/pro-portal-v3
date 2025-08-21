@@ -83,6 +83,6 @@ export default defineNuxtConfig({
     transpile: ['@headlessui/vue'],
   },
 
-  // Enable SSR for proper layout rendering
-  ssr: true,
+  // Disable SSR for easier development
+  ssr: false,
 })
