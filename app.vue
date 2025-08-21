@@ -85,9 +85,7 @@
           </div>
 
           <!-- Mobile menu button -->
-          <button
-            class="md:hidden text-gray-300 hover:text-white p-2"
-          >
+          <button class="md:hidden text-gray-300 hover:text-white p-2">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
@@ -121,7 +119,8 @@
               <span class="text-white text-xl font-semibold">provento.ai</span>
             </NuxtLink>
             <p class="text-gray-400 text-sm mb-4">
-              Transform your documents into intelligent conversations with AI-powered document chatting platform.
+              Transform your documents into intelligent conversations with AI-powered document
+              chatting platform.
             </p>
           </div>
 
@@ -129,9 +128,21 @@
           <div>
             <h3 class="text-white font-semibold mb-4">Product</h3>
             <ul class="space-y-2">
-              <li><NuxtLink to="/features" class="text-gray-400 hover:text-white transition-colors">Features</NuxtLink></li>
-              <li><NuxtLink to="/solutions" class="text-gray-400 hover:text-white transition-colors">Solutions</NuxtLink></li>
-              <li><NuxtLink to="/pricing" class="text-gray-400 hover:text-white transition-colors">Pricing</NuxtLink></li>
+              <li>
+                <NuxtLink to="/features" class="text-gray-400 hover:text-white transition-colors"
+                  >Features</NuxtLink
+                >
+              </li>
+              <li>
+                <NuxtLink to="/solutions" class="text-gray-400 hover:text-white transition-colors"
+                  >Solutions</NuxtLink
+                >
+              </li>
+              <li>
+                <NuxtLink to="/pricing" class="text-gray-400 hover:text-white transition-colors"
+                  >Pricing</NuxtLink
+                >
+              </li>
             </ul>
           </div>
 
@@ -139,8 +150,18 @@
           <div>
             <h3 class="text-white font-semibold mb-4">Support</h3>
             <ul class="space-y-2">
-              <li><NuxtLink to="/faq" class="text-gray-400 hover:text-white transition-colors">FAQ</NuxtLink></li>
-              <li><a href="mailto:support@provento.ai" class="text-gray-400 hover:text-white transition-colors">Contact Support</a></li>
+              <li>
+                <NuxtLink to="/faq" class="text-gray-400 hover:text-white transition-colors"
+                  >FAQ</NuxtLink
+                >
+              </li>
+              <li>
+                <a
+                  href="mailto:support@provento.ai"
+                  class="text-gray-400 hover:text-white transition-colors"
+                  >Contact Support</a
+                >
+              </li>
             </ul>
           </div>
 
@@ -148,18 +169,28 @@
           <div>
             <h3 class="text-white font-semibold mb-4">Company</h3>
             <ul class="space-y-2">
-              <li><a href="#" class="text-gray-400 hover:text-white transition-colors">About</a></li>
-              <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
+              <li>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors">About</a>
+              </li>
+              <li>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors"
+                  >Privacy Policy</a
+                >
+              </li>
+              <li>
+                <a href="#" class="text-gray-400 hover:text-white transition-colors"
+                  >Terms of Service</a
+                >
+              </li>
             </ul>
           </div>
         </div>
 
         <!-- Bottom Bar -->
-        <div class="border-t border-dark-700 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <div class="text-gray-400 text-sm">
-            © 2024 Provento.ai. All rights reserved.
-          </div>
+        <div
+          class="border-t border-dark-700 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center"
+        >
+          <div class="text-gray-400 text-sm">© 2024 Provento.ai. All rights reserved.</div>
         </div>
       </div>
     </footer>
