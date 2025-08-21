@@ -147,18 +147,12 @@
             <NuxtLink to="/pricing" class="block text-gray-300 hover:text-white py-2"
               >Pricing</NuxtLink
             >
-            <NuxtLink to="/faq" class="block text-gray-300 hover:text-white py-2"
-              >FAQ</NuxtLink
-            >
+            <NuxtLink to="/faq" class="block text-gray-300 hover:text-white py-2">FAQ</NuxtLink>
             <NuxtLink to="/book-meeting" class="block text-gray-300 hover:text-white py-2"
               >Book a Meeting</NuxtLink
             >
-            <NuxtLink to="/login" class="block text-gray-300 hover:text-white py-2"
-              >Login</NuxtLink
-            >
-            <NuxtLink to="/signup" class="btn-primary block text-center mt-3"
-              >Sign Up</NuxtLink
-            >
+            <NuxtLink to="/login" class="block text-gray-300 hover:text-white py-2">Login</NuxtLink>
+            <NuxtLink to="/signup" class="btn-primary block text-center mt-3">Sign Up</NuxtLink>
           </div>
         </div>
       </nav>
