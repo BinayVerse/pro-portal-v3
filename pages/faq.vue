@@ -137,92 +137,260 @@ const selectedCategory = ref('All')
 const openFaqs = ref<number[]>([])
 const searchQuery = ref('')
 
-const categories = ['All', 'Getting Started', 'Features', 'Pricing', 'Security', 'Technical']
+const categories = [
+  'All',
+  'General',
+  'Onboarding',
+  'Administration',
+  'Integrations',
+  'Pricing',
+  'Features',
+  'Security',
+  'Technical',
+]
 
 const faqs = [
   {
     id: 1,
-    category: 'Getting Started',
-    question: 'How do I get started with Provento.ai?',
+    category: 'General',
+    question: 'What is Provento.ai?',
     answer:
-      'Simply sign up for a free trial, upload your first document, and start asking questions. Our onboarding process will guide you through the key features.',
+      'Provento.ai is an intelligent document chatting platform that transforms your static documents into interactive conversations. Upload your documents and ask questions in natural language to get instant, accurate answers.',
   },
   {
     id: 2,
-    category: 'Features',
-    question: 'What file formats does Provento.ai support?',
+    category: 'General',
+    question: 'How does Provento.ai work?',
     answer:
-      'We support PDF, Word (.docx), Excel (.xlsx), PowerPoint (.pptx), CSV, plain text (.txt), Markdown (.md), and many other common document formats.',
+      'Our platform uses advanced AI and natural language processing to understand your documents and queries. When you upload documents, we process and index them for intelligent search. You can then ask questions in plain English and get accurate answers with source citations.',
   },
   {
     id: 3,
-    category: 'Pricing',
-    question: 'Is there a free trial available?',
+    category: 'General',
+    question: 'How many users can I add to my account?',
     answer:
-      'Yes! We offer a 14-day free trial with full access to all features. No credit card required to start.',
+      'User limits vary by plan: Starter (1 user), Professional (5 users), Business (25 users), and Enterprise (unlimited users). You can add users through the admin dashboard and assign different roles and permissions.',
   },
   {
     id: 4,
-    category: 'Security',
-    question: 'How secure is my data with Provento.ai?',
+    category: 'General',
+    question: 'Can individuals use Provento.ai?',
     answer:
-      'We use enterprise-grade security with AES-256 encryption, SOC 2 compliance, and GDPR compliance. Your documents are processed securely and never used to train our models.',
+      'No, Provento.ai is built specifically for organizations to streamline internal communication and document access.',
   },
   {
     id: 5,
-    category: 'Features',
-    question: 'Can I integrate Provento.ai with other tools?',
+    category: 'Onboarding',
+    question: 'How can an organization start using Provento.ai?',
     answer:
-      'Yes, we offer integrations with Slack, Microsoft Teams, Google Drive, Dropbox, and many other popular business tools. We also provide a REST API for custom integrations.',
+      'Organizations can sign up via our website, choose a plan, and complete a quick onboarding process involving document upload and bot channel integration.',
   },
   {
     id: 6,
-    category: 'Technical',
-    question: 'What languages does Provento.ai support?',
+    category: 'Onboarding',
+    question: 'Does the organization need to appoint an admin?',
     answer:
-      'Provento.ai supports over 50 languages for document processing and questioning, including English, Spanish, French, German, Chinese, Japanese, and many more.',
+      'Yes, each organization needs at least one admin to manage users, documents, and settings.',
   },
   {
     id: 7,
-    category: 'Pricing',
-    question: 'Can I change my plan anytime?',
+    category: 'Onboarding',
+    question: 'Is providing a WhatsApp number mandatory?',
     answer:
-      'Absolutely! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and billing is prorated accordingly.',
+      'Providing a WhatsApp number is not mandatory. WhatsApp integration is optional. You can choose to integrate with Slack, Teams, WhatsApp, or a combination of these depending on your organization’s needs.',
   },
   {
     id: 8,
-    category: 'Features',
-    question: 'How accurate are the AI responses?',
+    category: 'Onboarding',
+    question: 'Is the onboarding process time-consuming?',
     answer:
-      'Our AI is highly accurate, built on state-of-the-art language models. However, we always recommend reviewing AI responses for critical decisions. The accuracy improves with document quality and question specificity.',
+      'No, onboarding typically takes less than 30 minutes, including setting up channels and uploading initial documents.',
   },
   {
     id: 9,
-    category: 'Getting Started',
-    question: 'Do you offer training or support?',
+    category: 'Onboarding',
+    question: 'Can we add users immediately after onboarding?',
     answer:
-      'Yes! We provide comprehensive documentation, video tutorials, and email support for all users. Enterprise customers also get dedicated support and training sessions.',
+      "Yes, once your organization is set up, you can invite users right away via the user's dashboard.",
   },
   {
     id: 10,
-    category: 'Technical',
-    question: 'What are the system requirements?',
+    category: 'Administration',
+    question: 'Who can upload documents to Provento.ai?',
     answer:
-      'Provento.ai is a cloud-based platform that works in any modern web browser. No special software or hardware requirements needed.',
+      'Only organization admins can upload documents to ensure content accuracy and consistency.',
   },
   {
     id: 11,
-    category: 'Security',
-    question: 'Where is my data stored?',
+    category: 'Administration',
+    question: 'Can an organization have multiple admins?',
     answer:
-      'Your data is stored in secure, encrypted cloud servers with redundancy across multiple data centers. We offer data residency options for enterprise customers.',
+      "Yes, you can assign multiple admins to manage different aspects of your organization's workspace.",
   },
   {
     id: 12,
-    category: 'Pricing',
-    question: 'What payment methods do you accept?',
+    category: 'Administration',
+    question: 'Can the admin role be changed?',
+    answer: "Yes, existing admins can assign or remove admin privileges via the user's dashboard.",
+  },
+  {
+    id: 13,
+    category: 'Integrations',
+    question: 'Which platforms can I integrate with?',
     answer:
-      'We accept all major credit cards, bank transfers, and can accommodate purchase orders for enterprise customers.',
+      'Provento.ai integrates with popular workplace tools including Slack, Microsoft Teams, WhatsApp. This allows you to query your documents directly from your preferred communication platform.',
+  },
+  {
+    id: 14,
+    category: 'Integrations',
+    question: 'How do I set up Slack integration?',
+    answer:
+      'Setting up Slack integration is simple. In your admin dashboard, go to Slack Integration, connect your workspace, and configure the bot permissions. Once connected, users can directly chat with the Slack bot in their workspace.',
+  },
+  {
+    id: 15,
+    category: 'Integrations',
+    question: 'Can I integrate with Microsoft Teams?',
+    answer:
+      'Yes! Our Microsoft Teams integration allows you to query documents directly from Teams channels. Simply install the Provento.ai bot, connect your account, and start chatting with the bot.',
+  },
+  {
+    id: 16,
+    category: 'Integrations',
+    question: 'How do I set up WhatsApp integration for my organization?',
+    answer:
+      'Admins can link a WhatsApp Business number from the integration settings in the admin dashboard.',
+  },
+  {
+    id: 17,
+    category: 'Integrations',
+    question: 'Is chatbot available 24/7?',
+    answer:
+      'Yes, users can interact with the WhatsApp chatbot 24/7 with instant access to organizational knowledge.',
+  },
+  {
+    id: 18,
+    category: 'Integrations',
+    question: 'Do users need to share their WhatsApp number?',
+    answer:
+      'Yes, WhatsApp integration requires user phone numbers for authentication and messaging.',
+  },
+  {
+    id: 19,
+    category: 'Pricing',
+    question: 'Is there a free plan?',
+    answer:
+      'We do not provide a free plan. All our plans are paid and tailored to meet different organizational needs, ensuring access to full features, integrations, and dedicated support.',
+  },
+  {
+    id: 20,
+    category: 'Pricing',
+    question: 'Can I change my plan at any time?',
+    answer:
+      "Absolutely! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate the billing accordingly. No long-term commitments required.",
+  },
+  {
+    id: 21,
+    category: 'Pricing',
+    question: 'Do you offer annual discounts?',
+    answer:
+      'Yes! Annual subscriptions receive a 20% discount compared to monthly billing. This can result in significant savings, especially for higher-tier plans.',
+  },
+  {
+    id: 22,
+    category: 'Pricing',
+    question: 'Is there a document upload limit?',
+    answer:
+      'Yes, limits depend on your subscription plan. Basic plans support up to 500 pages per month.',
+  },
+  {
+    id: 23,
+    category: 'Pricing',
+    question: 'Is there a page or file size limit for uploads?',
+    answer: 'Individual documents can be up to 50MB or 500 pages, depending on your plan.',
+  },
+  {
+    id: 24,
+    category: 'Pricing',
+    question: 'Is there a daily question limit for users?',
+    answer:
+      'Yes, based on your plan. For example, Basic allows 10 questions/day per user; unlimited on Premium plans.',
+  },
+  {
+    id: 25,
+    category: 'Features',
+    question: 'What file formats are supported?',
+    answer:
+      'We support all major document formats including PDF, Word documents (.doc, .docx), CSV files, Markdown (.md), plain text files (.txt). If you have a specific format requirement, please contact us.',
+  },
+  {
+    id: 26,
+    category: 'Features',
+    question: 'Can I upload documents from Google Drive?',
+    answer:
+      'Yes! We offer seamless Google Drive integration. You can connect your Google Drive account and select multiple files to upload directly to Provento.ai.',
+  },
+  {
+    id: 27,
+    category: 'Features',
+    question: 'How accurate are the AI responses?',
+    answer:
+      'Our AI achieves high accuracy rates by using advanced language models and providing source citations with every answer. We continuously improve our models based on user feedback and usage patterns.',
+  },
+  {
+    id: 28,
+    category: 'Features',
+    question: 'What languages are supported for documents?',
+    answer:
+      'Currently, we support only English. Multilingual support is planned for future expansion.',
+  },
+  {
+    id: 29,
+    category: 'Features',
+    question: 'What kind of requests can users make?',
+    answer: "Users can ask questions based on the documents they've uploaded.",
+  },
+  {
+    id: 30,
+    category: 'Security',
+    question: 'Are uploaded documents secure?',
+    answer:
+      'Yes, all documents are encrypted in transit and at rest using industry-standard security protocols.',
+  },
+  {
+    id: 31,
+    category: 'Security',
+    question: 'Where are documents stored?',
+    answer:
+      'Documents are securely stored on cloud servers hosted by trusted providers like AWS or Google Cloud.',
+  },
+  {
+    id: 32,
+    category: 'Security',
+    question: 'Can I delete my data?',
+    answer:
+      "Yes, you have complete control over your data. You can delete individual documents or your entire account at any time. When you delete data, it's permanently removed from our servers within 30 days.",
+  },
+  {
+    id: 33,
+    category: 'Security',
+    question: 'Are user questions stored?',
+    answer:
+      'Yes, questions are stored for audit and improvement purposes, but never shared externally.',
+  },
+  {
+    id: 34,
+    category: 'Security',
+    question: 'Are interactions with the chatbot secure?',
+    answer:
+      'Absolutely. All user interactions are encrypted and comply with data privacy standards like GDPR.',
+  },
+  {
+    id: 35,
+    category: 'Technical',
+    question: 'What happens if I exceed my plan limits?',
+    answer:
+      "We'll notify you when you're approaching your limits. If you exceed document or query limits, you can upgrade your plan or purchase additional resources. We don't cut off access immediately - we'll work with you to find the right solution.",
   },
 ]
 
