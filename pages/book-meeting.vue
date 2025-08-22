@@ -1,5 +1,47 @@
 <template>
   <div>
+    <!-- Success Modal -->
+    <UModal v-model="showSuccessModal" :ui="{ width: 'sm:max-w-md' }">
+      <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
+        <template #header>
+          <div class="flex items-center justify-center">
+            <div
+              class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100"
+            >
+              <UIcon name="i-heroicons-check" class="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </template>
+
+        <div class="text-center">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+            Demo Request Submitted Successfully!
+          </h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            Thank you for your interest in Provento.ai! Our team will contact you within 24 hours to
+            schedule your personalized demo session.
+          </p>
+          <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
+            <div class="flex items-center text-sm text-blue-800 dark:text-blue-200">
+              <UIcon name="i-heroicons-information-circle" class="h-5 w-5 mr-2 flex-shrink-0" />
+              <span
+                >We'll send you a calendar invite with meeting details and preparation
+                materials.</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end space-x-3">
+            <UButton color="gray" variant="ghost" @click="showSuccessModal = false">
+              Close
+            </UButton>
+            <UButton color="primary" @click="navigateTo('/')"> Back to Home </UButton>
+          </div>
+        </template>
+      </UCard>
+    </UModal>
     <section class="pt-16 pb-24 px-4 sm:px-6 lg:px-8">
       <div class="max-w-4xl mx-auto">
         <div class="text-center mb-16">
@@ -219,12 +261,16 @@
 </template>
 
 <script setup lang="ts">
+import { useContactStore } from '~/stores/contact'
+
 definePageMeta({
   layout: 'main',
 })
 
 const { showNotification } = useNotification()
-const loading = ref(false)
+const contactStore = useContactStore()
+const loading = computed(() => contactStore.loading)
+const showSuccessModal = ref(false)
 
 const form = ref({
   firstName: '',
@@ -246,20 +292,31 @@ const demoExpectations = [
 ]
 
 const handleSubmit = async () => {
-  loading.value = true
-
   try {
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    const domain = window.location.hostname
 
-    showNotification(
-      "Demo request submitted successfully! We'll contact you within 24 hours to schedule your personalized demo.",
-      'success',
-      {
-        title: 'Demo Requested',
-        duration: 8000,
-      },
-    )
+    const isProd = domain.includes('provento.ai') && !domain.includes('test')
+    const isTest = domain.includes('test') || domain.includes('refactor')
+    // Prepare data for API
+    const contactData = {
+      name: form.value.firstName,
+      lastname: form.value.lastName,
+      email: form.value.email,
+      company: form.value.company || undefined,
+      jobTitle: form.value.jobTitle || undefined,
+      companySize: form.value.companySize || undefined,
+      requestFor: form.value.useCase || undefined,
+      message: form.value.message || undefined,
+      domain: isProd ? 'Prod' : isTest ? 'Test' : 'Local',
+      // Note: reCAPTCHA token would be needed for production
+      token: 'demo-token', // Replace with actual reCAPTCHA token
+    }
+
+    // Submit via store
+    await contactStore.submitDemoRequest(contactData)
+
+    // Show success modal
+    showSuccessModal.value = true
 
     // Reset form
     form.value = {
@@ -272,13 +329,12 @@ const handleSubmit = async () => {
       useCase: '',
       message: '',
     }
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Demo submission error:', error)
     showNotification(
-      'Failed to submit demo request. Please try again or contact us directly.',
+      error.message || 'Failed to submit demo request. Please try again or contact us directly.',
       'error',
     )
-  } finally {
-    loading.value = false
   }
 }
 </script>
