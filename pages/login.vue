@@ -70,21 +70,10 @@
           class="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span v-if="authStore.loading" class="flex items-center justify-center">
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              ></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
+            <UIcon
+              name="i-heroicons-arrow-path"
+              class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+            />
             Signing in...
           </span>
           <span v-else>Sign in</span>
@@ -92,14 +81,7 @@
 
         <!-- Demo Quick Fill Button -->
         <button type="button" @click="fillDemoCredentials" class="w-full btn-secondary text-sm">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 10V3L4 14h7v7l9-11h-7z"
-            ></path>
-          </svg>
+          <UIcon name="i-heroicons-bolt" class="w-4 h-4 mr-2" />
           Quick Fill Demo Credentials
         </button>
       </form>
@@ -117,9 +99,7 @@
       <!-- Register link -->
       <div class="text-center space-y-3">
         <NuxtLink to="/signup" class="btn-primary w-full"> Create New Account </NuxtLink>
-        <NuxtLink to="/book-meeting" class="btn-outline w-full ml-3">
-          Book a Meeting
-        </NuxtLink>
+        <NuxtLink to="/book-meeting" class="btn-outline w-full ml-3"> Book a Meeting </NuxtLink>
 
         <!-- Toast Demo Link -->
         <NuxtLink
@@ -135,7 +115,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: false
+  layout: 'minimal',
 })
 
 const router = useRouter()
@@ -152,8 +132,8 @@ const loginForm = ref({
 
 // Auto-fill demo credentials function
 const fillDemoCredentials = () => {
-  loginForm.value.email = 'demo@demo.com'
-  loginForm.value.password = '123'
+  loginForm.value.email = 'demo@example.com'
+  loginForm.value.password = 'password'
   showNotification('Demo credentials filled', 'info', { duration: 2000 })
 }
 

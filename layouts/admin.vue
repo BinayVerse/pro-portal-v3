@@ -17,107 +17,124 @@
       <!-- Admin Navigation -->
       <nav class="flex-1 p-6">
         <div class="space-y-2">
-          <NuxtLink
+          <UButton
             to="/admin/dashboard"
-            class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-dark-800 transition-colors duration-200"
-            :class="{ 'bg-primary-500/20 text-primary-400': $route.name === 'admin-dashboard' }"
+            variant="ghost"
+            justify="start"
+            icon="heroicons:squares-2x2"
+            :color="$route.name === 'admin-dashboard' ? 'primary' : 'gray'"
+            class="w-full"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-            </svg>
-            <span>Dashboard</span>
-          </NuxtLink>
+            Dashboard
+          </UButton>
 
-          <NuxtLink
+          <UButton
             to="/admin/users"
-            class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-dark-800 transition-colors duration-200"
-            :class="{ 'bg-primary-500/20 text-primary-400': $route.name === 'admin-users' }"
+            variant="ghost"
+            justify="start"
+            icon="heroicons:users"
+            :color="$route.name === 'admin-users' ? 'primary' : 'gray'"
+            class="w-full"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-            </svg>
-            <span>Users</span>
-          </NuxtLink>
+            Users
+          </UButton>
 
-          <NuxtLink
+          <UButton
             to="/admin/documents"
-            class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-dark-800 transition-colors duration-200"
-            :class="{ 'bg-primary-500/20 text-primary-400': $route.name === 'admin-documents' }"
+            variant="ghost"
+            justify="start"
+            icon="heroicons:document-text"
+            :color="$route.name === 'admin-documents' ? 'primary' : 'gray'"
+            class="w-full"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            <span>Documents</span>
-          </NuxtLink>
+            Artefacts
+          </UButton>
 
-          <NuxtLink
+          <UButton
             to="/admin/analytics"
-            class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-dark-800 transition-colors duration-200"
-            :class="{ 'bg-primary-500/20 text-primary-400': $route.name === 'admin-analytics' }"
+            variant="ghost"
+            justify="start"
+            icon="heroicons:chart-bar"
+            :color="$route.name === 'admin-analytics' ? 'primary' : 'gray'"
+            class="w-full"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-            </svg>
-            <span>Analytics</span>
-          </NuxtLink>
+            Analytics
+          </UButton>
 
           <!-- Integrations with submenu -->
           <div>
             <button
               @click="integrationsOpen = !integrationsOpen"
               class="w-full flex items-center justify-between space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-dark-800 transition-colors duration-200"
-              :class="{ 'bg-primary-500/20 text-primary-400': $route.path.includes('/admin/integrations') }"
+              :class="{
+                'bg-primary-500/20 text-primary-400': $route.path.includes('/admin/integrations'),
+              }"
             >
               <div class="flex items-center space-x-3">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-                </svg>
+                <UIcon name="heroicons:link" class="w-5 h-5" />
                 <span>Integrations</span>
               </div>
-              <svg
+              <UIcon
+                name="heroicons:chevron-down"
                 class="w-4 h-4 transition-transform duration-200"
                 :class="{ 'rotate-180': integrationsOpen }"
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
+              />
             </button>
             <div v-show="integrationsOpen" class="ml-8 mt-2 space-y-1">
-              <NuxtLink
+              <UButton
                 to="/admin/integrations"
-                class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-dark-800 rounded-lg transition-colors"
-                :class="{ 'bg-primary-500/20 text-primary-400': $route.name === 'admin-integrations' }"
+                variant="ghost"
+                justify="start"
+                size="sm"
+                :color="$route.name === 'admin-integrations' ? 'primary' : 'gray'"
+                class="w-full"
               >
                 Overview
-              </NuxtLink>
-              <NuxtLink
+              </UButton>
+              <UButton
                 to="/admin/integrations/slack"
-                class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-dark-800 rounded-lg transition-colors"
-                :class="{ 'bg-primary-500/20 text-primary-400': $route.name === 'admin-integrations-slack' }"
+                variant="ghost"
+                justify="start"
+                size="sm"
+                icon="mdi:slack"
+                :color="$route.name === 'admin-integrations-slack' ? 'primary' : 'gray'"
+                class="w-full"
               >
                 Slack
-              </NuxtLink>
-              <NuxtLink
+              </UButton>
+              <UButton
                 to="/admin/integrations/teams"
-                class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-dark-800 rounded-lg transition-colors"
-                :class="{ 'bg-primary-500/20 text-primary-400': $route.name === 'admin-integrations-teams' }"
+                variant="ghost"
+                justify="start"
+                size="sm"
+                icon="mdi:microsoft-teams"
+                :color="$route.name === 'admin-integrations-teams' ? 'primary' : 'gray'"
+                class="w-full"
               >
                 Teams
-              </NuxtLink>
-              <NuxtLink
+              </UButton>
+              <UButton
                 to="/admin/integrations/whatsapp"
-                class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-dark-800 rounded-lg transition-colors"
-                :class="{ 'bg-primary-500/20 text-primary-400': $route.name === 'admin-integrations-whatsapp' }"
+                variant="ghost"
+                justify="start"
+                size="sm"
+                icon="mdi:whatsapp"
+                :color="$route.name === 'admin-integrations-whatsapp' ? 'primary' : 'gray'"
+                class="w-full"
               >
                 WhatsApp
-              </NuxtLink>
-              <NuxtLink
+              </UButton>
+              <UButton
                 to="/admin/integrations/imessage"
-                class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-dark-800 rounded-lg transition-colors"
-                :class="{ 'bg-primary-500/20 text-primary-400': $route.name === 'admin-integrations-imessage' }"
+                variant="ghost"
+                justify="start"
+                size="sm"
+                icon="heroicons:device-phone-mobile"
+                :color="$route.name === 'admin-integrations-imessage' ? 'primary' : 'gray'"
+                class="w-full"
               >
                 iMessage
-              </NuxtLink>
+              </UButton>
             </div>
           </div>
         </div>
@@ -132,24 +149,14 @@
           <h1 class="text-xl font-semibold text-white">{{ pageTitle }}</h1>
 
           <!-- Profile dropdown -->
-          <div class="relative" @mouseenter="profileOpen = true" @mouseleave="profileOpen = false">
-            <button class="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors">
-              <div class="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
+          <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end' }">
+            <UButton variant="ghost" trailing-icon="heroicons:chevron-down">
+              <UAvatar src="" alt="Admin" size="sm" :ui="{ background: 'bg-primary-500' }">
                 <span class="text-white text-sm font-medium">A</span>
-              </div>
-              <span class="hidden sm:block">Admin</span>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-
-            <div v-show="profileOpen" class="absolute right-0 top-full mt-2 w-48 bg-dark-900 border border-dark-700 rounded-lg shadow-xl py-2 animate-fade-in">
-              <a href="#" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-800 transition-colors">My Account</a>
-              <a href="#" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-800 transition-colors">Change Password</a>
-              <hr class="border-dark-700 my-2">
-              <NuxtLink to="/login" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-800 transition-colors">Logout</NuxtLink>
-            </div>
-          </div>
+              </UAvatar>
+              <span class="hidden sm:block ml-2">Admin</span>
+            </UButton>
+          </UDropdown>
         </div>
       </header>
 
@@ -164,7 +171,28 @@
 <script setup lang="ts">
 const route = useRoute()
 const integrationsOpen = ref(true)
-const profileOpen = ref(false)
+
+const profileItems = [
+  [
+    {
+      label: 'My Account',
+      icon: 'heroicons:user',
+      click: () => {},
+    },
+    {
+      label: 'Change Password',
+      icon: 'heroicons:key',
+      click: () => {},
+    },
+  ],
+  [
+    {
+      label: 'Logout',
+      icon: 'heroicons:arrow-right-on-rectangle',
+      click: () => navigateTo('/login'),
+    },
+  ],
+]
 
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
@@ -176,7 +204,7 @@ const pageTitle = computed(() => {
     'admin-integrations-teams': 'Teams Integration',
     'admin-integrations-slack': 'Slack Integration',
     'admin-integrations-whatsapp': 'WhatsApp Integration',
-    'admin-integrations-imessage': 'iMessage Integration'
+    'admin-integrations-imessage': 'iMessage Integration',
   }
   return titles[route.name as string] || 'Admin'
 })

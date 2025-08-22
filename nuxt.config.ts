@@ -12,6 +12,7 @@ export default defineNuxtConfig({
   ui: {
     global: true,
     icons: ['heroicons', 'simple-icons'],
+    safelistColors: ['primary', 'brand'],
   },
 
   // Icon Configuration
@@ -39,7 +40,7 @@ export default defineNuxtConfig({
   // TailwindCSS
   tailwindcss: {
     cssPath: '~/assets/css/tailwind.css',
-    configPath: 'tailwind.config.js',
+    configPath: 'tailwind.config.ts',
   },
 
   // Nitro (Server)
@@ -47,12 +48,31 @@ export default defineNuxtConfig({
     experimental: {
       wasm: true,
     },
+    storage: {
+      dev: {
+        driver: 'fs',
+        base: './.data',
+      },
+    },
+  },
+
+  // Router options to fix manifest issues
+  router: {
+    options: {
+      hashMode: false,
+    },
+  },
+
+  // Experimental features to fix manifest conflicts
+  experimental: {
+    payloadExtraction: false,
+    writeEarlyHints: false,
   },
 
   // App Config
   app: {
     head: {
-      title: 'VueDash - Modern Dashboard',
+      title: 'provento.ai - Your AI Partner for Smarter Interactions',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },

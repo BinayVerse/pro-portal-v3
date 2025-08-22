@@ -14,19 +14,7 @@
         <div class="mb-8">
           <div class="relative max-w-2xl mx-auto">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg
-                class="h-5 w-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                ></path>
-              </svg>
+              <UIcon name="heroicons:magnifying-glass" class="h-5 w-5 text-gray-400" />
             </div>
             <input
               v-model="searchQuery"
@@ -36,14 +24,7 @@
             />
             <div v-if="searchQuery" class="absolute inset-y-0 right-0 pr-3 flex items-center">
               <button @click="clearSearch" class="text-gray-400 hover:text-white transition-colors">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  ></path>
-                </svg>
+                <UIcon name="heroicons:x-mark" class="h-5 w-5" />
               </button>
             </div>
           </div>
@@ -92,20 +73,11 @@
               <h3 class="text-lg font-semibold text-white pr-4">
                 <span v-html="highlightSearchTerm(faq.question)"></span>
               </h3>
-              <svg
+              <UIcon
+                name="heroicons:chevron-down"
                 class="w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0"
                 :class="openFaqs.includes(faq.id) ? 'rotate-180' : ''"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                ></path>
-              </svg>
+              />
             </div>
             <div v-show="openFaqs.includes(faq.id)" class="mt-4 text-gray-300 animate-fade-in">
               <span v-html="highlightSearchTerm(faq.answer)"></span>
@@ -118,19 +90,7 @@
           <div
             class="w-16 h-16 bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-4"
           >
-            <svg
-              class="w-8 h-8 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              ></path>
-            </svg>
+            <UIcon name="heroicons:document-magnifying-glass" class="w-8 h-8 text-gray-400" />
           </div>
           <h3 class="text-xl font-semibold text-white mb-2">No FAQs found</h3>
           <p class="text-gray-300 mb-6">

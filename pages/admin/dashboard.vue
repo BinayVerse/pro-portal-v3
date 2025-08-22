@@ -3,13 +3,13 @@
     <!-- Header -->
     <div>
       <h1 class="text-2xl font-bold text-white mb-2">Dashboard Overview</h1>
-      <p class="text-gray-400">Manage your document chatting platform from here.</p>
+      <p class="text-gray-400">Manage your artefact chatting platform from here.</p>
     </div>
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- Total Users -->
-      <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
+      <UCard class="bg-dark-800 border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Total Users</p>
@@ -21,55 +21,31 @@
             </p>
           </div>
           <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-            <svg
-              class="w-6 h-6 text-blue-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              ></path>
-            </svg>
+            <UIcon name="heroicons:users" class="w-6 h-6 text-blue-400" />
           </div>
         </div>
-      </div>
+      </UCard>
 
       <!-- Documents -->
-      <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
+      <UCard class="bg-dark-800 border-dark-700">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-gray-400 text-sm font-medium">Documents</p>
+            <p class="text-gray-400 text-sm font-medium">Artefacts</p>
             <p class="text-3xl font-bold text-white mt-2">
-              {{ loading ? '...' : stats.totalDocuments.toLocaleString() }}
+              {{ loading ? '...' : stats.totalArtefacts.toLocaleString() }}
             </p>
             <p class="text-sm mt-2">
-              <span class="text-green-400">+{{ stats.documentsToday }} today</span>
+              <span class="text-green-400">+{{ stats.artefactsToday }} today</span>
             </p>
           </div>
           <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-            <svg
-              class="w-6 h-6 text-green-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              ></path>
-            </svg>
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-green-400" />
           </div>
         </div>
-      </div>
+      </UCard>
 
       <!-- Conversations -->
-      <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
+      <UCard class="bg-dark-800 border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Conversations</p>
@@ -81,25 +57,13 @@
             </p>
           </div>
           <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
-            <svg
-              class="w-6 h-6 text-purple-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              ></path>
-            </svg>
+            <UIcon name="heroicons:chat-bubble-left-right" class="w-6 h-6 text-purple-400" />
           </div>
         </div>
-      </div>
+      </UCard>
 
       <!-- Tokens Used -->
-      <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
+      <UCard class="bg-dark-800 border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Tokens Used</p>
@@ -111,22 +75,10 @@
             </p>
           </div>
           <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center">
-            <svg
-              class="w-6 h-6 text-orange-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              ></path>
-            </svg>
+            <UIcon name="heroicons:bolt" class="w-6 h-6 text-orange-400" />
           </div>
         </div>
-      </div>
+      </UCard>
     </div>
 
     <!-- Main Content Grid -->
@@ -140,14 +92,7 @@
             @click="navigateTo('/admin/users')"
             class="text-primary-400 hover:text-primary-300 text-sm font-medium flex items-center gap-1"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              ></path>
-            </svg>
+            <UIcon name="heroicons:plus" class="w-4 h-4" />
             Add User
           </button>
         </div>
@@ -162,54 +107,37 @@
               <div class="h-6 w-16 bg-gray-600 rounded-full"></div>
             </div>
           </div>
-          <div v-else class="space-y-4">
-            <div
-              v-for="user in recentUsers"
-              :key="user.id"
-              class="flex items-center justify-between"
-            >
-              <div class="flex items-center space-x-3">
-                <div
-                  class="w-10 h-10 bg-primary-500/20 rounded-full flex items-center justify-center"
-                >
-                  <span class="text-primary-400 font-medium text-sm">{{ user.initials }}</span>
-                </div>
-                <div>
-                  <p class="text-white font-medium">{{ user.name }}</p>
-                  <p class="text-gray-400 text-sm">{{ user.email }}</p>
-                </div>
+          <UTable
+            v-else
+            :rows="sortedUsers"
+            :columns="userColumns"
+            :sort="userSort"
+            @update:sort="userSort = $event"
+          >
+            <template #initials-data="{ row }">
+              <div class="w-8 h-8 bg-primary-500/20 rounded-full flex items-center justify-center">
+                <span class="text-primary-400 font-medium text-xs">{{ row.initials }}</span>
               </div>
-              <div class="text-right">
-                <span
-                  :class="getUserStatusClass(user.status)"
-                  class="px-2 py-1 text-xs rounded-full font-medium"
-                >
-                  {{ user.status }}
-                </span>
-                <p class="text-gray-400 text-xs mt-1">{{ user.role }}</p>
-              </div>
-            </div>
-          </div>
+            </template>
+            <template #status-data="{ row }">
+              <UBadge :color="getStatusColor(row.status)" variant="soft" size="xs">
+                {{ row.status }}
+              </UBadge>
+            </template>
+          </UTable>
         </div>
       </div>
 
       <!-- Recent Documents -->
       <div class="bg-dark-800 rounded-lg border border-dark-700">
         <div class="flex items-center justify-between p-6 border-b border-dark-700">
-          <h2 class="text-lg font-semibold text-white">Recent Documents</h2>
-          <div class="text-sm text-gray-400">Latest document uploads and processing status</div>
+          <h2 class="text-lg font-semibold text-white">Recent Artefacts</h2>
+          <div class="text-sm text-gray-400">Latest artefact uploads and processing status</div>
           <button
-            @click="navigateTo('/admin/documents')"
+            @click="navigateTo('/admin/artefacts')"
             class="text-primary-400 hover:text-primary-300 text-sm font-medium flex items-center gap-1"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
-              ></path>
-            </svg>
+            <UIcon name="heroicons:cloud-arrow-up" class="w-4 h-4" />
             Upload
           </button>
         </div>
@@ -224,46 +152,35 @@
               <div class="h-6 w-20 bg-gray-600 rounded"></div>
             </div>
           </div>
-          <div v-else class="space-y-4">
-            <div
-              v-for="doc in recentDocuments"
-              :key="doc.id"
-              class="flex items-center justify-between"
-            >
-              <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-primary-500/20 rounded flex items-center justify-center">
-                  <svg
-                    class="w-5 h-5 text-primary-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    ></path>
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-white font-medium">{{ doc.title }}</p>
-                  <p class="text-gray-400 text-sm">
-                    {{ doc.fileName }} • {{ formatFileSize(doc.fileSize) }}
-                  </p>
-                </div>
+          <UTable
+            v-else
+            :rows="sortedArtefacts"
+            :columns="artefactColumns"
+            :sort="artefactSort"
+            @update:sort="artefactSort = $event"
+          >
+            <template #icon-data>
+              <div class="w-8 h-8 bg-primary-500/20 rounded flex items-center justify-center">
+                <UIcon name="heroicons:document-text" class="w-4 h-4 text-primary-400" />
               </div>
-              <div class="text-right">
-                <span
-                  :class="getDocumentStatusClass(doc.status)"
-                  class="px-2 py-1 text-xs rounded font-medium"
-                >
-                  {{ doc.status }}
-                </span>
-                <p class="text-gray-400 text-xs mt-1">{{ formatTime(doc.createdAt) }}</p>
+            </template>
+            <template #fileInfo-data="{ row }">
+              <div>
+                <p class="text-white font-medium text-sm">{{ row.title }}</p>
+                <p class="text-gray-400 text-xs">
+                  {{ row.fileName }} • {{ formatFileSize(row.fileSize) }}
+                </p>
               </div>
-            </div>
-          </div>
+            </template>
+            <template #status-data="{ row }">
+              <UBadge :color="getArtefactStatusColor(row.status)" variant="soft" size="xs">
+                {{ row.status }}
+              </UBadge>
+            </template>
+            <template #createdAt-data="{ row }">
+              <span class="text-gray-400 text-xs">{{ formatTime(row.createdAt) }}</span>
+            </template>
+          </UTable>
         </div>
       </div>
     </div>
@@ -283,43 +200,25 @@
           >
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                <img
-                  v-if="integration.logo"
-                  :src="integration.logo"
-                  :alt="integration.name"
+                <UIcon
+                  :name="getIntegrationIcon(integration.name)"
                   class="w-6 h-6"
+                  :class="getIntegrationIconColor(integration.name)"
                 />
-                <svg
-                  v-else
-                  class="w-6 h-6 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                  ></path>
-                </svg>
               </div>
               <div>
                 <p class="text-white font-medium">{{ integration.name }}</p>
                 <p class="text-gray-400 text-sm">{{ integration.description }}</p>
               </div>
             </div>
-            <button
+            <UButton
               @click="toggleIntegration(integration)"
-              :class="
-                integration.isConnected
-                  ? 'bg-green-500 hover:bg-green-600'
-                  : 'bg-blue-500 hover:bg-blue-600'
-              "
-              class="px-3 py-1 text-white text-sm rounded-lg transition-colors"
+              :color="integration.isConnected ? 'green' : 'blue'"
+              size="xs"
+              :icon="integration.isConnected ? 'heroicons:check' : 'heroicons:link'"
             >
               {{ integration.isConnected ? 'Connected' : 'Connect' }}
-            </button>
+            </UButton>
           </div>
         </div>
       </div>
@@ -329,16 +228,36 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin',
 })
 
 const loading = ref(true)
 
+// Table sorting
+const userSort = ref({ column: 'name', direction: 'asc' })
+const artefactSort = ref({ column: 'createdAt', direction: 'desc' })
+
+// Table columns
+const userColumns = [
+  { key: 'initials', label: '', sortable: false },
+  { key: 'name', label: 'Name', sortable: true },
+  { key: 'email', label: 'Email', sortable: true },
+  { key: 'role', label: 'Role', sortable: true },
+  { key: 'status', label: 'Status', sortable: true },
+]
+
+const artefactColumns = [
+  { key: 'icon', label: '', sortable: false },
+  { key: 'fileInfo', label: 'Artefact', sortable: false },
+  { key: 'status', label: 'Status', sortable: true },
+  { key: 'createdAt', label: 'Created', sortable: true },
+]
+
 const stats = ref({
   totalUsers: 2847,
   userGrowth: 12,
-  totalDocuments: 18432,
-  documentsToday: 48,
+  totalArtefacts: 18432,
+  artefactsToday: 48,
   totalConversations: 45231,
   conversationGrowth: 24,
   tokensUsed: 1200000,
@@ -380,7 +299,7 @@ const recentUsers = ref([
   },
 ])
 
-const recentDocuments = ref([
+const recentArtefacts = ref([
   {
     id: 1,
     title: 'Employee Handbook 2024',
@@ -470,22 +389,81 @@ const formatTime = (date: Date) => {
   }
 }
 
-const getUserStatusClass = (status: string) => {
-  const classes: Record<string, string> = {
-    Active: 'bg-green-500/20 text-green-400',
-    Inactive: 'bg-red-500/20 text-red-400',
-    Pending: 'bg-yellow-500/20 text-yellow-400',
+// Computed properties for sorted data
+const sortedUsers = computed(() => {
+  const users = [...recentUsers.value]
+  if (userSort.value.column) {
+    users.sort((a, b) => {
+      const aVal = a[userSort.value.column]
+      const bVal = b[userSort.value.column]
+      const direction = userSort.value.direction === 'asc' ? 1 : -1
+
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return aVal.localeCompare(bVal) * direction
+      }
+      return (aVal < bVal ? -1 : aVal > bVal ? 1 : 0) * direction
+    })
   }
-  return classes[status] || 'bg-gray-500/20 text-gray-400'
+  return users
+})
+
+const sortedArtefacts = computed(() => {
+  const docs = [...recentArtefacts.value]
+  if (artefactSort.value.column) {
+    docs.sort((a, b) => {
+      let aVal = a[artefactSort.value.column]
+      let bVal = b[artefactSort.value.column]
+      const direction = artefactSort.value.direction === 'asc' ? 1 : -1
+
+      // Handle date sorting
+      if (artefactSort.value.column === 'createdAt') {
+        aVal = new Date(aVal).getTime()
+        bVal = new Date(bVal).getTime()
+      }
+
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return aVal.localeCompare(bVal) * direction
+      }
+      return (aVal < bVal ? -1 : aVal > bVal ? 1 : 0) * direction
+    })
+  }
+  return docs
+})
+
+const getStatusColor = (status: string) => {
+  const colors: Record<string, string> = {
+    Active: 'green',
+    Inactive: 'red',
+    Pending: 'yellow',
+  }
+  return colors[status] || 'gray'
 }
 
-const getDocumentStatusClass = (status: string) => {
-  const classes: Record<string, string> = {
-    processed: 'bg-green-500/20 text-green-400',
-    processing: 'bg-yellow-500/20 text-yellow-400',
-    failed: 'bg-red-500/20 text-red-400',
+const getArtefactStatusColor = (status: string) => {
+  const colors: Record<string, string> = {
+    processed: 'green',
+    processing: 'yellow',
+    failed: 'red',
   }
-  return classes[status] || 'bg-gray-500/20 text-gray-400'
+  return colors[status] || 'gray'
+}
+
+const getIntegrationIcon = (name: string) => {
+  const iconMap: Record<string, string> = {
+    Slack: 'mdi:slack',
+    'Microsoft Teams': 'mdi:microsoft-teams',
+    'WhatsApp Business': 'mdi:whatsapp',
+  }
+  return iconMap[name] || 'mdi:link'
+}
+
+const getIntegrationIconColor = (name: string) => {
+  const colorMap: Record<string, string> = {
+    Slack: 'text-purple-400',
+    'Microsoft Teams': 'text-blue-400',
+    'WhatsApp Business': 'text-green-400',
+  }
+  return colorMap[name] || 'text-gray-400'
 }
 
 const toggleIntegration = async (integration: any) => {

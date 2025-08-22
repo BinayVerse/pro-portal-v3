@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-black">
     <!-- Header Navigation -->
     <header class="bg-black border-b border-dark-700 sticky top-0 z-50">
-      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <!-- Logo and brand -->
           <NuxtLink to="/" class="flex items-center space-x-3">
@@ -42,20 +42,11 @@
                 :class="{ 'text-primary-400': $route.path.includes('/solutions') }"
               >
                 Solutions
-                <svg
+                <UIcon
+                  name="i-heroicons-chevron-down"
                   class="ml-1 w-4 h-4 transition-transform duration-200"
                   :class="{ 'rotate-180': showSolutions }"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 9l-7 7-7-7"
-                  ></path>
-                </svg>
+                />
               </button>
 
               <!-- Solutions dropdown -->
@@ -68,12 +59,6 @@
                 <div class="px-4 py-2 text-sm text-gray-400 font-medium border-b border-dark-700">
                   By Industries
                 </div>
-                <NuxtLink
-                  to="/solutions"
-                  class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-800 transition-colors duration-200 font-medium"
-                >
-                  All Solutions
-                </NuxtLink>
                 <NuxtLink
                   v-for="industry in industries"
                   :key="industry.slug"
@@ -104,7 +89,7 @@
           <!-- Right side buttons -->
           <div class="flex items-center space-x-4">
             <NuxtLink to="/book-meeting" class="btn-outline hidden sm:inline-flex">
-              Book a Meeting
+              Book a Demo
             </NuxtLink>
             <NuxtLink
               to="/login"
@@ -120,14 +105,7 @@
             @click="mobileMenuOpen = !mobileMenuOpen"
             class="md:hidden text-gray-300 hover:text-white p-2"
           >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              ></path>
-            </svg>
+            <UIcon name="i-heroicons-bars-3" class="w-6 h-6" />
           </button>
         </div>
 
@@ -149,7 +127,7 @@
             >
             <NuxtLink to="/faq" class="block text-gray-300 hover:text-white py-2">FAQ</NuxtLink>
             <NuxtLink to="/book-meeting" class="block text-gray-300 hover:text-white py-2"
-              >Book a Meeting</NuxtLink
+              >Book a Demo</NuxtLink
             >
             <NuxtLink to="/login" class="block text-gray-300 hover:text-white py-2">Login</NuxtLink>
             <NuxtLink to="/signup" class="btn-primary block text-center mt-3">Sign Up</NuxtLink>

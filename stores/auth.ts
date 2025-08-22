@@ -31,7 +31,7 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      const { data } = await $fetch<{ success: boolean; data?: User; error?: string }>(
+      const response = await $fetch<{ success: boolean; data?: User; error?: string }>(
         '/api/auth/login',
         {
           method: 'POST',
@@ -39,19 +39,19 @@ export const useAuthStore = defineStore('auth', () => {
         },
       )
 
-      if (data) {
-        user.value = data
+      if (response.success && response.data) {
+        user.value = response.data
         // Store in localStorage for persistence
         if (process.client) {
           localStorage.setItem('isAuthenticated', 'true')
-          localStorage.setItem('user', JSON.stringify(data))
+          localStorage.setItem('user', JSON.stringify(response.data))
         }
         return { success: true }
       } else {
-        throw new Error('Login failed')
+        throw new Error(response.error || 'Login failed')
       }
     } catch (err: any) {
-      error.value = err?.data?.error || err.message || 'Login failed'
+      error.value = err?.data?.statusMessage || err.message || 'Login failed'
       return { success: false, error: error.value }
     } finally {
       isLoading.value = false
@@ -114,6 +114,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user: readonly(user),
+    loading: readonly(isLoading),
     isLoading: readonly(isLoading),
     error: readonly(error),
     isAuthenticated,

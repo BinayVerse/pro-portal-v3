@@ -23,14 +23,7 @@
             disabled
             class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center space-x-2 disabled:cursor-not-allowed"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-              ></path>
-            </svg>
+            <UIcon name="heroicons:link-slash" class="w-4 h-4" />
             <span>Disconnect</span>
           </button>
         </div>
@@ -77,19 +70,7 @@
         <!-- Coming Soon Notice -->
         <div class="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-6">
           <div class="flex items-center justify-center mb-2">
-            <svg
-              class="w-5 h-5 text-amber-400 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.634 0L3.18 16.5c-.77.833.192 2.5 1.732 2.5z"
-              ></path>
-            </svg>
+            <UIcon name="heroicons:exclamation-triangle" class="w-5 h-5 text-amber-400 mr-2" />
             <span class="text-amber-400 font-medium">Coming Soon</span>
           </div>
           <p class="text-amber-200 text-sm">

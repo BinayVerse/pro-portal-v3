@@ -10,17 +10,42 @@ export interface ToastOptions {
 }
 
 export const useNotification = () => {
+  const toast = useToast()
+
   const showNotification = (message: string, type: ToastType = 'info', options?: ToastOptions) => {
-    // Simple console logging for now - in a real app you'd integrate with a toast library
-    const timestamp = new Date().toLocaleTimeString()
-    console.log(`[${timestamp}] ${type.toUpperCase()}: ${message}`, options)
-    
-    // You could integrate with libraries like:
-    // - @vueuse/core notifications
-    // - vue-toastification
-    // - Custom toast component
-    
-    return { id: Date.now().toString() }
+    const toastConfig = {
+      title: options?.title,
+      description: message,
+      timeout: options?.duration || 5000,
+    }
+
+    switch (type) {
+      case 'success':
+        return toast.add({
+          ...toastConfig,
+          color: 'green',
+          icon: 'i-heroicons-check-circle',
+        })
+      case 'error':
+        return toast.add({
+          ...toastConfig,
+          color: 'red',
+          icon: 'i-heroicons-x-circle',
+        })
+      case 'warning':
+        return toast.add({
+          ...toastConfig,
+          color: 'yellow',
+          icon: 'i-heroicons-exclamation-triangle',
+        })
+      case 'info':
+      default:
+        return toast.add({
+          ...toastConfig,
+          color: 'blue',
+          icon: 'i-heroicons-information-circle',
+        })
+    }
   }
 
   const showSuccess = (message: string, options?: ToastOptions) => {
