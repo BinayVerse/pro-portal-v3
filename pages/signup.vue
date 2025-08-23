@@ -12,7 +12,6 @@
           <span class="text-white text-2xl font-semibold">provento.ai</span>
         </NuxtLink>
         <h2 class="text-3xl font-bold text-white">Create your account</h2>
-        <p class="mt-2 text-gray-400">Start your free trial today</p>
       </div>
 
       <!-- Signup form -->
@@ -76,7 +75,7 @@
 
         <div>
           <label for="company" class="block text-sm font-medium text-gray-300 mb-2">
-            Company (Optional)
+            Company
           </label>
           <input
             id="company"
