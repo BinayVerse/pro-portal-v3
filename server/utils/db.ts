@@ -1,52 +1,31 @@
-// Simple database query utility
-// This is a placeholder implementation - replace with your actual database connection
-export async function query(sql: string, params: any[] = []): Promise<{ rows: any[]; rowCount: number }> {
-  // For now, return mock data to prevent errors
-  // Replace this with your actual database implementation (PostgreSQL, MySQL, etc.)
-  
-  console.warn('Database query called but not implemented:', sql, params)
-  
-  // Mock response structure matching PostgreSQL client
-  return {
-    rows: [],
-    rowCount: 0
-  }
-}
+import pkg from "pg";
+const { Pool } = pkg;
 
-// If you're using a specific database, uncomment and configure the appropriate client:
-
-/*
-// For PostgreSQL:
-import { Pool } from 'pg'
+const config = useRuntimeConfig();
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-})
+  host: config.dbHost,
+  port: parseInt(config.dbPort || "5432"),
+  database: config.dbName,
+  user: config.dbUser,
+  password: config.dbPassword,
+});
 
-export async function query(sql: string, params: any[] = []) {
-  const client = await pool.connect()
+export async function query(text: string, params: any) {
   try {
-    const result = await client.query(sql, params)
-    return result
-  } finally {
-    client.release()
+    const result = await pool.query(text, params);
+    return result;
+  } catch (error) {
+    console.error("Database Query Error:", error);
+    throw new Error("Database query failed");
   }
 }
-*/
 
-/*
-// For MySQL:
-import mysql from 'mysql2/promise'
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-})
-
-export async function query(sql: string, params: any[] = []) {
-  const [rows] = await pool.execute(sql, params)
-  return { rows, rowCount: Array.isArray(rows) ? rows.length : 0 }
+export async function getClient() {
+  try {
+    const client = await pool.connect();
+    return client;
+  } catch (error) {
+    throw new Error('Database client connection failed');
+  }
 }
-*/
