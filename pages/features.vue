@@ -9,7 +9,7 @@
             <span class="text-primary-400">Smart Artefacts Management</span>
           </h1>
           <p class="text-xl text-gray-300 max-w-3xl mx-auto">
-            Discover how Provento.ai transforms your artefacts workflow with cutting-edge AI
+            Discover how provento.ai transforms your artefacts workflow with cutting-edge AI
             technology and seamless integrations.
           </p>
         </div>
@@ -20,7 +20,7 @@
           <div class="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <p class="text-gray-300 text-lg mb-8">
-                Transform static documents into interactive conversations. Ask questions in natural
+                Transform static artefacts into interactive conversations. Ask questions in natural
                 language and get instant, accurate answers from your artefacts library.
               </p>
               <div class="space-y-4">
@@ -63,7 +63,7 @@
                     the Q3 financial report?
                   </div>
                   <div class="text-gray-300 text-sm">
-                    <span class="text-green-400">Provento.ai:</span> Based on the Q3 financial
+                    <span class="text-green-400">provento.ai:</span> Based on the Q3 financial
                     report, the key risks identified are: 1) Market volatility affecting revenue
                     projections...
                   </div>
@@ -126,7 +126,7 @@
             <div>
               <h2 class="text-3xl font-bold text-white mb-6">Seamless Artefacts Upload</h2>
               <p class="text-gray-300 text-lg mb-8">
-                Upload documents from multiple sources with support for all major file formats. Our
+                Upload artefacts from multiple sources with support for all major file formats. Our
                 intelligent processing ensures your content is ready for conversations in seconds.
               </p>
               <div class="space-y-4">
@@ -166,7 +166,7 @@
               <div
                 class="w-16 h-16 bg-primary-500/20 rounded-xl flex items-center justify-center mx-auto mb-6"
               >
-                <UIcon name="simple-icons:slack" class="w-8 h-8 text-primary-400" />
+                <UIcon name="mdi:slack" class="w-8 h-8 text-primary-400" />
               </div>
               <h3 class="text-xl font-bold text-white mb-4">Slack Integration</h3>
               <p class="text-gray-300 mb-6">
@@ -178,7 +178,7 @@
               <div
                 class="w-16 h-16 bg-primary-500/20 rounded-xl flex items-center justify-center mx-auto mb-6"
               >
-                <UIcon name="simple-icons:microsoftteams" class="w-8 h-8 text-primary-400" />
+                <UIcon name="mdi:microsoft-teams" class="w-8 h-8 text-primary-400" />
               </div>
               <h3 class="text-xl font-bold text-white mb-4">Teams Integration</h3>
               <p class="text-gray-300 mb-6">
@@ -194,7 +194,8 @@
               </div>
               <h3 class="text-xl font-bold text-white mb-4">Mobile Integration</h3>
               <p class="text-gray-300 mb-6">
-                Access your documents on WhatsApp for on-the-go insights and quick artefacts queries.
+                Access your artefacts on WhatsApp for on-the-go insights and quick artefacts
+                queries.
               </p>
             </div>
           </div>
@@ -207,7 +208,7 @@
           </h2>
           <p class="text-xl text-gray-300 text-center mb-12 max-w-3xl mx-auto">
             Track usage patterns, monitor performance, and gain insights into how your team
-            interacts with documents.
+            interacts with artefacts.
           </p>
           <div class="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
             <div class="text-center">
@@ -228,7 +229,7 @@
                 <UIcon name="heroicons:presentation-chart-line" class="w-8 h-8 text-primary-400" />
               </div>
               <h3 class="text-lg font-bold text-white mb-3">Trend Analysis</h3>
-              <p class="text-gray-300 text-sm">Identify popular documents and query patterns.</p>
+              <p class="text-gray-300 text-sm">Identify popular artefacts and query patterns.</p>
             </div>
           </div>
         </div>
@@ -239,7 +240,8 @@
         >
           <h2 class="text-3xl font-bold text-white mb-4">Ready to Experience These Features?</h2>
           <p class="text-xl text-gray-300 mb-8">
-            Join thousands of teams already using Provento.ai to transform their artefacts workflows.
+            Join thousands of teams already using provento.ai to transform their artefacts
+            workflows.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <NuxtLink to="/book-meeting" class="btn-primary text-lg px-8 py-4">
@@ -256,6 +258,6 @@
 // The default layout will be used automatically
 
 useHead({
-  title: 'Features - Provento.ai',
+  title: 'Features - provento.ai',
 })
 </script>

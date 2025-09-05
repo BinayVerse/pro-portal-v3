@@ -22,18 +22,34 @@ export const usePricingStore = defineStore('pricing', () => {
     error.value = null
 
     try {
-      const data = await $fetch<{ success: boolean; data?: PricingPlan[]; error?: string }>(
-        '/api/plans',
-      )
+      const response = await fetch('/api/plans')
 
-      if (data.success && data.data) {
+      let data: { success: boolean; data?: PricingPlan[]; error?: string }
+
+      try {
+        const responseText = await response.text()
+
+        if (!responseText) {
+          data = { success: false, error: 'Empty response from server' }
+        } else {
+          try {
+            data = JSON.parse(responseText)
+          } catch (parseError) {
+            data = { success: false, error: responseText }
+          }
+        }
+      } catch (textError) {
+        data = { success: false, error: 'Failed to read response from server' }
+      }
+
+      if (response.ok && data.success && data.data) {
         plans.value = data.data
         return { success: true }
       } else {
         throw new Error(data.error || 'Failed to fetch pricing plans')
       }
     } catch (err: any) {
-      error.value = err?.data?.error || err.message || 'Failed to fetch pricing plans'
+      error.value = err.message || 'Failed to fetch pricing plans'
       return { success: false, error: error.value }
     } finally {
       isLoading.value = false

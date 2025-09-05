@@ -9,9 +9,9 @@ export const companySizeLabels: Record<string, string> = {
 }
 
 export const requestForLabels: Record<string, string> = {
-  'legal': 'Legal document analysis',
+  'legal': 'Legal artefact analysis',
   'hr': 'HR documentation',
-  'finance': 'Financial documents',
+  'finance': 'Financial artefacts',
   'research': 'Research and analysis',
   'customer-support': 'Customer support',
   'other': 'Other'

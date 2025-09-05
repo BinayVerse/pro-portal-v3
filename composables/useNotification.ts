@@ -13,11 +13,15 @@ export const useNotification = () => {
   const toast = useToast()
 
   const showNotification = (message: string, type: ToastType = 'info', options?: ToastOptions) => {
-    const toastConfig = {
+    const toastConfig: any = {
       title: options?.title,
       description: message,
       timeout: options?.duration || 5000,
     }
+
+    // Allow passing a custom class via options.className or default to enabling pre-line for errors
+    const extraClass = (options as any)?.className ?? (type === 'error' ? 'toast-pre-line' : undefined)
+    if (extraClass) toastConfig.class = extraClass
 
     switch (type) {
       case 'success':
@@ -64,11 +68,17 @@ export const useNotification = () => {
     return showNotification(message, 'info', options)
   }
 
+  // Add clear function to remove all toasts
+  const clear = () => {
+    toast.clear()
+  }
+
   return {
     showNotification,
     showSuccess,
     showError,
     showWarning,
     showInfo,
+    clear,
   }
 }

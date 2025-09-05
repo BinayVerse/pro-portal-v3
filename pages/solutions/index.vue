@@ -8,7 +8,7 @@
             <span class="text-primary-400">AI-Powered Artefact Intelligence</span>
           </h1>
           <p class="text-xl text-gray-300 max-w-3xl mx-auto">
-            Discover how Provento.ai transforms artefact workflows across different industries,
+            Discover how provento.ai transforms artefact workflows across different industries,
             helping organizations streamline artefact workflow, enhance productivity, and make
             data-driven decisions faster than ever before.
           </p>
@@ -115,7 +115,7 @@
             Ready to Transform Your Industry Workflow?
           </h2>
           <p class="text-xl text-gray-300 mb-8">
-            Join industry leaders who are already using Provento.ai to revolutionize their document
+            Join industry leaders who are already using provento.ai to revolutionize their artefact
             processes.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -141,14 +141,14 @@ const industries = [
   {
     name: 'Education',
     slug: 'education',
-    description: 'Enhance learning experiences with intelligent document interaction.',
+    description: 'Enhance learning experiences with intelligent artefact interaction.',
     icon: 'i-heroicons-academic-cap',
     useCases: ['Research assistance', 'Study materials', 'Academic papers', 'Student support'],
   },
   {
     name: 'Finance & Banking',
     slug: 'finance-banking',
-    description: 'Accelerate financial document processing and analysis.',
+    description: 'Accelerate financial artefact processing and analysis.',
     icon: 'i-heroicons-currency-dollar',
     useCases: [
       'Risk assessment',
@@ -160,14 +160,14 @@ const industries = [
   {
     name: 'Government',
     slug: 'government',
-    description: 'Modernize public sector document management and citizen services.',
+    description: 'Modernize public sector artefact management and citizen services.',
     icon: 'i-heroicons-building-office',
-    useCases: ['Policy documents', 'Public records', 'Regulatory compliance', 'Citizen services'],
+    useCases: ['Policy artefacts', 'Public records', 'Regulatory compliance', 'Citizen services'],
   },
   {
     name: 'Healthcare',
     slug: 'healthcare',
-    description: 'Improve patient care with intelligent medical document analysis.',
+    description: 'Improve patient care with intelligent medical artefact analysis.',
     icon: 'i-heroicons-heart',
     useCases: [
       'Medical records',
@@ -186,7 +186,7 @@ const industries = [
   {
     name: 'Legal',
     slug: 'legal',
-    description: 'Streamline legal document analysis and contract review processes.',
+    description: 'Streamline legal artefact analysis and contract review processes.',
     icon: 'i-heroicons-scale',
     useCases: ['Contract analysis', 'Due diligence', 'Case research', 'Compliance review'],
   },
@@ -207,7 +207,7 @@ const industries = [
     slug: 'real-estate',
     description: 'Simplify property documentation and transaction management.',
     icon: 'i-heroicons-home',
-    useCases: ['Property documents', 'Contracts & leases', 'Market analysis', 'Due diligence'],
+    useCases: ['Property artefacts', 'Contracts & leases', 'Market analysis', 'Due diligence'],
   },
 ]
 
@@ -221,15 +221,15 @@ const filteredIndustries = computed(() => {
 const benefits = [
   {
     title: 'Reduce Processing Time by 75%',
-    description: 'Transform hours of manual document review into minutes of intelligent analysis.',
+    description: 'Transform hours of manual artefact review into minutes of intelligent analysis.',
   },
   {
     title: 'Improve Accuracy by 90%',
-    description: 'Eliminate human error with AI-powered document analysis and extraction.',
+    description: 'Eliminate human error with AI-powered artefact analysis and extraction.',
   },
   {
     title: 'Scale Operations Effortlessly',
-    description: 'Handle increasing document volumes without proportional staffing increases.',
+    description: 'Handle increasing artefact volumes without proportional staffing increases.',
   },
   {
     title: 'Ensure Compliance & Security',

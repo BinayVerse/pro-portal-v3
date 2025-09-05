@@ -40,11 +40,11 @@
           </UButton>
 
           <UButton
-            to="/admin/documents"
+            to="/admin/artefacts"
             variant="ghost"
             justify="start"
             icon="heroicons:document-text"
-            :color="$route.name === 'admin-documents' ? 'primary' : 'gray'"
+            :color="$route.name === 'admin-artefacts' ? 'primary' : 'gray'"
             class="w-full"
           >
             Artefacts
@@ -86,6 +86,7 @@
                 variant="ghost"
                 justify="start"
                 size="sm"
+                icon="heroicons:eye"
                 :color="$route.name === 'admin-integrations' ? 'primary' : 'gray'"
                 class="w-full"
               >
@@ -96,7 +97,7 @@
                 variant="ghost"
                 justify="start"
                 size="sm"
-                icon="mdi:slack"
+                icon="i-mdi:slack"
                 :color="$route.name === 'admin-integrations-slack' ? 'primary' : 'gray'"
                 class="w-full"
               >
@@ -107,7 +108,7 @@
                 variant="ghost"
                 justify="start"
                 size="sm"
-                icon="mdi:microsoft-teams"
+                icon="i-mdi:microsoft-teams"
                 :color="$route.name === 'admin-integrations-teams' ? 'primary' : 'gray'"
                 class="w-full"
               >
@@ -118,19 +119,19 @@
                 variant="ghost"
                 justify="start"
                 size="sm"
-                icon="mdi:whatsapp"
+                icon="i-mdi:whatsapp"
                 :color="$route.name === 'admin-integrations-whatsapp' ? 'primary' : 'gray'"
                 class="w-full"
               >
                 WhatsApp
               </UButton>
               <UButton
-                to="/admin/integrations/imessage"
+                to="/admin/integrations/i-message"
                 variant="ghost"
                 justify="start"
                 size="sm"
-                icon="heroicons:device-phone-mobile"
-                :color="$route.name === 'admin-integrations-imessage' ? 'primary' : 'gray'"
+                icon="i-heroicons:chat-bubble-left-ellipsis"
+                :color="$route.name === 'admin-integrations-i-message' ? 'primary' : 'gray'"
                 class="w-full"
               >
                 iMessage
@@ -144,9 +145,9 @@
     <!-- Main content area -->
     <div class="flex-1 flex flex-col">
       <!-- Top header -->
-      <header class="bg-dark-900 border-b border-dark-700 px-6 py-4">
-        <div class="flex items-center justify-between">
-          <h1 class="text-xl font-semibold text-white">{{ pageTitle }}</h1>
+      <header class="bg-dark-900 border-b border-dark-700 px-6 py-2.5">
+        <div class="flex items-center justify-end">
+          <!-- <h1 class="text-xl font-semibold text-white">{{ pageTitle }}</h1> -->
 
           <!-- Profile dropdown -->
           <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end' }">
@@ -169,27 +170,38 @@
 </template>
 
 <script setup lang="ts">
+import { useAuthStore } from '~/stores/auth/index'
+
 const route = useRoute()
 const integrationsOpen = ref(true)
+const auth = useAuthStore()
 
 const profileItems = [
   [
     {
       label: 'My Account',
       icon: 'heroicons:user',
-      click: () => {},
+      click: () => navigateTo('/profile'),
     },
     {
       label: 'Change Password',
       icon: 'heroicons:key',
-      click: () => {},
+      click: () => navigateTo('/update-password'),
     },
   ],
   [
     {
       label: 'Logout',
       icon: 'heroicons:arrow-right-on-rectangle',
-      click: () => navigateTo('/login'),
+      click: async () => {
+        try {
+          await auth.signOut()
+        } catch (e) {
+          console.error('Logout failed from profile dropdown', e)
+          // Fallback navigation
+          navigateTo('/login')
+        }
+      },
     },
   ],
 ]
@@ -198,13 +210,13 @@ const pageTitle = computed(() => {
   const titles: Record<string, string> = {
     'admin-dashboard': 'Dashboard',
     'admin-users': 'Users',
-    'admin-documents': 'Documents',
+    'admin-artefacts': 'Artefacts',
     'admin-analytics': 'Analytics',
     'admin-integrations': 'Integrations Overview',
     'admin-integrations-teams': 'Teams Integration',
     'admin-integrations-slack': 'Slack Integration',
     'admin-integrations-whatsapp': 'WhatsApp Integration',
-    'admin-integrations-imessage': 'iMessage Integration',
+    'admin-integrations-i-message': 'iMessage Integration',
   }
   return titles[route.name as string] || 'Admin'
 })

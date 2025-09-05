@@ -7,7 +7,7 @@
             Frequently Asked
             <span class="text-primary-400">Questions</span>
           </h1>
-          <p class="text-xl text-gray-300">Everything you need to know about Provento.ai</p>
+          <p class="text-xl text-gray-300">Everything you need to know about provento.ai</p>
         </div>
 
         <!-- Search Bar -->
@@ -153,14 +153,14 @@ const faqs = [
   {
     id: 1,
     category: 'General',
-    question: 'What is Provento.ai?',
+    question: 'What is provento.ai?',
     answer:
-      'Provento.ai is an intelligent document chatting platform that transforms your static documents into interactive conversations. Upload your documents and ask questions in natural language to get instant, accurate answers.',
+      'provento.ai is an intelligent document chatting platform that transforms your static documents into interactive conversations. Upload your documents and ask questions in natural language to get instant, accurate answers.',
   },
   {
     id: 2,
     category: 'General',
-    question: 'How does Provento.ai work?',
+    question: 'How does provento.ai work?',
     answer:
       'Our platform uses advanced AI and natural language processing to understand your documents and queries. When you upload documents, we process and index them for intelligent search. You can then ask questions in plain English and get accurate answers with source citations.',
   },
@@ -174,14 +174,14 @@ const faqs = [
   {
     id: 4,
     category: 'General',
-    question: 'Can individuals use Provento.ai?',
+    question: 'Can individuals use provento.ai?',
     answer:
-      'No, Provento.ai is built specifically for organizations to streamline internal communication and document access.',
+      'No, provento.ai is built specifically for organizations to streamline internal communication and document access.',
   },
   {
     id: 5,
     category: 'Onboarding',
-    question: 'How can an organization start using Provento.ai?',
+    question: 'How can an organization start using provento.ai?',
     answer:
       'Organizations can sign up via our website, choose a plan, and complete a quick onboarding process involving document upload and bot channel integration.',
   },
@@ -216,7 +216,7 @@ const faqs = [
   {
     id: 10,
     category: 'Administration',
-    question: 'Who can upload documents to Provento.ai?',
+    question: 'Who can upload documents to provento.ai?',
     answer:
       'Only organization admins can upload documents to ensure content accuracy and consistency.',
   },
@@ -238,7 +238,7 @@ const faqs = [
     category: 'Integrations',
     question: 'Which platforms can I integrate with?',
     answer:
-      'Provento.ai integrates with popular workplace tools including Slack, Microsoft Teams, WhatsApp. This allows you to query your documents directly from your preferred communication platform.',
+      'provento.ai integrates with popular workplace tools including Slack, Microsoft Teams, WhatsApp. This allows you to query your documents directly from your preferred communication platform.',
   },
   {
     id: 14,
@@ -252,7 +252,7 @@ const faqs = [
     category: 'Integrations',
     question: 'Can I integrate with Microsoft Teams?',
     answer:
-      'Yes! Our Microsoft Teams integration allows you to query documents directly from Teams channels. Simply install the Provento.ai bot, connect your account, and start chatting with the bot.',
+      'Yes! Our Microsoft Teams integration allows you to query documents directly from Teams channels. Simply install the provento.ai bot, connect your account, and start chatting with the bot.',
   },
   {
     id: 16,
@@ -328,7 +328,7 @@ const faqs = [
     category: 'Features',
     question: 'Can I upload documents from Google Drive?',
     answer:
-      'Yes! We offer seamless Google Drive integration. You can connect your Google Drive account and select multiple files to upload directly to Provento.ai.',
+      'Yes! We offer seamless Google Drive integration. You can connect your Google Drive account and select multiple files to upload directly to provento.ai.',
   },
   {
     id: 27,
@@ -468,6 +468,6 @@ watch(searchQuery, (newQuery) => {
 })
 
 useHead({
-  title: 'FAQ - Provento.ai',
+  title: 'FAQ - provento.ai',
 })
 </script>

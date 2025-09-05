@@ -8,7 +8,7 @@ export const BaseSchema = z.object({
 const PrivateSchema = z.object({
   NODE_ENV: z.string(),
   NUXT_PUBLIC_APP_URL: z.string(),
-  NUXT_PUBLIC_SITE_KEY: z.string().default('http://localhost:3000/'),
+  NUXT_PUBLIC_SITE_KEY: z.string().default('http://localhost:3001/'),
   NUXT_SENDGRID_API_KEY: z.string(),
   NUXT_SENDGRID_EMAIL_TEMPLATE_ID: z.string(),
   NUXT_SENDGRID_FROM_EMAIL_ID: z.string(),

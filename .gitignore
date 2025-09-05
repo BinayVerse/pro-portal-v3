@@ -42,3 +42,4 @@ Environment Variables
 dist
 
 .config/
+package-lock.json

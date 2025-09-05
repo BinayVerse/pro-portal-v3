@@ -46,9 +46,9 @@
 
           <!-- Right Content -->
           <div class="lg:col-span-8">
-            <!-- How Provento.ai Helps -->
+            <!-- How provento.ai Helps -->
             <div class="bg-dark-800 rounded-xl p-8 border border-dark-700">
-              <h2 class="text-2xl font-bold text-white mb-6">How Provento.ai Helps</h2>
+              <h2 class="text-2xl font-bold text-white mb-6">How provento.ai Helps</h2>
               <div class="space-y-4">
                 <div v-for="help in solution.helps" :key="help" class="flex items-center space-x-3">
                   <div
@@ -118,7 +118,7 @@
             Ready to Transform Your {{ solution.name }} Workflow?
           </h2>
           <p class="text-xl text-gray-300 mb-8">
-            See how Provento.ai can streamline your {{ solution.name.toLowerCase() }} artefact
+            See how provento.ai can streamline your {{ solution.name.toLowerCase() }} artefact
             processes.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -255,18 +255,18 @@ const solutions: Record<string, any> = {
       {
         title: 'Credit Analysis',
         description:
-          'Quickly analyze financial statements, credit reports, and supporting documents.',
+          'Quickly analyze financial statements, credit reports, and supporting artefacts.',
         question: 'Ask: "What are the key financial ratios in this loan application?"',
       },
       {
         title: 'Risk Assessment',
-        description: 'Identify potential risks and compliance issues in financial documents.',
+        description: 'Identify potential risks and compliance issues in financial artefacts.',
         question: 'Ask: "Find any red flags related to data privacy violations in healthcare"',
       },
       {
         title: 'Regulatory Compliance',
         description: 'Ensure all financial products meet current regulatory requirements.',
-        question: 'Ask: "What are the intellectual property risks in these documents?"',
+        question: 'Ask: "What are the intellectual property risks in these artefacts?"',
       },
     ],
     testimonial: {
@@ -296,12 +296,12 @@ const solutions: Record<string, any> = {
       {
         title: 'Regulatory Compliance',
         description:
-          'Ensure documents meet current financial regulations and compliance standards.',
+          'Ensure artefacts meet current financial regulations and compliance standards.',
         icon: 'i-heroicons-check-circle',
       },
       {
         title: 'Artefact Classification',
-        description: 'Automatically categorize and tag financial documents by type and importance.',
+        description: 'Automatically categorize and tag financial artefacts by type and importance.',
         icon: 'i-heroicons-folder',
       },
     ],
@@ -309,7 +309,7 @@ const solutions: Record<string, any> = {
   government: {
     name: 'Government',
     description:
-      'Modernize public sector artefact management and citizen services with intelligent artefact processing for policy documents, public records, and regulatory compliance.',
+      'Modernize public sector artefact management and citizen services with intelligent artefact processing for policy artefacts, public records, and regulatory compliance.',
     icon: 'i-heroicons-building-office',
     keyPoints: [
       'Complex policy artefact management',
@@ -327,7 +327,7 @@ const solutions: Record<string, any> = {
       {
         title: 'Policy Research',
         description:
-          'Quickly search through policy documents, regulations, and historical records.',
+          'Quickly search through policy artefacts, regulations, and historical records.',
         question: 'Ask: "Find all policies related to environmental regulations from 2020-2023"',
       },
       {
@@ -356,7 +356,7 @@ const solutions: Record<string, any> = {
       {
         title: 'Policy Intelligence',
         description:
-          'Search and analyze complex policy documents with intelligent content understanding.',
+          'Search and analyze complex policy artefacts with intelligent content understanding.',
         icon: 'heroicons:document-text',
       },
       {
@@ -399,17 +399,17 @@ const solutions: Record<string, any> = {
       {
         title: 'Claims Processing',
         description:
-          'Automatically extract and analyze information from claims documents and supporting materials.',
+          'Automatically extract and analyze information from claims artefacts and supporting materials.',
         question: 'Ask: "What are the key details from this auto accident claim?"',
       },
       {
         title: 'Risk Assessment',
-        description: 'Analyze applications and supporting documents to assess risk factors.',
+        description: 'Analyze applications and supporting artefacts to assess risk factors.',
         question: 'Ask: "Identify risk factors in this property insurance application"',
       },
       {
         title: 'Policy Analysis',
-        description: 'Review policy documents for coverage details and exclusions.',
+        description: 'Review policy artefacts for coverage details and exclusions.',
         question: 'Ask: "What coverage exclusions apply to this water damage claim?"',
       },
     ],
@@ -428,13 +428,13 @@ const solutions: Record<string, any> = {
       {
         title: 'Claims Intelligence',
         description:
-          'Extract key information from claims documents with intelligent artefact processing.',
+          'Extract key information from claims artefacts with intelligent artefact processing.',
         icon: 'heroicons:document-text',
       },
       {
         title: 'Risk Analysis',
         description:
-          'Automatically assess risk factors from application documents and supporting materials.',
+          'Automatically assess risk factors from application artefacts and supporting materials.',
         icon: 'heroicons:magnifying-glass',
       },
       {
@@ -445,7 +445,7 @@ const solutions: Record<string, any> = {
       },
       {
         title: 'Policy Management',
-        description: 'Organize and search policy documents with intelligent categorization.',
+        description: 'Organize and search policy artefacts with intelligent categorization.',
         icon: 'heroicons:funnel',
       },
     ],
@@ -482,7 +482,7 @@ const solutions: Record<string, any> = {
       {
         title: 'Due Diligence',
         description: 'Accelerate due diligence processes with comprehensive artefact analysis.',
-        question: 'Ask: "What are the intellectual property risks in these documents?"',
+        question: 'Ask: "What are the intellectual property risks in these artefacts?"',
       },
     ],
     testimonial: {
@@ -512,13 +512,13 @@ const solutions: Record<string, any> = {
       {
         title: 'Compliance Monitoring',
         description:
-          'Ensure documents meet current legal standards and regulatory requirements across jurisdictions.',
+          'Ensure artefacts meet current legal standards and regulatory requirements across jurisdictions.',
         icon: 'heroicons:check-circle',
       },
       {
         title: 'Artefact Classification',
         description:
-          'Automatically categorize and tag legal documents by type, jurisdiction, and practice area.',
+          'Automatically categorize and tag legal artefacts by type, jurisdiction, and practice area.',
         icon: 'heroicons:funnel',
       },
     ],
@@ -544,12 +544,12 @@ const solutions: Record<string, any> = {
       {
         title: 'Technical Specifications',
         description:
-          'Quickly search and analyze technical specifications and engineering documents.',
+          'Quickly search and analyze technical specifications and engineering artefacts.',
         question: 'Ask: "Find all specifications for steel grade requirements in automotive parts"',
       },
       {
         title: 'Quality Documentation',
-        description: 'Organize and search quality control documents and inspection records.',
+        description: 'Organize and search quality control artefacts and inspection records.',
         question: 'Ask: "What are the quality standards for this product line?"',
       },
       {
@@ -578,7 +578,7 @@ const solutions: Record<string, any> = {
       },
       {
         title: 'Quality Management',
-        description: 'Organize and track quality control documents and inspection records.',
+        description: 'Organize and track quality control artefacts and inspection records.',
         icon: 'heroicons:magnifying-glass',
       },
       {
@@ -612,9 +612,9 @@ const solutions: Record<string, any> = {
     ],
     useCases: [
       {
-        title: 'Property Documents',
-        description: 'Organize and search property documents, deeds, and ownership records.',
-        question: 'Ask: "Find all property documents for 123 Main Street including deed history"',
+        title: 'Property artefacts',
+        description: 'Organize and search property artefacts, deeds, and ownership records.',
+        question: 'Ask: "Find all property artefacts for 123 Main Street including deed history"',
       },
       {
         title: 'Contracts & Leases',
@@ -641,7 +641,7 @@ const solutions: Record<string, any> = {
     keyFeatures: [
       {
         title: 'Property Intelligence',
-        description: 'Search and analyze property documents with intelligent content recognition.',
+        description: 'Search and analyze property artefacts with intelligent content recognition.',
         icon: 'heroicons:document-text',
       },
       {
@@ -709,7 +709,7 @@ const solutions: Record<string, any> = {
     keyFeatures: [
       {
         title: 'Medical Intelligence',
-        description: 'Search and analyze medical documents with healthcare-specific understanding.',
+        description: 'Search and analyze medical artefacts with healthcare-specific understanding.',
         icon: 'heroicons:document-text',
       },
       {
@@ -735,7 +735,7 @@ const solution = computed(() => solutions[slug] || null)
 
 useHead({
   title: solution.value
-    ? `${solution.value.name} Solutions - Provento.ai`
-    : 'Solution Not Found - Provento.ai',
+    ? `${solution.value.name} Solutions - provento.ai`
+    : 'Solution Not Found - provento.ai',
 })
 </script>

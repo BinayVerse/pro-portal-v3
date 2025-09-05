@@ -9,7 +9,7 @@ definePageMeta({
     <section class="pt-16 pb-24 px-4 sm:px-6 lg:px-8">
       <div class="max-w-7xl mx-auto">
         <h1 class="font-semibold text-3xl text-white">Privacy Policy</h1>
-        <p class="text-gray-400">Last updated: March 07, 2024</p>
+        <p class="text-gray-400">Last updated: 07/03/2024 12:00 PM</p>
         <p class="mt-8 text-gray-300">
           This Privacy Policy describes Our policies and procedures on the collection, use and
           disclosure of Your information when You use the Service and tells You about Your privacy

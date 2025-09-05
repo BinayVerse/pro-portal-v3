@@ -12,11 +12,19 @@
           <span class="text-white text-2xl font-semibold">provento.ai</span>
         </NuxtLink>
         <h2 class="text-3xl font-bold text-white">Sign in to your account</h2>
-        <p class="mt-2 text-gray-400">Access your document chatting dashboard</p>
+        <p class="mt-2 text-gray-400">Access your artifact management dashboard</p>
       </div>
 
-      <!-- Demo Login Info -->
-      <DemoLoginInfo />
+      <AuthSignInWithOAuth authView="signin" />
+
+      <div class="relative">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-dark-700" />
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-black text-gray-400">or proceed with</span>
+        </div>
+      </div>
 
       <!-- Login form -->
       <form @submit.prevent="handleLogin" class="space-y-6">
@@ -38,14 +46,26 @@
           <label for="password" class="block text-sm font-medium text-gray-300 mb-2">
             Password
           </label>
-          <input
-            id="password"
-            v-model="loginForm.password"
-            type="password"
-            required
-            class="input-field w-full"
-            placeholder="Enter your password"
-          />
+          <div class="relative">
+            <input
+              id="password"
+              v-model="loginForm.password"
+              :type="showPassword ? 'text' : 'password'"
+              required
+              class="input-field w-full pr-12"
+              placeholder="Enter your password"
+            />
+            <button
+              type="button"
+              class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-300 transition-colors"
+              @click="togglePasswordVisibility"
+            >
+              <UIcon
+                :name="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+                class="h-5 w-5"
+              />
+            </button>
+          </div>
         </div>
 
         <div class="flex items-center justify-between">
@@ -59,9 +79,12 @@
             <label for="remember-me" class="ml-2 text-sm text-gray-300"> Remember me </label>
           </div>
 
-          <a href="#" class="text-sm text-primary-400 hover:text-primary-300 transition-colors">
+          <NuxtLink
+            :to="`/forgot-password?email=${loginForm.email}`"
+            class="text-sm text-primary-400 hover:text-primary-300 transition-colors"
+          >
             Forgot your password?
-          </a>
+          </NuxtLink>
         </div>
 
         <button
@@ -77,12 +100,6 @@
             Signing in...
           </span>
           <span v-else>Sign in</span>
-        </button>
-
-        <!-- Demo Quick Fill Button -->
-        <button type="button" @click="fillDemoCredentials" class="w-full btn-secondary text-sm">
-          <UIcon name="i-heroicons-bolt" class="w-4 h-4 mr-2" />
-          Quick Fill Demo Credentials
         </button>
       </form>
 
@@ -100,26 +117,17 @@
       <div class="text-center space-y-3">
         <NuxtLink to="/signup" class="btn-primary w-full"> Create New Account </NuxtLink>
         <NuxtLink to="/book-meeting" class="btn-outline w-full ml-3"> Book a Meeting </NuxtLink>
-
-        <!-- Toast Demo Link -->
-        <NuxtLink
-          to="/toast-demo"
-          class="text-sm text-primary-400 hover:text-primary-300 transition-colors block"
-        >
-          View Toast Notifications Demo
-        </NuxtLink>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useAuthStore } from '~/stores/auth/index'
+
 definePageMeta({
   layout: 'minimal',
 })
-
-const router = useRouter()
-const { $api } = useNuxtApp()
 
 const authStore = useAuthStore()
 const { showNotification } = useNotification()
@@ -130,40 +138,40 @@ const loginForm = ref({
   rememberMe: false,
 })
 
-// Auto-fill demo credentials function
-const fillDemoCredentials = () => {
-  loginForm.value.email = 'demo@example.com'
-  loginForm.value.password = 'password'
-  showNotification('Demo credentials filled', 'info', { duration: 2000 })
+// Password visibility toggle
+const showPassword = ref(false)
+
+const togglePasswordVisibility = () => {
+  showPassword.value = !showPassword.value
 }
+
+// Clear errors when user starts typing
+watch(
+  loginForm,
+  () => {
+    if (authStore.error) {
+      authStore.setError(null)
+    }
+  },
+  { deep: true },
+)
 
 const handleLogin = async () => {
   try {
-    const result = await authStore.login({
+    await authStore.signIn({
       email: loginForm.value.email,
       password: loginForm.value.password,
     })
 
-    if (result.success) {
-      showNotification('Welcome back! Login successful.', 'success', {
-        title: 'Login Successful',
-      })
-      await navigateTo('/admin/dashboard')
-    } else {
-      showNotification(result.error || 'Login failed. Please check your credentials.', 'error', {
-        title: 'Login Failed',
-        action: {
-          label: 'Forgot Password?',
-          handler: () => {
-            showNotification('Password reset functionality coming soon!', 'info')
-          },
-        },
-      })
-    }
-  } catch (error) {
-    showNotification('An unexpected error occurred during login.', 'error', {
-      title: 'Login Error',
-    })
+    // Show success notification
+    showNotification('Welcome back! Login successful.', 'success')
+
+    // Handle redirect through store
+    await authStore.handlePostLoginRedirect()
+  } catch (error: any) {
+    // Show error notification
+    showNotification(error?.message || 'Login failed. Please try again.', 'error')
+    console.error('Login failed:', error?.message)
   }
 }
 </script>

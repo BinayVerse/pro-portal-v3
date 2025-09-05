@@ -145,7 +145,7 @@
         class="border-t border-dark-700 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center"
       >
         <div class="text-gray-400 text-sm">
-          © {{ currentYear }} Provento.ai. All rights reserved.
+          © {{ currentYear }} provento.ai. All rights reserved.
         </div>
         <div class="flex space-x-6 mt-4 md:mt-0">
           <NuxtLink
