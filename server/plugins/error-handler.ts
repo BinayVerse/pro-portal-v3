@@ -1,5 +1,7 @@
 import { CustomError } from '../utils/custom.error'
 
+import { CustomError } from '../utils/custom.error'
+
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('error', async (error, { event }) => {
     console.error('[Error Handler]:', error)

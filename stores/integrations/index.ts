@@ -375,31 +375,9 @@ export const useIntegrationsStore = defineStore('integrations', {
       } catch (error: any) {
         // Handle authentication errors first
         if (!await this.handleAuthError(error)) {
-          // Try to extract detailed message from various possible shapes of the thrown error
-          let detailedMessage: string | undefined = undefined
-
-          if (error?.data && typeof error.data.message === 'string') {
-            detailedMessage = error.data.message
-          } else if (error?.response?.data && typeof error.response.data.message === 'string') {
-            detailedMessage = error.response.data.message
-          } else if (typeof error?.message === 'string') {
-            detailedMessage = error.message
-          }
-
-          // Fallback for common 403 conflict case if backend didn't provide message
-          const isForbidden = error?.statusCode === 403 || error?.response?.status === 403 || error?.status === 403
-          if (!detailedMessage && isForbidden) {
-            detailedMessage = 'This Slack workspace is already connected to another organization.'
-          }
-
-          this.error = detailedMessage || 'Failed to connect Slack'
-
-          // Show error notification
-          if (process.client) {
-            const { showError } = useNotification();
-            // Use pre-line class for multi-line errors
-            showError(this.error, { className: 'toast-pre-line' } as any)
-          }
+          // Use shared handler to extract message and show notification
+          const msg = handleError(error, 'Failed to connect Slack')
+          this.error = msg
         }
       } finally {
         this.loading = false;
