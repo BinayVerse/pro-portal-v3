@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia'
 import type { UserProfileState, UserProfile } from './types'
 import { useNotification } from '~/composables/useNotification'
+import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
 
 export const useProfileStore = defineStore('userStore', {
   state: (): UserProfileState => ({
@@ -36,25 +37,6 @@ export const useProfileStore = defineStore('userStore', {
   },
 
   actions: {
-    handleError(error: any, defaultMessage: string, silent: boolean = false): string {
-      const { showError } = useNotification()
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.response?._data?.message ||
-        error?.data?.message ||
-        error?.message ||
-        defaultMessage
-      if (!silent) {
-        showError(errorMessage)
-      }
-      return errorMessage
-    },
-
-    handleSuccess(message: string): void {
-      const { showSuccess } = useNotification()
-      this.profileMessage = null
-      showSuccess(message)
-    },
 
     async handleApiError(err: any) {
       const normalized = {
@@ -137,13 +119,13 @@ export const useProfileStore = defineStore('userStore', {
           localStorage.setItem('authToken', data.authToken)
         }
 
-        this.handleSuccess(data?.message || 'Profile updated successfully.')
+        handleSuccess(data?.message || 'Profile updated successfully.')
         await new Promise((resolve) => setTimeout(resolve, 1000))
         await this.fetchUserProfile()
       } catch (error: any) {
         console.error('Error updating profile:', error)
         const normalizedError = await this.handleApiError(error)
-        this.profileMessage = this.handleError(normalizedError, 'Error updating profile')
+        this.profileMessage = handleError(normalizedError, 'Error updating profile')
         throw new Error(normalizedError.message)
       }
     },

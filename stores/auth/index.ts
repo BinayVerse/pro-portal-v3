@@ -1,5 +1,7 @@
 import type { AuthUser, ApiResponse } from "./types";
 
+import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
+
 export const useAuthStore = defineStore("authStore", {
   state: () => ({
     user: null as AuthUser | null,
@@ -69,21 +71,10 @@ export const useAuthStore = defineStore("authStore", {
         this.setError(errorMessage);
         throw new Error(errorMessage);
       } catch (error: any) {
-        // Handle fetch errors (network, HTTP status codes, etc.)
-        if (error.data?.message) {
-          // Structured error from server
-          this.setError(error.data.message);
-          throw new Error(error.data.message);
-        } else if (error.message) {
-          // Other errors
-          this.setError(error.message);
-          throw new Error(error.message);
-        } else {
-          // Unknown error
-          const fallbackMessage = "An unexpected error occurred";
-          this.setError(fallbackMessage);
-          throw new Error(fallbackMessage);
-        }
+        // Use central handler to extract message and show notification
+        const msg = handleError(error, 'An unexpected error occurred')
+        this.setError(msg)
+        throw new Error(msg)
       }
     },
 

@@ -7,6 +7,7 @@ import type {
   ApiResponse,
   DocumentAnalysis,
 } from './types';
+import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
 
 export const useAnalyticsStore = defineStore('analyticsStore', {
   state: (): AnalyticsState => ({
@@ -35,25 +36,14 @@ export const useAnalyticsStore = defineStore('analyticsStore', {
 
   actions: {
     handleError(error: any, defaultMessage: string, silent: boolean = false): string {
-      const { showError } = useNotification();
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.response?._data?.message ||
-        error?.data?.message ||
-        error?.message ||
-        defaultMessage;
-
-      if (!silent) {
-        showError(errorMessage);
-      }
-      this.error = errorMessage;
-      return errorMessage;
+      const msg = handleError(error, defaultMessage, silent)
+      this.error = msg
+      return msg
     },
 
     handleSuccess(message: string): void {
-      const { showSuccess } = useNotification();
-      this.error = null;
-      showSuccess(message);
+      this.error = null
+      handleSuccess(message)
     },
 
     getAuthHeaders(): Record<string, string> {
@@ -72,7 +62,7 @@ export const useAnalyticsStore = defineStore('analyticsStore', {
         );
         this.tokenDetails = response.data || [];
       } catch (error) {
-        this.handleError(error, 'Failed to fetch token details');
+        handleError(error, 'Failed to fetch token details');
       } finally {
         this.loading = false;
       }
@@ -87,7 +77,7 @@ export const useAnalyticsStore = defineStore('analyticsStore', {
         );
         this.appTokenDetails = response.data || [];
       } catch (error) {
-        this.handleError(error, 'Failed to fetch app token usage');
+        handleError(error, 'Failed to fetch app token usage');
       } finally {
         this.loading = false;
       }
@@ -109,7 +99,7 @@ async fetchUserAppWiseTokenDetail(orgId: string, startDate: string, endDate: str
     this.totalQueriesCount = Number(response.meta.total_queries_count) || 0;
 
   } catch (error) {
-    this.handleError(error, 'Failed to fetch app token usage');
+    handleError(error, 'Failed to fetch app token usage');
   } finally {
     this.loading = false;
   }
@@ -123,7 +113,7 @@ async fetchUserAppWiseTokenDetail(orgId: string, startDate: string, endDate: str
         );
         this.organizationDetails = response.data || null;
       } catch (error) {
-        this.handleError(error, 'Failed to fetch organization details');
+        handleError(error, 'Failed to fetch organization details');
       } finally {
         this.loading = false;
       }
@@ -145,7 +135,7 @@ async fetchUserAppWiseTokenDetail(orgId: string, startDate: string, endDate: str
 
         this.orgDocList = response.data || [];
       } catch (error) {
-        this.handleError(error, 'Failed to fetch documents');
+        handleError(error, 'Failed to fetch documents');
       } finally {
         this.loading = false;
       }
@@ -160,7 +150,7 @@ async fetchUserAppWiseTokenDetail(orgId: string, startDate: string, endDate: str
         );
         this.orgUserList = response.data || [];
       } catch (error) {
-        this.handleError(error, 'Failed to fetch users');
+        handleError(error, 'Failed to fetch users');
       } finally {
         this.loading = false;
       }
@@ -176,7 +166,7 @@ async fetchUserAppWiseTokenDetail(orgId: string, startDate: string, endDate: str
           this.fetchOrganizationDocuments(id),
         ]);
       } catch (error) {
-        this.handleError(error, 'Failed to fetch organization-related data');
+        handleError(error, 'Failed to fetch organization-related data');
       } finally {
         this.loading = false;
       }

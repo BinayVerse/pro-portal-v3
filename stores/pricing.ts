@@ -12,6 +12,8 @@ export interface PricingPlan {
   createdAt: string
 }
 
+import { handleError } from '../utils/apiHandler'
+
 export const usePricingStore = defineStore('pricing', () => {
   const plans = ref<PricingPlan[]>([])
   const isLoading = ref(false)
@@ -46,10 +48,13 @@ export const usePricingStore = defineStore('pricing', () => {
         plans.value = data.data
         return { success: true }
       } else {
-        throw new Error(data.error || 'Failed to fetch pricing plans')
+        const msg = data.error || 'Failed to fetch pricing plans'
+        handleError({ response: { _data: { message: msg } } }, msg)
+        throw new Error(msg)
       }
     } catch (err: any) {
-      error.value = err.message || 'Failed to fetch pricing plans'
+      const msg = handleError(err, 'Failed to fetch pricing plans')
+      error.value = msg
       return { success: false, error: error.value }
     } finally {
       isLoading.value = false

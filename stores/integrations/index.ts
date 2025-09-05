@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import type { IntegrationsOverview, IntegrationActivity, ApiResponse, BusinessWhatsAppDetails, WhatsAppNumber, WhatsAppAccountData } from './types'
 import { useNotification } from '~/composables/useNotification'
+import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
 
 export const useIntegrationsStore = defineStore('integrations', {
   state: () => ({
@@ -174,16 +175,9 @@ export const useIntegrationsStore = defineStore('integrations', {
       return false
     },
 
-    handleError(error: any, fallbackMessage: string): string {
-      if (error?.data?.message) {
-        return error.data.message
-      }
-
-      if (error?.message) {
-        return error.message
-      }
-
-      return fallbackMessage
+    // Delegate to common error handler
+    handleError(error: any, fallbackMessage: string, silent: boolean = false): string {
+      return handleError(error, fallbackMessage, silent)
     },
 
     // Main fetch method
@@ -213,7 +207,7 @@ export const useIntegrationsStore = defineStore('integrations', {
         }
       } catch (error: any) {
         if (!await this.handleAuthError(error)) {
-          const errorMessage = this.handleError(error, 'Failed to fetch integrations overview')
+          const errorMessage = handleError(error, 'Failed to fetch integrations overview')
           this.setError(errorMessage)
           return { success: false, message: errorMessage }
         }
@@ -344,7 +338,7 @@ export const useIntegrationsStore = defineStore('integrations', {
       } catch (error) {
         // Handle authentication errors first
         if (!await this.handleAuthError(error)) {
-          this.error = this.handleError(error, 'Failed to fetch Slack app details');
+          this.error = handleError(error, 'Failed to fetch Slack app details');
         }
         // Reset details on error
         this.slackAppDetails = null;
@@ -431,7 +425,7 @@ export const useIntegrationsStore = defineStore('integrations', {
       } catch (error) {
         // Handle authentication errors first
         if (!await this.handleAuthError(error)) {
-          this.error = this.handleError(error, 'Failed to disconnect Slack');
+          this.error = handleError(error, 'Failed to disconnect Slack');
 
           // Show error notification
           if (process.client) {
@@ -460,7 +454,7 @@ export const useIntegrationsStore = defineStore('integrations', {
       } catch (error) {
         // Handle authentication errors first
         if (!await this.handleAuthError(error)) {
-          this.error = this.handleError(error, 'Failed to fetch Teams app details');
+          this.error = handleError(error, 'Failed to fetch Teams app details');
         }
         // Reset details on error
         this.teamsAppDetails = null;
@@ -489,7 +483,7 @@ export const useIntegrationsStore = defineStore('integrations', {
       } catch (error) {
         // Handle authentication errors first
         if (!await this.handleAuthError(error)) {
-          this.error = this.handleError(error, 'Failed to disconnect Teams');
+          this.error = handleError(error, 'Failed to disconnect Teams');
 
           // Show error notification
           if (process.client) {
@@ -530,7 +524,7 @@ export const useIntegrationsStore = defineStore('integrations', {
       } catch (error) {
         // Handle authentication errors first
         if (!await this.handleAuthError(error)) {
-          this.error = this.handleError(error, 'Failed to download Teams app package');
+          this.error = handleError(error, 'Failed to download Teams app package');
 
           // Show error notification
           if (process.client) {
@@ -571,7 +565,7 @@ export const useIntegrationsStore = defineStore('integrations', {
         return data;
       } catch (error: any) {
         if (!await this.handleAuthError(error)) {
-          this.error = this.handleError(error, 'Error adding Business WhatsApp Number');
+          this.error = handleError(error, 'Error adding Business WhatsApp Number');
 
           if (process.client) {
             const { showError } = useNotification();
@@ -611,7 +605,7 @@ export const useIntegrationsStore = defineStore('integrations', {
         return data;
       } catch (error: any) {
         if (!await this.handleAuthError(error)) {
-          this.error = this.handleError(error, 'Error updating Business WhatsApp Number');
+          this.error = handleError(error, 'Error updating Business WhatsApp Number');
 
           if (process.client) {
             const { showError } = useNotification();
@@ -651,7 +645,7 @@ export const useIntegrationsStore = defineStore('integrations', {
         return data?.data;
       } catch (error: any) {
         if (!await this.handleAuthError(error)) {
-          this.error = this.handleError(error, 'Error fetching Business WhatsApp Details');
+          this.error = handleError(error, 'Error fetching Business WhatsApp Details');
         }
         // Reset details on error
         this.whatsappDetails = null;
@@ -690,7 +684,7 @@ export const useIntegrationsStore = defineStore('integrations', {
         return data;
       } catch (error: any) {
         if (!await this.handleAuthError(error)) {
-          this.error = this.handleError(error, 'Error disconnecting WhatsApp integration');
+          this.error = handleError(error, 'Error disconnecting WhatsApp integration');
 
           if (process.client) {
             const { showError } = useNotification();
@@ -725,7 +719,7 @@ export const useIntegrationsStore = defineStore('integrations', {
         return data;
       } catch (error: any) {
         if (!await this.handleAuthError(error)) {
-          this.error = this.handleError(error, 'Failed to fetch QR Code');
+          this.error = handleError(error, 'Failed to fetch QR Code');
         }
         this.qrCode = '';
         throw error;
@@ -813,7 +807,7 @@ export const useIntegrationsStore = defineStore('integrations', {
           }
         } catch (proxyErr: any) {
           if (!await this.handleAuthError(proxyErr)) {
-            this.error = this.handleError(proxyErr, 'Error downloading QR code');
+            this.error = handleError(proxyErr, 'Error downloading QR code');
 
             if (process.client) {
               const { showError } = useNotification();

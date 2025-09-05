@@ -6,6 +6,8 @@ function initialState(): State {
   }
 }
 
+import { handleError } from '../../utils/apiHandler'
+
 export const useContactStore = defineStore('contactStore', {
   state: (): State => initialState(),
   getters: {},
@@ -40,12 +42,15 @@ export const useContactStore = defineStore('contactStore', {
         }
 
         if (!response.ok) {
-          throw new Error(data?.message || 'Failed to send message');
+          const msg = data?.message || 'Failed to send message'
+          handleError({ response: { _data: { message: msg } } }, msg)
+          throw new Error(msg);
         }
 
         return data;
       } catch (error: any) {
-        throw new Error(error?.message || 'Failed to send message');
+        const msg = handleError(error, 'Failed to send message')
+        throw new Error(msg);
       } finally {
         this.loading = false;
       }
@@ -81,12 +86,15 @@ export const useContactStore = defineStore('contactStore', {
         }
 
         if (!response.ok) {
-          throw new Error(data?.message || 'Failed to submit demo request');
+          const msg = data?.message || 'Failed to submit demo request'
+          handleError({ response: { _data: { message: msg } } }, msg)
+          throw new Error(msg);
         }
 
         return data;
       } catch (error: any) {
-        throw new Error(error?.message || 'Failed to submit demo request');
+        const msg = handleError(error, 'Failed to submit demo request')
+        throw new Error(msg);
       } finally {
         this.loading = false;
       }

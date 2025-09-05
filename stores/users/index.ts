@@ -8,6 +8,8 @@ import type {
   OrganizationResponse,
 } from './types'
 
+import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
+
 export const useUsersStore = defineStore('usersStore', {
   state: (): OrganizationState => ({
     loading: true,
@@ -28,27 +30,6 @@ export const useUsersStore = defineStore('usersStore', {
   },
 
   actions: {
-    handleError(error: any, defaultMessage: string, silent: boolean = false): string {
-      const { showError } = useNotification()
-      const errorMessage =
-        // prefer Nuxt $fetch unpacked body (_data) for non-2xx responses
-        error?.response?._data?.message ||
-        // fallback to axios-like response.data or other shapes
-        error?.response?.data?.message ||
-        error?.data?.message ||
-        error?.message ||
-        defaultMessage
-      if (!silent) {
-        showError(errorMessage)
-      }
-      return errorMessage
-    },
-
-    handleSuccess(message: string): void {
-      const { showSuccess } = useNotification()
-      this.userError = null
-      showSuccess(message)
-    },
 
     mapOrganization(org: OrganizationResponse): Organization {
       return {
@@ -113,7 +94,7 @@ export const useUsersStore = defineStore('usersStore', {
         console.error('Fetch roles error:', err)
 
         if (!this.handleAuthError(err)) {
-          this.userError = this.handleError(err, 'Failed to fetch roles')
+          this.userError = handleError(err, 'Failed to fetch roles')
         }
       } finally {
         this.loading = false
@@ -130,7 +111,7 @@ export const useUsersStore = defineStore('usersStore', {
       } catch (err: any) {
         console.error('Fetch users error:', err)
         if (!this.handleAuthError(err)) {
-          this.userError = this.handleError(err, 'Failed to fetch users')
+          this.userError = handleError(err, 'Failed to fetch users')
         }
       } finally {
         this.userLoading = false
@@ -154,11 +135,11 @@ export const useUsersStore = defineStore('usersStore', {
           const message = response.message || 'Error creating user'
           this.userError = message
           // Show the API message directly
-          this.handleError({ response: { _data: { message } } }, message)
+          handleError({ response: { _data: { message } } }, message)
           return { success: false, message, errors: response.errors || [] }
         }
 
-        this.handleSuccess('User added successfully!')
+        handleSuccess('User added successfully!')
         await this.fetchUsers()
         return { success: true, message: 'User added successfully!' }
       } catch (err: any) {
@@ -167,13 +148,13 @@ export const useUsersStore = defineStore('usersStore', {
           return { success: false, message: 'Unauthorized', errors: [] }
         }
 
-        const message = this.handleError(err, 'Error creating user')
+        const message = handleError(err, 'Error creating user')
         this.userError = message
         return {
           success: false,
           message,
           errors:
-            err?.response?._data?.errors || err?.response?.data?.errors || err?.data?.errors || [],
+            extractErrors(err),
         }
       } finally {
         this.loading = false
@@ -195,11 +176,11 @@ export const useUsersStore = defineStore('usersStore', {
         if (response?.status === false || response?.status === 'error') {
           const message = response.message || 'Error editing user'
           this.userError = message
-          this.handleError({ response: { _data: { message } } }, message)
+          handleError({ response: { _data: { message } } }, message)
           return { success: false, message, errors: response.errors || [] }
         }
 
-        if (!silent) this.handleSuccess('User edited successfully!')
+        if (!silent) handleSuccess('User edited successfully!')
         await this.fetchUsers()
         return { success: true, message: 'User edited successfully!' }
       } catch (err: any) {
@@ -208,13 +189,13 @@ export const useUsersStore = defineStore('usersStore', {
           return { success: false, message: 'Unauthorized', errors: [] }
         }
 
-        const message = this.handleError(err, 'Error editing user')
+        const message = handleError(err, 'Error editing user')
         this.userError = message
         return {
           success: false,
           message,
           errors:
-            err?.response?._data?.errors || err?.response?.data?.errors || err?.data?.errors || [],
+            extractErrors(err),
         }
       }
     },
@@ -226,11 +207,11 @@ export const useUsersStore = defineStore('usersStore', {
           headers: this.getAuthHeaders(),
         })
 
-        this.handleSuccess('User deleted successfully!')
+        handleSuccess('User deleted successfully!')
         await this.fetchUsers()
       } catch (err: any) {
         if (!this.handleAuthError(err)) {
-          this.userError = this.handleError(err, 'Error deleting user')
+          this.userError = handleError(err, 'Error deleting user')
         }
       }
     },
@@ -248,14 +229,14 @@ export const useUsersStore = defineStore('usersStore', {
           headers: this.getAuthHeaders({ 'Content-Type': 'application/json' }),
         })
 
-        this.handleSuccess('Bulk users added successfully!')
+        handleSuccess('Bulk users added successfully!')
         await this.fetchUsers()
 
         return { status: data.status, message: data.message, errors: data.errors || [] }
       } catch (err: any) {
         if (!this.handleAuthError(err)) {
-          const message = this.handleError(err, 'Error uploading bulk users')
-          return { status: false, message, errors: err?.response?.data?.errors || [] }
+          const message = handleError(err, 'Error uploading bulk users')
+          return { status: false, message, errors: extractErrors(err) }
         }
         return { status: false, message: 'Unauthorized', errors: [] }
       } finally {
@@ -299,7 +280,7 @@ export const useUsersStore = defineStore('usersStore', {
           return { status: false, message: 'Unauthorized', errors: [] }
         }
 
-        const message = this.handleError(err, 'Error validating JSON')
+        const message = handleError(err, 'Error validating JSON')
         return { status: false, message, errors: [] }
       } finally {
         this.userLoading = false

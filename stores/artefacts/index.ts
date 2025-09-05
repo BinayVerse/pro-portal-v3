@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import type { ArtefactGoogleDriveFile, DocumentCategory } from './types'
+import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
 
 export const useArtefactsStore = defineStore('artefacts', {
   state: () => ({
@@ -112,7 +113,7 @@ export const useArtefactsStore = defineStore('artefacts', {
         return {
           success: false,
           files: [],
-          message: this.handleError(error, 'Failed to fetch Google Drive files')
+          message: handleError(error, 'Failed to fetch Google Drive files')
         }
       } finally {
         this.isLoadingGoogleDrive = false
@@ -153,7 +154,7 @@ export const useArtefactsStore = defineStore('artefacts', {
         return {
           success: false,
           files: [],
-          message: this.handleError(error, 'Failed to upload Google Drive files')
+          message: handleError(error, 'Failed to upload Google Drive files')
         }
       } finally {
         this.isUploadingGoogleDrive = false
@@ -208,43 +209,24 @@ export const useArtefactsStore = defineStore('artefacts', {
         return {
           success: false,
           data: null,
-          message: this.handleError(error, 'Failed to upload artefact')
+          message: handleError(error, 'Failed to upload artefact')
         }
       }
     },
 
-    handleError(error: any, fallbackMessage: string): string {
-      if (error?.data?.message) {
-        return error.data.message
-      }
-
-      if (error?.message) {
-        return error.message
-      }
-
-      return fallbackMessage
+    // Delegate to common handler
+    handleError(error: any, fallbackMessage: string, silent: boolean = false): string {
+      return handleError(error, fallbackMessage, silent)
     },
 
     // Helper methods for categories
     handleCategoryError(error: any, defaultMessage: string, silent: boolean = false): string {
-      const { showError } = useNotification()
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.response?._data?.message ||
-        error?.data?.message ||
-        error?.message ||
-        defaultMessage
-
-      if (!silent) {
-        showError(errorMessage)
-      }
-      return errorMessage
+      return handleError(error, defaultMessage, silent)
     },
 
     handleCategorySuccess(message: string): void {
-      const { showSuccess } = useNotification()
       this.categoryError = null
-      showSuccess(message)
+      handleSuccess(message)
     },
 
     getAuthHeaders(extra: Record<string, string> = {}) {
@@ -460,7 +442,7 @@ export const useArtefactsStore = defineStore('artefacts', {
           throw new Error('Session expired. Please log in again.')
         }
 
-        this.artefactsError = this.handleError(error, 'Failed to fetch artefacts')
+        this.artefactsError = handleError(error, 'Failed to fetch artefacts')
         return {
           success: false,
           data: null,
@@ -539,7 +521,7 @@ export const useArtefactsStore = defineStore('artefacts', {
 
         return {
           success: false,
-          message: this.handleError(error, 'Failed to view document')
+          message: handleError(error, 'Failed to view document')
         }
       }
     },
@@ -585,7 +567,7 @@ export const useArtefactsStore = defineStore('artefacts', {
 
         return {
           success: false,
-          message: this.handleError(error, 'Failed to summarize document')
+          message: handleError(error, 'Failed to summarize document')
         }
       }
     },
@@ -631,7 +613,7 @@ export const useArtefactsStore = defineStore('artefacts', {
 
         return {
           success: false,
-          message: this.handleError(error, 'Failed to reprocess artefact')
+          message: handleError(error, 'Failed to reprocess artefact')
         }
       }
     },
@@ -678,7 +660,7 @@ export const useArtefactsStore = defineStore('artefacts', {
 
         return {
           success: false,
-          message: this.handleError(error, 'Failed to delete artefact')
+          message: handleError(error, 'Failed to delete artefact')
         }
       }
     },
@@ -732,7 +714,7 @@ export const useArtefactsStore = defineStore('artefacts', {
         return {
           success: false,
           exists: false,
-          message: this.handleError(error, 'Failed to check file existence')
+          message: handleError(error, 'Failed to check file existence')
         }
       }
     },
@@ -789,7 +771,7 @@ export const useArtefactsStore = defineStore('artefacts', {
         return {
           success: false,
           results: [],
-          message: this.handleError(error, 'Failed to check files existence')
+          message: handleError(error, 'Failed to check files existence')
         }
       }
     },
