@@ -31,8 +31,10 @@ export const useUsersStore = defineStore('usersStore', {
     handleError(error: any, defaultMessage: string, silent: boolean = false): string {
       const { showError } = useNotification()
       const errorMessage =
-        error?.response?.data?.message ||
+        // prefer Nuxt $fetch unpacked body (_data) for non-2xx responses
         error?.response?._data?.message ||
+        // fallback to axios-like response.data or other shapes
+        error?.response?.data?.message ||
         error?.data?.message ||
         error?.message ||
         defaultMessage
@@ -147,11 +149,12 @@ export const useUsersStore = defineStore('usersStore', {
           }
         )
 
-        // If API explicitly returns failure (like 409 conflict, validation error, etc.)
-        if (response?.status === false) {
+        // If API explicitly returns failure (like status: 'error' or status === false)
+        if (response?.status === false || response?.status === 'error') {
           const message = response.message || 'Error creating user'
           this.userError = message
-          this.handleError({ message }, message)
+          // Show the API message directly
+          this.handleError({ response: { _data: { message } } }, message)
           return { success: false, message, errors: response.errors || [] }
         }
 
@@ -169,7 +172,8 @@ export const useUsersStore = defineStore('usersStore', {
         return {
           success: false,
           message,
-          errors: err?.response?.data?.errors || [],
+          errors:
+            err?.response?._data?.errors || err?.response?.data?.errors || err?.data?.errors || [],
         }
       } finally {
         this.loading = false
@@ -187,11 +191,11 @@ export const useUsersStore = defineStore('usersStore', {
           }
         )
 
-        // If API explicitly returns failure (e.g., validation error, conflict, etc.)
-        if (response?.status === false) {
+        // If API explicitly returns failure (e.g., status: 'error' or status === false)
+        if (response?.status === false || response?.status === 'error') {
           const message = response.message || 'Error editing user'
           this.userError = message
-          this.handleError({ message }, message)
+          this.handleError({ response: { _data: { message } } }, message)
           return { success: false, message, errors: response.errors || [] }
         }
 
@@ -209,7 +213,8 @@ export const useUsersStore = defineStore('usersStore', {
         return {
           success: false,
           message,
-          errors: err?.response?.data?.errors || [],
+          errors:
+            err?.response?._data?.errors || err?.response?.data?.errors || err?.data?.errors || [],
         }
       }
     },
