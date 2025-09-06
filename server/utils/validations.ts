@@ -78,10 +78,23 @@ export const SignupValidation = z.object({
 
 // Google signup validation schema
 export const GoogleSignupValidation = z.object({
-  name: z.string().min(1, 'Name is required').max(255, 'Name too long'),
-  email: z.string().email('Invalid email format').max(255, 'Email too long'),
-  wpNumber: z.string().max(20, 'Phone number too long').optional(),
-  companyName: z.string().min(1, 'Company name is required').max(255, 'Company name too long'),
+  user_id: z.string().nonempty({ message: "User ID is required." }),
+  email: z.string().nonempty({ message: "Email is required." }).email({ message: "Invalid email address." }),
+  name: z.string().nonempty({ message: "Name is required." }),
+  company: z.string().nonempty({ message: "Company is required." }),
+  org_id: z.string().optional().nullable().or(z.literal('')),
+  contact_number: z.string()
+    .nonempty({ message: "Whatsapp Number is required." })
+    .refine(value => value.startsWith('+'), {
+      message: "The WhatsApp number must start with a '+' followed by the country code (e.g., +1 for USA, +91 for India)."
+    })
+    .refine(value => {
+      const phoneNumber = parsePhoneNumberFromString(value);
+      return phoneNumber ? phoneNumber.isValid() : false;
+    }, {
+      message: "The WhatsApp number is not valid. Please include a valid country code and number."
+    }),
+  primary_contact: z.union([z.boolean(), z.string().optional()]).optional()
 })
 
 export const uploadBulkUserValidation = z.object({

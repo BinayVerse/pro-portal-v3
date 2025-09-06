@@ -1,118 +1,121 @@
 <template>
-  <div class="max-w-3xl mx-auto bg-dark-900 p-6 rounded-lg">
-    <h1 class="text-2xl font-semibold text-white mb-4">My Profile</h1>
+  <UCard>
+    <template #header>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <UAvatar :text="initials" size="lg" color="primary" />
+          <div class="leading-tight">
+            <p class="text-base font-semibold">
+              {{ isEditing ? state.name || state.email : profile.name || profile.email }}
+            </p>
+            <p class="text-xs text-gray-400">
+              {{ isEditing ? state.company || 'No company' : profile.company || 'No company' }}
+            </p>
+          </div>
+        </div>
+        <div v-if="!isEditing">
+          <UButton color="primary" icon="i-heroicons-pencil-square" @click="startEdit"
+            >Edit Profile</UButton
+          >
+        </div>
+      </div>
+    </template>
 
     <!-- View mode -->
-    <div v-if="!isEditing">
-      <div class="flex items-center space-x-4 mb-6">
-        <div class="w-16 h-16 rounded-full bg-primary-500 flex items-center justify-center">
-          <span class="text-white text-xl font-bold">{{ initials }}</span>
+    <div v-if="!isEditing" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p class="text-xs text-gray-400">Full name</p>
+          <p class="mt-1">{{ profile.name || '-' }}</p>
         </div>
         <div>
-          <div class="text-lg font-semibold text-white">{{ profile.name || profile.email }}</div>
-          <div class="text-sm text-gray-400">{{ profile.company || 'No company' }}</div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label class="text-gray-300 text-sm">Full name</label>
-          <div class="mt-1 text-white">{{ profile.name || '-' }}</div>
+          <p class="text-xs text-gray-400">Email</p>
+          <p class="mt-1">{{ profile.email || '-' }}</p>
         </div>
         <div>
-          <label class="text-gray-300 text-sm">Email</label>
-          <div class="mt-1 text-white">{{ profile.email || '-' }}</div>
+          <p class="text-xs text-gray-400">Contact number</p>
+          <p class="mt-1">{{ profile.contact_number || '-' }}</p>
         </div>
         <div>
-          <label class="text-gray-300 text-sm">Contact number</label>
-          <div class="mt-1 text-white">{{ profile.contact_number || '-' }}</div>
+          <p class="text-xs text-gray-400">Primary contact</p>
+          <p class="mt-1">{{ profile.primary_contact ? 'Yes' : 'No' }}</p>
         </div>
-        <div>
-          <label class="text-gray-300 text-sm">Primary contact</label>
-          <div class="mt-1 text-white">{{ profile.primary_contact ? 'Yes' : 'No' }}</div>
-        </div>
-      </div>
-
-      <div>
-        <UButton color="primary" @click="startEdit">Edit Profile</UButton>
       </div>
     </div>
 
     <!-- Edit mode -->
     <div v-else>
-      <div class="flex items-center space-x-4 mb-6">
-        <div class="w-16 h-16 rounded-full bg-primary-500 flex items-center justify-center">
-          <span class="text-white text-xl font-bold">{{ initials }}</span>
-        </div>
-        <div>
-          <div class="text-lg font-semibold text-white">Editing: {{ form.name || form.email }}</div>
-          <div class="text-sm text-gray-400">{{ form.company || 'No company' }}</div>
-        </div>
-      </div>
-
-      <form @submit.prevent="onSubmit" class="space-y-4">
-        <UFormGroup label="Full name">
-          <UInput
-            v-model="form.name"
-            required
-            placeholder="Enter full name"
-            icon="heroicons:user"
-          />
-          <p v-if="errors.name" class="text-red-500 text-sm mt-1">{{ errors.name }}</p>
-        </UFormGroup>
-
-        <UFormGroup label="Email">
-          <UInput
-            v-model="form.email"
-            type="email"
-            required
-            placeholder="Enter email address"
-            icon="heroicons:envelope"
-          />
-          <p v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</p>
-        </UFormGroup>
-
-        <UFormGroup label="Company">
-          <UInput
-            v-model="form.company"
-            :disabled="!!profile.company"
-            required
-            placeholder="Enter company name"
-            icon="heroicons:building-office"
-          />
-          <p v-if="errors.company" class="text-red-500 text-sm mt-1">{{ errors.company }}</p>
-          <p v-if="profile.company" class="text-gray-400 text-xs mt-1">
-            Company cannot be changed for existing organization
-          </p>
-        </UFormGroup>
-
-        <UFormGroup label="Contact number">
-          <div>
-            <VueTelInput
-              class="whatsapp-tel-input"
-              ref="phoneComponent"
-              :propPhone="form.contact_number"
+      <UForm :schema="schema" :state="state" @submit="onSubmit">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <UFormGroup name="name" label="Full name" required>
+            <UInput
+              v-model="state.name"
+              eager-validation
+              inputClass="custom-input"
+              placeholder="Enter full name"
+              icon="i-heroicons-user"
             />
-          </div>
-          <p v-if="errors.contact_number" class="text-red-500 text-sm mt-1">
-            {{ errors.contact_number }}
-          </p>
-        </UFormGroup>
+          </UFormGroup>
 
-        <div class="flex space-x-2">
-          <UButton type="submit" color="primary" :loading="submitting">Save</UButton>
-          <UButton type="button" variant="ghost" @click="cancelEdit">Cancel</UButton>
+          <UFormGroup name="email" label="Email" required>
+            <UInput
+              v-model="state.email"
+              type="email"
+              eager-validation
+              inputClass="custom-input"
+              placeholder="Enter email address"
+              icon="i-heroicons-envelope"
+            />
+          </UFormGroup>
+
+          <UFormGroup name="company" label="Company" required>
+            <UInput
+              v-model="state.company"
+              :disabled="!!profile.company"
+              eager-validation
+              inputClass="custom-input"
+              placeholder="Enter company name"
+              icon="i-heroicons-building-office"
+            />
+            <p v-if="profile.company" class="text-gray-400 text-xs mt-1">
+              Company cannot be changed for existing organization
+            </p>
+          </UFormGroup>
+
+          <UFormGroup name="contact_number" label="Contact number" required>
+            <LibVueTelInput
+              ref="phoneRef"
+              v-model="state.contact_number"
+              :propPhone="state.contact_number || profile.contact_number"
+              placeholder="Your phone number"
+              defaultCountry="in"
+            />
+          </UFormGroup>
         </div>
-      </form>
+
+        <div class="flex justify-end gap-2 mt-4">
+          <UButton type="button" variant="ghost" icon="i-heroicons-x-mark" @click="cancelEdit"
+            >Cancel</UButton
+          >
+          <UButton
+            type="submit"
+            color="primary"
+            :loading="submitting"
+            icon="i-heroicons-check-circle"
+            >Save</UButton
+          >
+        </div>
+      </UForm>
     </div>
-  </div>
+  </UCard>
 </template>
 
 <script setup lang="ts">
 import { onMounted, computed, ref, reactive } from 'vue'
 import { useProfileStore } from '~/stores/profile'
 import { useNotification } from '~/composables/useNotification'
-import VueTelInput from '~/components/lib/VueTelInput/Index.vue'
+import LibVueTelInput from '~/components/lib/VueTelInput/Index.vue'
+import { z } from 'zod'
 
 definePageMeta({ layout: 'admin' })
 
@@ -122,17 +125,19 @@ const profile = computed(() => profileStore.userProfile || {})
 
 const isEditing = ref(false)
 const submitting = ref(false)
-const phoneComponent = ref<any>(null)
+const phoneRef = ref<any>(null)
 
-const form = reactive({
-  user_id: '',
-  name: '',
-  email: '',
-  company: '',
-  contact_number: '',
+const schema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters'),
+  email: z.string().email('Please enter a valid email'),
+  company: z.string().min(3, 'Company must be at least 3 characters'),
+  contact_number: z.string().min(1, 'Contact number is required'),
 })
 
-const errors = reactive({
+type Schema = z.output<typeof schema>
+
+const state = reactive<Partial<Schema & { user_id: any }>>({
+  user_id: '',
   name: '',
   email: '',
   company: '',
@@ -141,8 +146,8 @@ const errors = reactive({
 
 const initials = computed(() => {
   const name =
-    (isEditing.value ? form.name : profile.value.name) ||
-    (isEditing.value ? form.email : profile.value.email) ||
+    (isEditing.value ? state.name : profile.value.name) ||
+    (isEditing.value ? state.email : profile.value.email) ||
     ''
   if (!name) return ''
   const parts = name.trim().split(/\s+/)
@@ -152,74 +157,43 @@ const initials = computed(() => {
 
 const startEdit = () => {
   isEditing.value = true
-  form.user_id = profile.value.user_id || ''
-  form.name = profile.value.name || ''
-  form.email = profile.value.email || ''
-  form.company = profile.value.company || ''
-  form.contact_number = profile.value.contact_number || ''
-  // reset errors
-  errors.name = errors.email = errors.company = errors.contact_number = ''
+  state.user_id = profile.value.user_id || ''
+  state.name = profile.value.name || ''
+  state.email = profile.value.email || ''
+  state.company = profile.value.company || ''
+  state.contact_number = profile.value.contact_number || ''
 }
 
 const cancelEdit = () => {
   isEditing.value = false
 }
 
-const validateForm = async () => {
-  let valid = true
-  errors.name = ''
-  errors.email = ''
-  errors.company = ''
-  errors.contact_number = ''
-
-  if (!form.name || form.name.trim().length < 3) {
-    errors.name = 'Name must be at least 3 characters'
-    valid = false
-  }
-  if (!form.company || form.company.trim().length < 3) {
-    errors.company = 'Company must be at least 3 characters'
-    valid = false
-  }
-  if (!form.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) {
-    errors.email = 'Please enter a valid email'
-    valid = false
-  }
-
-  // Validate phone via component
-  if (phoneComponent.value) {
-    const res = phoneComponent.value.handlePhoneValidation()
-    if (!res || res.status === false) {
-      errors.contact_number = res?.message || 'Please enter a valid phone number'
-      valid = false
-    } else {
-      // pull the normalized number
-      form.contact_number =
-        phoneComponent.value.phoneData?.number ||
-        phoneComponent.value.phoneData?.formatted ||
-        form.contact_number
-    }
-  } else {
-    if (!form.contact_number) {
-      errors.contact_number = 'Contact number is required'
-      valid = false
-    }
-  }
-
-  return valid
+function validatePhoneField() {
+  const res = phoneRef.value?.handlePhoneValidation?.(true)
+  return res?.status || false
 }
 
 const onSubmit = async () => {
   submitting.value = true
   try {
-    const ok = await validateForm()
-    if (!ok) throw new Error('Validation failed')
+    // Validate phone
+    if (!validatePhoneField()) {
+      throw new Error('Please enter a valid phone number')
+    }
+
+    // Ensure contact_number uses the phone component formatted value if available
+    let phoneData = phoneRef.value?.phoneData
+    // handle both ref and plain object exposures
+    if (phoneData && typeof phoneData === 'object' && 'value' in phoneData)
+      phoneData = phoneData.value
+    state.contact_number = (phoneData && phoneData.number) || state.contact_number || ''
 
     await profileStore.updateProfile({
-      user_id: form.user_id,
-      name: form.name,
-      email: form.email,
-      company: form.company,
-      contact_number: form.contact_number,
+      user_id: state.user_id,
+      name: state.name,
+      email: state.email,
+      company: state.company,
+      contact_number: state.contact_number,
     })
 
     isEditing.value = false
@@ -233,148 +207,228 @@ const onSubmit = async () => {
 onMounted(async () => {
   try {
     await profileStore.fetchUserProfile()
-  } catch (e) {
-    // ignore; store handles errors
-  }
+  } catch {}
 })
 </script>
 
 <style scoped>
-/* Make VueTelInput input visually match other inputs */
-::deep(.whatsapp-tel-input .vue-tel-input) {
-  border: 2px solid transparent !important;
+:deep(.custom-input) {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  font-size: 0.875rem !important;
+  padding: 0.875rem 2.5rem !important;
+  transition: all 0.2s ease-in-out !important;
+  width: 100% !important;
   border-radius: 0.5rem !important;
-  background-color: transparent !important;
-  height: 2.5rem !important;
-  min-height: 2.5rem !important;
-  max-height: 2.5rem !important;
-  display: flex !important;
-  align-items: center !important;
-  transition:
-    border-color 0.15s ease-in-out,
-    box-shadow 0.15s ease-in-out !important;
-  box-shadow: none !important;
+}
+
+:deep(.custom-input:hover) {
+  background-color: #1e293b !important;
+}
+
+:deep(.custom-input:focus) {
+  background-color: #1e293b !important;
   outline: none !important;
 }
 
-::deep(.whatsapp-tel-input .vue-tel-input:focus-within) {
-  border-color: rgb(59 130 246) !important;
-  box-shadow: none !important;
-  outline: 2px solid rgb(59 130 246) !important;
-  outline-offset: 0 !important;
+:deep(.custom-input::placeholder) {
+  color: #64748b !important;
 }
 
-::deep(.whatsapp-tel-input .vti__dropdown) {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  height: 100% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 !important;
-  margin: 0 !important;
+/* Custom select styles - no border styling to allow UForm errors */
+:deep(.custom-select) {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  font-size: 0.875rem !important;
+  padding: 0.875rem 2.5rem !important;
+  transition: all 0.2s ease-in-out !important;
+  width: 100% !important;
   cursor: pointer !important;
+  border-radius: 0.5rem !important;
 }
 
-::deep(.whatsapp-tel-input .vti__dropdown:hover) {
-  background: transparent !important;
+:deep(.custom-select:hover) {
+  background-color: #1e293b !important;
 }
 
-::deep(.whatsapp-tel-input .vti__dropdown.open) {
-  background: transparent !important;
-}
-
-::deep(.whatsapp-tel-input .vti__selection) {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  height: 100% !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-/* Ensure the internal input background is transparent */
-::deep(.whatsapp-tel-input .vue-tel-input input),
-::deep(.whatsapp-tel-input .vti__input) {
-  background: transparent !important;
-  border: none !important;
+:deep(.custom-select:focus) {
+  background-color: #1e293b !important;
   outline: none !important;
-  color: rgb(243 244 246) !important;
+}
+
+/* Custom textarea styles - no border styling to allow UForm errors */
+:deep(.custom-textarea) {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
   font-size: 0.875rem !important;
-  line-height: 1.25rem !important;
-  padding: 0.5rem 0.75rem !important;
-  height: 100% !important;
-  flex: 1 !important;
-  margin-left: 0.5rem !important;
+  padding: 0.875rem 2.5rem !important;
+  transition: all 0.2s ease-in-out !important;
+  width: 100% !important;
+  resize: none !important;
+  border-radius: 0.5rem !important;
 }
 
-::deep(.whatsapp-tel-input .vue-tel-input input::placeholder),
-::deep(.whatsapp-tel-input .vti__input::placeholder) {
-  color: rgb(156 163 175) !important;
+:deep(.custom-textarea:hover) {
+  background-color: #1e293b !important;
 }
 
-::deep(.whatsapp-tel-input .vue-tel-input input:focus) {
+:deep(.custom-textarea:focus) {
+  background-color: #1e293b !important;
+  outline: none !important;
+}
+
+:deep(.custom-textarea::placeholder) {
+  color: #64748b !important;
+}
+
+/* Custom styling for vue3-tel-input to match the design */
+:deep(.vue-tel-input) {
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  background-color: #1e293b;
+  transition: all 0.2s ease-in-out;
+  box-shadow: none;
+  position: relative;
+  overflow: visible;
+}
+
+:deep(.vue-tel-input:hover) {
+  border-color: #475569;
+  background-color: #1e293b;
+}
+
+:deep(.vue-tel-input:focus-within) {
+  border-color: #3b82f6;
+  background-color: #1e293b;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Focused error state - maintain consistent border width */
+:deep(.vue-tel-input.errorState:focus-within) {
+  border-color: #ef4444 !important;
+  background-color: #1e293b;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+}
+
+:deep(.vue-tel-input .vti__dropdown) {
+  background-color: #1e293b;
+  border-right: 1px solid #334155;
+  border-radius: 0.5rem 0 0 0.5rem;
+}
+
+:deep(.vue-tel-input .vti__dropdown:hover) {
+  background-color: #1e293b;
+}
+
+:deep(.vue-tel-input .vti__dropdown-list) {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+:deep(.vue-tel-input .vti__dropdown-item) {
+  color: #e2e8f0;
+  padding: 8px 12px;
+}
+
+:deep(.vue-tel-input .vti__dropdown-item:hover) {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+:deep(.vue-tel-input .vti__dropdown-item.highlighted) {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+:deep(.vue-tel-input .vti__selection) {
+  color: #e2e8f0;
+  font-size: 0.875rem;
+}
+
+:deep(.vue-tel-input .vti__input) {
+  background-color: transparent !important;
+  border: none !important;
+  color: #e2e8f0 !important;
+  font-size: 0.875rem;
+  padding: 0.875rem 1rem !important;
+}
+
+:deep(.vue-tel-input .vti__input::placeholder) {
+  color: #9ca3af;
+}
+
+:deep(.vue-tel-input .vti__input:focus) {
   outline: none !important;
   box-shadow: none !important;
 }
 
-::deep(.whatsapp-tel-input .vti__dropdown-list) {
-  background-color: rgb(17, 24, 39) !important;
-  border: 1px solid rgb(75 85 99) !important;
+/* Ensure input is clickable and not blocked */
+:deep(.vue-tel-input .vti__input) {
+  pointer-events: all !important;
+  user-select: text !important;
+  cursor: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+/* Remove any potential overlays or blocking elements */
+:deep(.vue-tel-input::before),
+:deep(.vue-tel-input::after) {
+  display: none !important;
+}
+
+/* Ensure the phone input container is interactive */
+:deep(.vue-tel-input) {
+  pointer-events: all !important;
+}
+
+/* Fix any potential z-index issues */
+:deep(.vue-tel-input *) {
+  z-index: auto !important;
+}
+
+:deep(.vue-tel-input .vti__dropdown-arrow) {
+  color: #9ca3af;
+}
+
+/* Search box styling */
+:deep(.vti__search-box) {
+  background-color: rgba(31, 41, 55, 0.9) !important;
+  border: 1px solid rgba(75, 85, 99, 0.7) !important;
+  color: #f3f4f6 !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3) !important;
-  max-height: 200px !important;
-  overflow-y: auto !important;
-  z-index: 50 !important;
-  margin-top: 0.25rem !important;
+  margin: 8px !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  width: calc(100% - 16px) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
-::deep(.whatsapp-tel-input .vti__dropdown-item) {
-  padding: 0.5rem 0.75rem !important;
-  color: rgb(243 244 246) !important;
-  font-size: 0.875rem !important;
-  border-bottom: 1px solid rgb(55 65 81) !important;
-  display: flex !important;
-  align-items: center !important;
+:deep(.vti__search-box::placeholder) {
+  color: #9ca3af !important;
 }
 
-::deep(.whatsapp-tel-input .vti__dropdown-item:hover) {
-  background-color: rgb(55 65 81) !important;
-}
-
-::deep(.whatsapp-tel-input .vti__dropdown-item.highlighted) {
-  background-color: rgb(59 130 246) !important;
-  color: white !important;
-}
-
-::deep(.whatsapp-tel-input .vti__dropdown-item:last-child) {
-  border-bottom: none !important;
-}
-
-::deep(.whatsapp-tel-input .vti__search_box) {
-  background-color: rgb(31 41 55) !important;
-  color: rgb(243 244 246) !important;
-  border: none !important;
-  border-bottom: 1px solid rgb(75 85 99) !important;
-  font-size: 0.875rem !important;
-  padding: 0.5rem 0.75rem !important;
-  margin: 0 !important;
-}
-
-::deep(.whatsapp-tel-input .vti__search_box::placeholder) {
-  color: rgb(156 163 175) !important;
-}
-
-::deep(.whatsapp-tel-input .vti__search_box:focus) {
+:deep(.vti__search-box:focus) {
   outline: none !important;
-  border-bottom-color: rgb(59 130 246) !important;
+  border-color: #3b82f6 !important;
+  background-color: rgba(37, 47, 63, 1) !important;
+  box-shadow:
+    0 0 0 2px rgba(59, 130, 246, 0.1),
+    inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Ensure proper box sizing */
-::deep(.whatsapp-tel-input *) {
-  box-sizing: border-box !important;
+/* Ensure dropdown list is properly positioned and sized */
+:deep(.vue-tel-input .vti__dropdown-list) {
+  background-color: rgba(17, 24, 39, 0.95) !important;
+  border: 1px solid rgba(55, 65, 81, 0.6) !important;
+  border-radius: 0.5rem !important;
+  backdrop-filter: blur(10px) !important;
+  max-height: 250px !important;
+  overflow-y: auto !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+  z-index: 50 !important;
 }
 </style>

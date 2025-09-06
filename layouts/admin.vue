@@ -152,10 +152,16 @@
           <!-- Profile dropdown -->
           <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end' }">
             <UButton variant="ghost" trailing-icon="heroicons:chevron-down">
-              <UAvatar src="" alt="User" size="sm" :ui="{ background: 'bg-primary-500' }">
-                <span class="text-white text-sm font-medium">{{ getInitials(profileStore.userProfile?.name, profileStore.userProfile?.email) }}</span>
+              <UAvatar
+                src=""
+                :alt="profileStore.userProfile?.name?.toUpperCase()"
+                size="sm"
+                :ui="{ background: 'bg-primary-500' }"
+              >
               </UAvatar>
-              <span class="hidden sm:block ml-2">{{ profileStore.userProfile?.name || profileStore.userProfile?.email || 'User' }}</span>
+              <span class="hidden sm:block ml-2">{{
+                profileStore.userProfile?.name || profileStore.userProfile?.email || 'User'
+              }}</span>
             </UButton>
           </UDropdown>
         </div>

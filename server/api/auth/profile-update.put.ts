@@ -28,8 +28,11 @@ export default defineEventHandler(async (event) => {
         }
 
         const { user_id, name, email, company, contact_number } = params;
-        const { error } = GoogleSignupValidation.validate(params);
-        if (error) throw new CustomError(`Validation error: ${error.details[0].message}`, 400);
+        const validation = GoogleSignupValidation.safeParse(params);
+
+        if (!validation.success) {
+            throw new CustomError(`Validation error: ${validation.error.errors[0].message}`, 400);
+        }
 
         if (name.length < 3 || company.trim().length < 3) {
             throw new CustomError('Name and Company name must be at least 3 characters long', 400);
