@@ -152,10 +152,10 @@
           <!-- Profile dropdown -->
           <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end' }">
             <UButton variant="ghost" trailing-icon="heroicons:chevron-down">
-              <UAvatar src="" alt="Admin" size="sm" :ui="{ background: 'bg-primary-500' }">
-                <span class="text-white text-sm font-medium">A</span>
+              <UAvatar src="" alt="User" size="sm" :ui="{ background: 'bg-primary-500' }">
+                <span class="text-white text-sm font-medium">{{ getInitials(profileStore.userProfile?.name, profileStore.userProfile?.email) }}</span>
               </UAvatar>
-              <span class="hidden sm:block ml-2">Admin</span>
+              <span class="hidden sm:block ml-2">{{ profileStore.userProfile?.name || profileStore.userProfile?.email || 'User' }}</span>
             </UButton>
           </UDropdown>
         </div>
@@ -171,17 +171,32 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth/index'
+import { useProfileStore } from '~/stores/profile/index'
 
 const route = useRoute()
 const integrationsOpen = ref(true)
 const auth = useAuthStore()
+const profileStore = useProfileStore()
+
+// Ensure profile is loaded
+if (process.client) {
+  void profileStore.fetchUserProfile().catch(() => {})
+}
+
+const getInitials = (name?: string, email?: string) => {
+  if (!name && email) return (email[0] || '').toUpperCase()
+  if (!name) return ''
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
 
 const profileItems = [
   [
     {
       label: 'My Account',
       icon: 'heroicons:user',
-      click: () => navigateTo('/profile'),
+      click: () => navigateTo('/admin/profile'),
     },
     {
       label: 'Change Password',
