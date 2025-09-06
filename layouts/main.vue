@@ -91,13 +91,31 @@
             <NuxtLink to="/book-meeting" class="btn-outline hidden sm:inline-flex">
               Book a Demo
             </NuxtLink>
-            <NuxtLink
-              to="/login"
-              class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              Login
-            </NuxtLink>
-            <NuxtLink to="/signup" class="btn-primary"> Sign Up </NuxtLink>
+
+            <template v-if="auth.isAuthenticated">
+              <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end' }">
+                <UButton variant="ghost" trailing-icon="heroicons:chevron-down">
+                  <UAvatar
+                    src=""
+                    :alt="profileStore.userProfile?.name?.toUpperCase()"
+                    size="sm"
+                    :ui="{ background: 'bg-primary-500' }"
+                  />
+                  <span class="hidden sm:block ml-2">
+                    {{ profileStore.userProfile?.name || profileStore.userProfile?.email || 'User' }}
+                  </span>
+                </UButton>
+              </UDropdown>
+            </template>
+            <template v-else>
+              <NuxtLink
+                to="/login"
+                class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Login
+              </NuxtLink>
+              <NuxtLink to="/signup" class="btn-primary"> Sign Up </NuxtLink>
+            </template>
           </div>
 
           <!-- Mobile menu button -->
@@ -129,8 +147,15 @@
             <NuxtLink to="/book-meeting" class="block text-gray-300 hover:text-white py-2"
               >Book a Demo</NuxtLink
             >
-            <NuxtLink to="/login" class="block text-gray-300 hover:text-white py-2">Login</NuxtLink>
-            <NuxtLink to="/signup" class="btn-primary block text-center mt-3">Sign Up</NuxtLink>
+            <template v-if="auth.isAuthenticated">
+              <NuxtLink to="/admin/dashboard" class="block text-gray-300 hover:text-white py-2">Dashboard</NuxtLink>
+              <NuxtLink to="/change-password" class="block text-gray-300 hover:text-white py-2">Change Password</NuxtLink>
+              <button @click="auth.signOut()" class="block text-gray-300 hover:text-white py-2 text-left w-full">Logout</button>
+            </template>
+            <template v-else>
+              <NuxtLink to="/login" class="block text-gray-300 hover:text-white py-2">Login</NuxtLink>
+              <NuxtLink to="/signup" class="btn-primary block text-center mt-3">Sign Up</NuxtLink>
+            </template>
           </div>
         </div>
       </nav>
@@ -165,6 +190,29 @@ const handleSolutionsEnter = () => {
   }
   showSolutions.value = true
 }
+
+// Auth and profile stores
+import { useAuthStore } from '~/stores/auth/index'
+import { useProfileStore } from '~/stores/profile/index'
+const auth = useAuthStore()
+const profileStore = useProfileStore()
+
+if (process.client) {
+  if (auth.isAuthenticated) {
+    void profileStore.fetchUserProfile().catch(() => {})
+  }
+}
+
+const profileItems = [
+  [
+    { label: 'Dashboard', icon: 'heroicons:squares-2x2', click: () => navigateTo('/admin/dashboard') },
+    { label: 'My Account', icon: 'heroicons:user', click: () => navigateTo('/admin/profile') },
+    { label: 'Change Password', icon: 'heroicons:key', click: () => navigateTo('/change-password') },
+  ],
+  [
+    { label: 'Logout', icon: 'heroicons:arrow-right-on-rectangle', click: async () => { await auth.signOut() } },
+  ],
+]
 
 const industries = [
   { name: 'Education', slug: 'education' },

@@ -298,6 +298,27 @@ export const useAuthStore = defineStore("authStore", {
       }
     },
 
+    async changePassword(formData: Record<string, any>) {
+      this.setLoading(true);
+      this.setError(null);
+
+      try {
+        const token = this.token || useCookie('auth-token')?.value
+        const response = await $fetch('/api/auth/change-password', {
+          method: 'POST',
+          body: formData,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          // keep ignoreResponseError to let centralized handler manage errors
+          // but $fetch will throw on non-2xx unless ignoreResponseError is true
+          // use ignoreResponseError to allow our apiCall style handling
+          // However this direct call will surface errors which our callers catch
+        })
+        return response
+      } finally {
+        this.setLoading(false);
+      }
+    },
+
     async signOut() {
       try {
         await this.clearAuth();

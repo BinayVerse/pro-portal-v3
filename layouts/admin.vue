@@ -207,7 +207,7 @@ const profileItems = [
     {
       label: 'Change Password',
       icon: 'heroicons:key',
-      click: () => navigateTo('/update-password'),
+      click: () => navigateTo('/change-password'),
     },
   ],
   [
