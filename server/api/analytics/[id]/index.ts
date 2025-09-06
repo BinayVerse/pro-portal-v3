@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
             p.add_ons_price,
             p.features
         FROM organizations o
-            LEFT JOIN users u ON o.org_id = u.org_id
+            LEFT JOIN users u ON o.org_id = u.org_id AND u.role_id IS DISTINCT FROM '0'
             LEFT JOIN plans p ON o.plan_id = p.id
             LEFT JOIN organization_documents d ON o.org_id = d.org_id
         WHERE o.org_id = $1

@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
           u.updated_at,
           u.created_at
       FROM users u
-      WHERE u.org_id = $1
+      WHERE u.org_id = $1 AND u.role_id IS DISTINCT FROM '0'
       ORDER BY u.user_id, u.created_at DESC  -- keep latest if duplicates exist
     )
     SELECT 

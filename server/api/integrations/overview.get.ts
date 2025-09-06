@@ -42,9 +42,9 @@ export default defineEventHandler(async (event) => {
         COUNT(*) FILTER (WHERE added_by = 'slack_auto_provision') as slack_users,
         COUNT(*) FILTER (WHERE added_by = 'teams_auto_provision') as teams_users,
         COUNT(*) as total_users
-      FROM users 
-      WHERE org_id = $1`,
-      [orgId]
+      FROM users
+      WHERE org_id = $1 AND role_id IS DISTINCT FROM '0'`,
+    [orgId]
     )
 
     // Get integration status

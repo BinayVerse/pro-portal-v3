@@ -780,8 +780,9 @@ const paginatedUsers = computed(() => {
 })
 
 const roleOptions = computed(() => {
-  const superAdmin = [{ value: 0, label: 'Super Admin' }]
+  // const superAdmin = [{ value: 0, label: 'Super Admin' }]
 
+  const superAdmin = []
   const mappedRoles = usersStore.roles.map((role: any) => ({
     value: role.role_id,
     label: role.role_name,
@@ -819,6 +820,7 @@ function validatePhoneField() {
 }
 // Computed properties
 const stats = computed<UserStats>(() => {
+  console.log('Recomputing stats...', usersList.value)
   const totalUsers = usersList.value.length
   const activeUsers = usersList.value.filter((user) => user.status === 'active').length
   const adminUsers = usersList.value.filter((user) => user.role === 'admin').length
