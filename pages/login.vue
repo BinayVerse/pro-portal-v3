@@ -127,6 +127,7 @@ import { useAuthStore } from '~/stores/auth/index'
 
 definePageMeta({
   layout: 'minimal',
+  middleware: 'guest',
 })
 
 const authStore = useAuthStore()

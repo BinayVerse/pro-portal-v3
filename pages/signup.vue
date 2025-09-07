@@ -282,6 +282,7 @@ import type { FormSubmitEvent } from '#ui/types'
 
 definePageMeta({
   layout: 'minimal',
+  middleware: 'guest',
 })
 
 const authStore = useAuthStore()
