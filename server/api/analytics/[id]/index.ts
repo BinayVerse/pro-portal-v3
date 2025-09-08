@@ -110,11 +110,11 @@ export default defineEventHandler(async (event) => {
             q.question_text.trim()
         );
 
-        const groupedQuestions = await groupSimilarTexts(rawQuestions, 0.9, 10);
+        const groupedQuestions = await groupSimilarTexts(rawQuestions, 0.85, 10);
 
         const documents_analysis = await Promise.all(
             topDocumentsRows.map(async (doc: { document_source: string; reference_count: number; questions: string[] }) => {
-                const grouped = await groupSimilarTexts(doc.questions, 0.9);
+                const grouped = await groupSimilarTexts(doc.questions, 0.85);
                 return {
                     document_source: doc.document_source,
                     reference_count: Number(doc.reference_count),

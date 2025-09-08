@@ -112,7 +112,7 @@ export default defineEventHandler(async (event) => {
     const formattedDocuments = documents.map((doc: any) => ({
       id: doc.id,
       name: doc.name,
-      description: doc.description || '-',
+      description: doc.description || 'No description provided',
       category: doc.category_name || 'Uncategorized',
       type: getFileType(doc.content_type, doc.name),
       size: formatFileSize(doc.file_size || 0),

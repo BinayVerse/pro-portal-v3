@@ -1,7 +1,5 @@
 import { CustomError } from '../utils/custom.error'
 
-import { CustomError } from '../utils/custom.error'
-
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('error', async (error, { event }) => {
     console.error('[Error Handler]:', error)
@@ -27,7 +25,7 @@ export default defineNitroPlugin((nitroApp) => {
     }
 
     // Handle other errors with generic format
-    const statusCode = error.statusCode || 500
+    const statusCode = (error as any)?.statusCode || 500
     const message = error.message || 'Internal Server Error'
 
     if (event && event.node && event.node.res) {
@@ -36,7 +34,7 @@ export default defineNitroPlugin((nitroApp) => {
 
     return {
       statusCode,
-      status: 'error', 
+      status: 'error',
       message,
       timestamp: new Date().toISOString()
     }

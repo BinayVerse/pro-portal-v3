@@ -44,7 +44,7 @@
             <div>
               <p class="text-gray-400 text-sm font-medium">Active Users</p>
               <p class="text-3xl font-bold text-white mt-2 cursor-pointer" @click="showOrganizationUsers">
-                {{ loading ? '...' : activeUsersCount.toLocaleString() }} </p>
+                 {{ loading ? '...' : ((analyticsStore.organizationDetails as any)?.total_users || 0).toLocaleString() }} </p>
             </div>
             <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
               <UIcon name="heroicons:users" class="w-6 h-6 text-green-400" />
@@ -212,7 +212,7 @@
             </div>
           </template>
 
-          <CustomTable key="analytics-user-table" :columns="userColumns" :rows="analyticsStore.tokenDetails"
+          <CustomTable key="analytics-user-table" :columns="userColumns" :rows="analyticsStore.orgUserList"
             :loading="userLoading" :showActionButton="false" />
         </UCard>
       </UModal>
@@ -326,7 +326,10 @@ const timeRangeOptions = [
 const userColumns = [
   { key: "sl_no", label: "Sl No." },
   { key: "name", label: "Name" },
-  { key: "email", label: "Email" }
+  { key: "email", label: "Email" },
+  { key: "role", label: "Role" },
+  { key: "contact_number", label: "Mobile" },
+  { key: "source", label: "Source" },
 ];
 
 const docColumns = [
@@ -696,16 +699,16 @@ const exportReport = () => {
     const rows: string[][] = []
 
     rows.push(["--- Organization Summary ---"])
-    rows.push(["Total Users", String((analyticsStore.organizationDetails as any)?.total_users || 0)])
+    rows.push(["Active Users", String(activeUsersCount.value || 0)])
     rows.push(["Documents Created", String((analyticsStore.organizationDetails as any)?.docs_uploaded || 0)])
-    rows.push(["Total Tokens", String((analyticsStore.organizationDetails as any)?.total_tokens || 0)])
-    rows.push(["Total Queries", String(totalQueriesCount.value || 0)]) // Fixed this line
+    rows.push(["Total Tokens", String(totalTokens.value || 0)])
+    rows.push(["Total Queries", String(totalQueriesCount.value || 0)])
 
     rows.push([])
     rows.push(["--- App-wise Token Usage ---"])
     rows.push(["App", "Tokens"])
     analyticsStore.appTokenDetails?.forEach((app: any) => {
-      rows.push([app.name, String(app.total_tokens || 0)]) // Also fixed here
+      rows.push([app.name, String(app.total_tokens || 0)])
     })
 
     rows.push([])
@@ -716,14 +719,27 @@ const exportReport = () => {
         (sum: number, detail: any) => sum + (parseInt(detail.total_tokens) || 0),
         0
       ) || 0
-      rows.push([user.name || "Unknown", String(total)]) // And here
+      rows.push([user.name || "Unknown", String(total)])
+    })
+
+    rows.push([])
+    rows.push(["--- Daily-wise User-wise Token Usage ---"])
+    rows.push(["Date", "User", "Tokens"])
+    analyticsStore.tokenDetails?.forEach((user: any) => {
+      user.token_usage_details?.forEach((detail: any) => {
+        rows.push([
+          detail.date,
+          user.name || "Unknown",
+          String(detail.total_tokens || 0)
+        ])
+      })
     })
 
     rows.push([])
     rows.push(["--- Top Documents ---"])
     rows.push(["Name", "Queries"])
     topDocuments.value.forEach((doc: any) => {
-      rows.push([doc.name, String(doc.queries || 0)]) // And here
+      rows.push([doc.name, String(doc.queries || 0)])
     })
 
     // Add Top 10 Frequently Asked Questions section
@@ -731,7 +747,7 @@ const exportReport = () => {
     rows.push(["--- Top 10 Frequently Asked Questions ---"])
     rows.push(["Question", "Count", "Category"])
     frequentQuestions.value.slice(0, 10).forEach((faq: any) => {
-      rows.push([faq.question, String(faq.count || 0), faq.category]) // And here
+      rows.push([faq.question, String(faq.count || 0), faq.category])
     })
 
     // Convert to CSV

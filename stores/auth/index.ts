@@ -1,5 +1,4 @@
 import type { AuthUser, ApiResponse } from "./types";
-
 import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
 
 export const useAuthStore = defineStore("authStore", {
@@ -28,6 +27,37 @@ export const useAuthStore = defineStore("authStore", {
 
     setError(error: string | null) {
       this.error = error;
+    },
+
+    async handleAuthError(err: any): Promise<boolean> {
+      // Check multiple possible 401 error patterns
+      const is401 = err?.statusCode === 401 ||
+        err?.response?.status === 401 ||
+        err?.status === 401 ||
+        err?.data?.statusCode === 401 ||
+        (err?.message && err.message.includes('401')) ||
+        (err?.message && err.message.toLowerCase().includes('unauthorized'))
+
+      if (is401) {
+        console.log('401 Unauthorized detected, redirecting to login...')
+        if (process.client) {
+          localStorage.removeItem('authUser')
+          localStorage.removeItem('authToken')
+          // Clear any other auth-related storage
+          localStorage.removeItem('user')
+          setTimeout(() => {
+            navigateTo('/login')
+          }, 500)
+        }
+        const authCookie = useCookie('authToken')
+        authCookie.value = null
+        return true
+      }
+      return false
+    },
+
+    handleError(error: any, fallbackMessage: string, silent: boolean = false): string {
+      return handleError(error, fallbackMessage, silent)
     },
 
 
@@ -301,19 +331,19 @@ export const useAuthStore = defineStore("authStore", {
     async changePassword(formData: Record<string, any>) {
       this.setLoading(true);
       this.setError(null);
-
       try {
         const token = this.token || useCookie('auth-token')?.value
         const response = await $fetch('/api/auth/change-password', {
           method: 'POST',
           body: formData,
           headers: token ? { Authorization: `Bearer ${token}` } : {},
-          // keep ignoreResponseError to let centralized handler manage errors
-          // but $fetch will throw on non-2xx unless ignoreResponseError is true
-          // use ignoreResponseError to allow our apiCall style handling
-          // However this direct call will surface errors which our callers catch
         })
         return response
+      } catch (error) {
+        // Handle authentication errors first
+        if (!await this.handleAuthError(error)) {
+          this.error = handleError(error, 'Failed to change password');
+        }
       } finally {
         this.setLoading(false);
       }
@@ -353,7 +383,7 @@ export const useAuthStore = defineStore("authStore", {
 
     async handlePostLoginRedirect() {
       if (!process.client) return;
-      
+
       const route = useRoute();
       const redirectTo = (route.query.redirect as string) || '/admin/dashboard';
       await navigateTo(redirectTo);

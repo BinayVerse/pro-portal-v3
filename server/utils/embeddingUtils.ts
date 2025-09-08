@@ -4,7 +4,7 @@ import { cosineSimilarity } from './cosine';
 
 export async function groupSimilarTexts(
     texts: string[],
-    threshold = 0.9,
+    threshold = 0.85,
     maxGroups?: number
 ): Promise<{ representative: string; similar_questions: string[] }[]> {
     const cleanedMap = new Map<string, string>();
@@ -39,12 +39,27 @@ export async function groupSimilarTexts(
         }
 
         clusters[group[0]] = group;
-
-        if (maxGroups && Object.keys(clusters).length >= maxGroups) break;
     }
 
-    return Object.entries(clusters).map(([key, group]) => ({
+    let result = Object.entries(clusters).map(([key, group]) => ({
         representative: key,
         similar_questions: group,
     }));
+
+    result = result.sort(
+        (a, b) => b.similar_questions.length - a.similar_questions.length
+    );
+
+    if (maxGroups) {
+        while (result.length < maxGroups && result.length > 0) {
+            const idx = result.length % result.length; // cycle
+            result.push({
+                representative: result[idx].representative,
+                similar_questions: result[idx].similar_questions,
+            });
+        }
+        return result.slice(0, maxGroups);
+    }
+
+    return result;
 }
