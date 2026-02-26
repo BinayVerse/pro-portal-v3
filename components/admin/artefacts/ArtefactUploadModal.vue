@@ -3,9 +3,24 @@
   <FileReplacementModal
     v-model:isOpen="showReplacementModal"
     :fileName="pendingUpload.fileName"
-    :category="pendingUpload.existingCategory"
+    :currentCategory="pendingUpload.existingCategory"
+    :currentDepartments="pendingUpload.currentDepartments"
+    :newCategory="pendingUpload.category"
+    :newDepartments="pendingUpload.newDepartments"
+    :departmentNameMap="departmentNameMap"
     @replace="proceedWithUpload"
     @cancel="cancelUpload"
+  />
+
+  <!-- Size Limit Exceeded Modal -->
+  <SizeLimitExceededModal
+    v-model:open="showSizeLimitModal"
+    :file-size="exceededFileSize"
+    :max-file-size="maxFileSizeDisplay"
+    :available-storage="availableStorageDisplay"
+    :used-storage="usedStorageDisplay"
+    :total-storage="totalStorageDisplay"
+    :exceeded-type="exceededType"
   />
 
   <UModal
@@ -106,6 +121,47 @@
                 </UInputMenu>
               </UFormGroup>
 
+              <!-- Departments -->
+              <UFormGroup name="departments">
+                <template #label>
+                  <span class="text-sm font-medium text-gray-300">
+                    Departments
+                    <span v-if="isDepartmentAdmin" class="text-red-500 dark:text-red-400 ml-[-2px]"
+                      >*</span
+                    >
+                    <span v-else>(Optional)</span>
+                  </span>
+                </template>
+                <USelectMenu
+                  v-model="state.departments"
+                  :options="restrictedDepartmentOptions"
+                  option-attribute="name"
+                  value-attribute="dept_id"
+                  multiple
+                  searchable
+                  :placeholder="
+                    isDepartmentAdmin
+                      ? 'Select at least one department'
+                      : 'Select departments or leave empty for Common'
+                  "
+                >
+                  <template #label>
+                    <span v-if="!state.departments.length" class="text-gray-400">
+                      {{
+                        isDepartmentAdmin ? 'Select at least one department' : 'Select departments'
+                      }}
+                    </span>
+                    <span v-else>
+                      {{ selectedDepartmentsLabel }}
+                    </span>
+                  </template>
+                </USelectMenu>
+                <p v-if="isDepartmentAdmin" class="text-xs text-amber-400 mt-2">
+                  ⚠️ Department Admins must assign documents to at least one department. You cannot
+                  upload Common documents.
+                </p>
+              </UFormGroup>
+
               <!-- Drag and Drop File Upload -->
               <UFormGroup label="File" name="file" required>
                 <div
@@ -130,13 +186,13 @@
                     <p class="text-lg text-gray-300 mb-2">
                       <span class="font-medium">Click to upload</span> or drag and drop
                     </p>
-                    <p class="text-sm text-gray-400 mb-4">PDF, Word, TXT, CSV, Markdown, Images</p>
+                    <p class="text-sm text-gray-400 mb-4">PDF, DOC, CSV, Markdown, TXT files</p>
                     <p class="text-xs text-gray-500">Maximum file size: 20MB</p>
                     <input
                       ref="fileInput"
                       type="file"
                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      accept=".pdf,.doc,.docx,.txt,.csv,.md,.png,.jpg,.jpeg"
+                      accept=".pdf,.doc,.docx,.txt,.csv,.md"
                       @change="handleFileSelect"
                       :disabled="isAnyOperationInProgress"
                     />
@@ -268,6 +324,47 @@
                 </UInputMenu>
               </UFormGroup>
 
+              <!-- Departments -->
+              <UFormGroup name="departments">
+                <template #label>
+                  <span class="text-sm font-medium text-gray-300">
+                    Departments
+                    <span v-if="isDepartmentAdmin" class="text-red-500 dark:text-red-400 ml-[-2px]"
+                      >*</span
+                    >
+                    <span v-else>(Optional)</span>
+                  </span>
+                </template>
+                <USelectMenu
+                  v-model="googleDriveState.departments"
+                  :options="restrictedDepartmentOptions"
+                  option-attribute="name"
+                  value-attribute="dept_id"
+                  multiple
+                  searchable
+                  :placeholder="
+                    isDepartmentAdmin
+                      ? 'Select at least one department'
+                      : 'Select departments or leave empty for Common'
+                  "
+                >
+                  <template #label>
+                    <span v-if="!googleDriveState.departments.length" class="text-gray-400">
+                      {{
+                        isDepartmentAdmin ? 'Select at least one department' : 'Select departments'
+                      }}
+                    </span>
+                    <span v-else>
+                      {{ selectedGoogleDepartmentsLabel }}
+                    </span>
+                  </template>
+                </USelectMenu>
+                <p v-if="isDepartmentAdmin" class="text-xs text-amber-400 mt-2">
+                  ⚠️ Department Admins must assign documents to at least one department. You cannot
+                  upload Common documents.
+                </p>
+              </UFormGroup>
+
               <!-- Method 1: Google Drive URL -->
               <UFormGroup label="Option 1: Google Drive Public URL">
                 <div class="flex space-x-2">
@@ -332,9 +429,7 @@
                       By signing in, you allow us to access your Google Drive and download selected
                       files to our server. Your files are not stored or shared beyond this process.
                     </p>
-                    <p class="mt-2">
-                      Supported file types: CSV, MS Word, PDF, Markdown, and Text files
-                    </p>
+                    <p class="mt-2">Supported file types: PDF, DOC, CSV, Markdown, TXT files</p>
                   </div>
                 </div>
               </div>
@@ -515,14 +610,18 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '#ui/types'
-import { nextTick, onMounted, onUnmounted, withDefaults } from 'vue'
+import { nextTick, onMounted, onUnmounted, withDefaults, ref, computed, reactive, watch } from 'vue'
 import { useArtefactsStore } from '~/stores/artefacts'
 import { useNotification } from '~/composables/useNotification'
+import { useOrganizationStore } from '~/stores/organization'
 import {
   useGoogleDrive,
   type GoogleDriveFile as GoogleOAuthFile,
 } from '~/composables/useGoogleDrive'
 import FileReplacementModal from '~/components/ui/FileReplacementModal.vue'
+import SizeLimitExceededModal from '~/components/ui/SizeLimitExceededModal.vue'
+import { useRoute } from 'vue-router'
+import { useAuthStore } from '~/stores/auth'
 
 interface GoogleDriveFile {
   id: string
@@ -539,20 +638,30 @@ interface Props {
   isOpen: boolean
   availableCategories: string[]
   categoriesLoading?: boolean
+  availableDepartments?: Array<{ dept_id: string; name: string }>
+  departmentsLoading?: boolean
+  departmentNameMap?: Record<string, string> // dept_id -> dept_name
 }
 
 const props = withDefaults(defineProps<Props>(), {
   categoriesLoading: false,
+  departmentsLoading: false,
+  availableDepartments: () => [],
+  departmentNameMap: () => ({}),
 })
 
 // Initialize artefacts store
 const artefactsStore = useArtefactsStore()
+
+// Initialize organization store
+const orgStore = useOrganizationStore()
 
 // Initialize notification composable
 const { showError, showWarning, showSuccess } = useNotification()
 
 // Initialize Google Drive OAuth composable
 const googleDrive = useGoogleDrive()
+const exceededType = ref<'file' | 'storage'>('file')
 
 const emit = defineEmits<{
   'update:isOpen': [value: boolean]
@@ -568,6 +677,7 @@ const schema = z.object({
   file: z.any().refine((file) => file !== null, 'File is required'),
   category: z.string().min(1, 'Category is required'),
   description: z.string().max(100, 'Description must be 100 characters or less').optional(),
+  departments: z.array(z.string()).optional().default([]),
 })
 
 type Schema = z.output<typeof schema>
@@ -595,6 +705,7 @@ const tabItems = [
 const googleDriveState = reactive({
   category: '',
   url: '',
+  departments: [] as string[],
 })
 
 // Google Drive computed properties from store
@@ -627,6 +738,7 @@ const state = reactive({
   file: null as File | null,
   category: '',
   description: '',
+  departments: [] as string[],
 })
 
 // File replacement modal state
@@ -637,6 +749,14 @@ const pendingUpload = reactive({
   existingCategory: '', // The category the existing file is currently in
   formData: null as FormData | null,
 })
+
+// Size limit exceeded modal state
+const showSizeLimitModal = ref(false)
+const exceededFileSize = ref('')
+const maxFileSizeDisplay = ref('20 MB')
+const availableStorageDisplay = ref<string | undefined>()
+const usedStorageDisplay = ref<string | undefined>()
+const totalStorageDisplay = ref<string | undefined>()
 
 // Drag and drop state
 const isDragOver = ref(false)
@@ -697,6 +817,27 @@ const categoryOptions = computed(() => {
   }))
 })
 
+// Compute storage limit from plan
+const storageLimitGb = computed(() => {
+  return orgStore.currentPlan?.plan?.storage_limit_gb ?? 0
+})
+
+// Check if user has an active plan
+const hasPlan = computed(() => {
+  return orgStore.currentPlan?.plan !== null && orgStore.currentPlan?.plan !== undefined
+})
+
+// Helper function to format file size
+const formatStorageSize = (gb: number): string => {
+  if (gb === 0 || gb === -1 || gb === null) return 'Unlimited'
+  return `${gb} GB`
+}
+
+// Helper to convert bytes to GB
+const bytesToGb = (bytes: number): number => {
+  return bytes / (1024 * 1024 * 1024)
+}
+
 // Drag and drop handlers
 const handleDragEnter = (e: DragEvent) => {
   if (isAnyOperationInProgress.value) return
@@ -741,10 +882,56 @@ const handleFileSelect = (event: Event) => {
 
 const setFile = (file: File) => {
   try {
-    // Validate file size (20MB limit)
+    // Validate file size (20MB limit per file)
     if (file.size > 20 * 1024 * 1024) {
-      showError('File size must be less than 20MB')
+      exceededFileSize.value = formatFileSize(file.size)
+      maxFileSizeDisplay.value = '20 MB'
+      exceededType.value = 'file'
+
+      const currentStats = artefactsStore.getStats
+
+      usedStorageDisplay.value = formatFileSize(currentStats.totalSizeBytes || 0)
+      totalStorageDisplay.value =
+        hasPlan.value && (storageLimitGb.value === 0 || storageLimitGb.value === -1)
+          ? 'Unlimited'
+          : formatStorageAuto(storageLimitGb.value)
+
+      // ✅ FIX: Correct available storage
+      const usedGB = bytesToGb(currentStats.totalSizeBytes || 0)
+      const availableGB = Math.max(0, storageLimitGb.value - usedGB)
+      availableStorageDisplay.value =
+        hasPlan.value && (storageLimitGb.value === 0 || storageLimitGb.value === -1)
+          ? 'Unlimited'
+          : formatStorageAuto(availableGB)
+
+      showSizeLimitModal.value = true
       return
+    }
+
+    // Check against plan storage limit
+    if (storageLimitGb.value > 0) {
+      const currentStats = artefactsStore.getStats
+      const usedStorageGb = bytesToGb(currentStats.totalSizeBytes || 0)
+      const fileStorageGb = bytesToGb(file.size)
+      const availableGb = storageLimitGb.value - usedStorageGb
+
+      if (fileStorageGb > availableGb) {
+        exceededFileSize.value = formatFileSize(file.size)
+        maxFileSizeDisplay.value = '20 MB'
+        exceededType.value = 'storage'
+        usedStorageDisplay.value = formatFileSize(currentStats.totalSizeBytes || 0)
+        totalStorageDisplay.value =
+          hasPlan.value && (storageLimitGb.value === 0 || storageLimitGb.value === -1)
+            ? 'Unlimited'
+            : formatStorageAuto(storageLimitGb.value)
+        availableStorageDisplay.value =
+          hasPlan.value && (storageLimitGb.value === 0 || storageLimitGb.value === -1)
+            ? 'Unlimited'
+            : formatStorageAuto(Math.max(0, availableGb))
+
+        showSizeLimitModal.value = true
+        return
+      }
     }
 
     // Validate file type
@@ -809,26 +996,116 @@ const formatFileSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
+const formatStorageAuto = (gb: number): string => {
+  // Handle unlimited storage (0 or -1)
+  if (gb === 0 || gb === -1) return 'Unlimited'
+
+  const bytes = gb * 1024 * 1024 * 1024 // Convert GB → Bytes
+
+  if (bytes < 1024) {
+    return `${bytes.toFixed(0)} Bytes`
+  }
+
+  const kb = bytes / 1024
+  if (kb < 1024) {
+    return `${kb.toFixed(2)} KB`
+  }
+
+  const mb = kb / 1024
+  if (mb < 1024) {
+    return `${mb.toFixed(2)} MB`
+  }
+
+  const gbVal = mb / 1024
+  return `${gbVal.toFixed(2)} GB`
+}
+
 // UForm submission handler
+const route = useRoute()
+const authStore = useAuthStore()
+const authUser = computed(() => authStore.getAuthUser)
+const modalOrgId = computed(() => {
+  if (authUser.value?.role_id === 0) {
+    const q = route && route.query ? route.query.org || route.query.org_id : null
+    if (q && String(q).trim()) return String(q)
+  }
+  return authUser.value?.org_id || null
+})
+
+const buildDepartmentsLabel = (selectedIds: string[]) => {
+  if (!selectedIds || !selectedIds.length) return ''
+
+  const selected =
+    props.availableDepartments?.filter((d) => selectedIds.includes(String(d.dept_id))) || []
+
+  const names = selected.map((d) => d.name)
+
+  if (names.length <= 2) return names.join(', ')
+
+  return `${names.slice(0, 2).join(', ')} +${names.length - 2} more`
+}
+
+const selectedDepartmentsLabel = computed(() => buildDepartmentsLabel(state.departments))
+
+const selectedGoogleDepartmentsLabel = computed(() =>
+  buildDepartmentsLabel(googleDriveState.departments),
+)
+
+// 🔑 Department Admin role check and restrictions
+const currentUser = computed(() => authStore.getAuthUser)
+const isDepartmentAdmin = computed(() => currentUser.value?.role_id === 3)
+
+// Use department name map from parent (built from all departments, not just filtered ones)
+// This allows displaying names for all departments, even ones not assigned to the user
+const departmentNameMap = computed(() => {
+  return props.departmentNameMap || {}
+})
+
+// Use pre-filtered departments from parent
+// (Backend already filters departments based on user's role)
+const restrictedDepartmentOptions = computed(() => {
+  return props.availableDepartments || []
+})
+
 const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   try {
     isUploading.value = true
+
+    // 🔑 Validate Department Admin is not uploading as Common document
+    if (
+      isDepartmentAdmin.value &&
+      (!event.data.departments || event.data.departments.length === 0)
+    ) {
+      showError('Department Admins must assign documents to at least one department.')
+      isUploading.value = false
+      return
+    }
 
     // Create FormData for the upload
     const formData = new FormData()
     formData.append('file', event.data.file)
     formData.append('category', event.data.category)
     formData.append('description', event.data.description || '')
+    // 🔑 important - append departments as array
+    if (event.data.departments && event.data.departments.length > 0) {
+      formData.append('departments', JSON.stringify(event.data.departments))
+    }
 
     // Check if file already exists
     const fileName = event.data.file.name.replace(/\s+/g, '_')
-    const existsResult = await artefactsStore.checkFileExists(fileName)
+    const existsResult = await artefactsStore.checkFileExists(fileName, modalOrgId.value)
 
     if (existsResult.success && existsResult.exists) {
-      // Show replacement modal with existing file's category
+      // Show replacement modal with existing file's category and departments
       pendingUpload.fileName = fileName
       pendingUpload.category = event.data.category
+      pendingUpload.newDepartments = event.data.departments || []
       pendingUpload.existingCategory = existsResult.fileInfo?.category || 'Unknown'
+      // Ensure department IDs are strings for proper mapping
+      const deptIds = existsResult.fileInfo?.departments || []
+      pendingUpload.currentDepartments = Array.isArray(deptIds)
+        ? deptIds.map((id) => String(id))
+        : []
       pendingUpload.formData = formData
       showReplacementModal.value = true
       isUploading.value = false
@@ -836,7 +1113,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
     }
 
     // Proceed with upload if file doesn't exist
-    await performUpload(formData)
+    await performUpload(formData, modalOrgId.value)
   } catch (error) {
     showError('Upload failed. Please try again.')
     isUploading.value = false
@@ -844,23 +1121,24 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 }
 
 // Perform the actual upload
-const performUpload = async (formData: FormData) => {
+const performUpload = async (formData: FormData, orgId?: string | null) => {
   try {
     // Call the store upload method
-    const result = await artefactsStore.uploadArtefact(formData)
+    const result = await artefactsStore.uploadArtefact(formData, orgId)
 
     if (!result.success) {
       showError(result.message || 'Upload failed. Please try again.')
       return
     }
 
-    // Emit the uploaded artefact data
+    // Emit the uploaded artifact data
     emit('fileUploaded', result.data)
 
     // Reset form
     state.file = null
     state.category = ''
     state.description = ''
+    state.departments = []
 
     // Reset file input
     if (fileInput.value) {
@@ -947,34 +1225,53 @@ const uploadFromGoogleDrive = async () => {
     return
   }
 
+  // 🔑 Validate Department Admin is not uploading as Common document
+  if (
+    isDepartmentAdmin.value &&
+    (!googleDriveState.departments || googleDriveState.departments.length === 0)
+  ) {
+    showError('Department Admins must assign documents to at least one department.')
+    return
+  }
+
   try {
     // Check for existing files and show notification
-    const fileNames = selectedGoogleDriveFiles.value.map(file => file.name)
+    const fileNames = selectedGoogleDriveFiles.value.map((file) => file.name)
     const bulkCheckResult = await artefactsStore.checkFilesExistBulk(fileNames)
 
     const existingFiles: { name: string; category: string }[] = []
     if (bulkCheckResult.success) {
-      bulkCheckResult.results.forEach(result => {
+      bulkCheckResult.results.forEach((result) => {
         if (result.exists) {
           existingFiles.push({
             name: result.originalFileName,
-            category: result.fileInfo?.category || 'Unknown'
+            category: result.fileInfo?.category || 'Unknown',
           })
         }
       })
     }
 
     if (existingFiles.length > 0) {
-      const fileList = existingFiles.map(f => `"${f.name}" (currently in ${f.category})`).join(', ')
-      showWarning(
-        `The following files already exist and will be overwritten: ${fileList}`
-      )
+      const fileList = existingFiles
+        .map((f) => `"${f.name}" (currently in ${f.category})`)
+        .join(', ')
+      showWarning(`The following files already exist and will be overwritten: ${fileList}`)
+    }
+
+    // 🔑 important - pass departments as part of upload
+    const uploadPayload = {
+      files: selectedGoogleDriveFiles.value,
+      category: googleDriveState.category,
+      departments:
+        googleDriveState.departments && googleDriveState.departments.length > 0
+          ? googleDriveState.departments
+          : [],
     }
 
     // Call the store method to upload files
-    const result = await artefactsStore.uploadGoogleDriveFiles(
-      selectedGoogleDriveFiles.value,
-      googleDriveState.category,
+    const result = await artefactsStore.uploadGoogleDriveFilesWithDepartments(
+      uploadPayload,
+      modalOrgId.value,
     )
 
     if (!result.success) {
@@ -982,7 +1279,7 @@ const uploadFromGoogleDrive = async () => {
       return
     }
 
-    // Create artefact objects from uploaded files
+    // Create artifact objects from uploaded files
     const newArtefacts = result.files.map((file) => ({
       id: Date.now() + Math.random(),
       name: file.name,
@@ -1001,6 +1298,7 @@ const uploadFromGoogleDrive = async () => {
     // Reset Google Drive state
     googleDriveState.category = ''
     googleDriveState.url = ''
+    googleDriveState.departments = []
     selectedGoogleDriveFiles.value = []
     artefactsStore.clearGoogleDriveFiles()
 
@@ -1019,6 +1317,15 @@ const handleGoogleOAuthSignIn = async () => {
     return
   }
 
+  // 🔑 Validate Department Admin is not uploading as Common document
+  if (
+    isDepartmentAdmin.value &&
+    (!googleDriveState.departments || googleDriveState.departments.length === 0)
+  ) {
+    showError('Department Admins must assign documents to at least one department.')
+    return
+  }
+
   try {
     isGoogleOAuthInProgress.value = true
 
@@ -1032,26 +1339,26 @@ const handleGoogleOAuthSignIn = async () => {
 
       try {
         // Check for existing files
-        const fileNames = selectedFiles.map(file => file.name)
+        const fileNames = selectedFiles.map((file) => file.name)
         const bulkCheckResult = await artefactsStore.checkFilesExistBulk(fileNames)
 
         const existingFiles: { name: string; category: string }[] = []
         if (bulkCheckResult.success) {
-          bulkCheckResult.results.forEach(result => {
+          bulkCheckResult.results.forEach((result) => {
             if (result.exists) {
               existingFiles.push({
                 name: result.originalFileName,
-                category: result.fileInfo?.category || 'Unknown'
+                category: result.fileInfo?.category || 'Unknown',
               })
             }
           })
         }
 
         if (existingFiles.length > 0) {
-          const fileList = existingFiles.map(f => `"${f.name}" (currently in ${f.category})`).join(', ')
-          showWarning(
-            `The following files already exist and will be overwritten: ${fileList}`,
-          )
+          const fileList = existingFiles
+            .map((f) => `"${f.name}" (currently in ${f.category})`)
+            .join(', ')
+          showWarning(`The following files already exist and will be overwritten: ${fileList}`)
         }
 
         // Convert GoogleOAuthFile to ArtefactGoogleDriveFile format for upload
@@ -1067,14 +1374,24 @@ const handleGoogleOAuthSignIn = async () => {
           googleAccessToken: file.googleAccessToken,
         }))
 
+        // 🔑 important - pass departments with the upload
+        const uploadPayload = {
+          files: convertedFiles,
+          category: googleDriveState.category,
+          departments:
+            googleDriveState.departments && googleDriveState.departments.length > 0
+              ? googleDriveState.departments
+              : [],
+        }
+
         // Upload the files
-        const result = await artefactsStore.uploadGoogleDriveFiles(
-          convertedFiles,
-          googleDriveState.category,
+        const result = await artefactsStore.uploadGoogleDriveFilesWithDepartments(
+          uploadPayload,
+          modalOrgId.value,
         )
 
         if (result.success) {
-          // Create artefact objects from uploaded files
+          // Create artifact objects from uploaded files
           const newArtefacts = result.files.map((file) => ({
             id: Date.now() + Math.random(),
             name: file.name,
@@ -1093,6 +1410,7 @@ const handleGoogleOAuthSignIn = async () => {
           // Reset state
           googleDriveState.category = ''
           googleDriveState.url = ''
+          googleDriveState.departments = []
           selectedGoogleDriveFiles.value = []
           artefactsStore.clearGoogleDriveFiles()
           googleDrive.cleanup()
@@ -1203,7 +1521,6 @@ const performComprehensiveCleanup = () => {
 
     // Clear store state
     artefactsStore.clearGoogleDriveFiles()
-
   } catch (error) {
     // Cleanup error handled silently
   }
@@ -1215,8 +1532,10 @@ const resetAllFields = () => {
     state.file = null
     state.category = ''
     state.description = ''
+    state.departments = []
     googleDriveState.category = ''
     googleDriveState.url = ''
+    googleDriveState.departments = []
     selectedGoogleDriveFiles.value = []
 
     // Reset replacement modal state
@@ -1268,8 +1587,10 @@ watch(uploadType, () => {
     state.file = null
     state.category = ''
     state.description = ''
+    state.departments = []
     googleDriveState.category = ''
     googleDriveState.url = ''
+    googleDriveState.departments = []
     selectedGoogleDriveFiles.value = []
 
     // Perform comprehensive cleanup
@@ -1289,8 +1610,17 @@ onUnmounted(() => {
   performComprehensiveCleanup()
 })
 
-// Cleanup when user navigates away or closes browser
-onMounted(() => {
+// Fetch org plan and cleanup when user navigates away or closes browser
+onMounted(async () => {
+  try {
+    // Fetch organization plan to get storage limits
+    const orgId = modalOrgId.value
+    await orgStore.fetchOrgPlan(orgId)
+  } catch (error) {
+    // Silently handle fetch errors
+    console.error('Failed to fetch org plan:', error)
+  }
+
   const handleBeforeUnload = () => {
     performComprehensiveCleanup()
   }

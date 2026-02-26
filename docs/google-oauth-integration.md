@@ -7,7 +7,7 @@ This document describes the Google OAuth integration that allows users to connec
 - **OAuth2 Flow**: Secure authentication with Google Drive using OAuth2
 - **Interactive File Selection**: Users can browse and select files from their Google Drive using Google Picker
 - **Multi-file Selection**: Support for selecting multiple files at once
-- **File Type Filtering**: Automatically filters supported file types (PDF, Word, TXT, CSV, Markdown, Images)
+- **File Type Filtering**: Automatically filters supported file types (PDF, DOC, CSV, Markdown, TXT files)
 - **Access Token Management**: Handles OAuth access tokens securely
 
 ## Implementation

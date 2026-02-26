@@ -1,34 +1,33 @@
 <template>
-  <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
-    <div class="flex flex-col lg:flex-row gap-4 items-end">
+  <div class="bg-dark-800 rounded-lg p-4 sm:p-6 border border-dark-700">
+    <div class="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-4 xl:grid-cols-6">
       <!-- Search Input -->
-      <div class="flex-1">
+      <div class="min-w-0 md:col-span-3 xl:col-span-2">
         <UInput
           :model-value="searchQuery"
           @update:model-value="$emit('update:searchQuery', $event)"
-          placeholder="Search artefacts..."
-          size="lg"
+          placeholder="Search artifacts..."
           icon="i-heroicons-magnifying-glass"
+          size="md"
         />
       </div>
 
       <!-- Category Filter -->
-      <div class="lg:w-48">
+      <div class="md:col-span-1 xl:col-span-1">
         <USelect
           :model-value="selectedCategory"
           @update:model-value="$emit('update:selectedCategory', $event)"
           :options="[
             { label: categoriesLoading ? 'Loading categories...' : 'All Categories', value: '' },
-            ...availableCategories.map(cat => ({ label: cat, value: cat }))
+            ...availableCategories.map((cat) => ({ label: cat, value: cat })),
           ]"
           :loading="categoriesLoading"
           :disabled="categoriesLoading"
-          size="lg"
         />
       </div>
 
       <!-- Type Filter -->
-      <div class="lg:w-48">
+      <div class="md:col-span-1 xl:col-span-1">
         <USelect
           :model-value="selectedType"
           @update:model-value="$emit('update:selectedType', $event)"
@@ -39,15 +38,12 @@
             { label: 'Markdown', value: 'Markdown' },
             { label: 'TXT', value: 'TXT' },
             { label: 'CSV', value: 'CSV' },
-            { label: 'Image', value: 'Image' },
-            { label: 'Database', value: 'Database' }
           ]"
-          size="lg"
         />
       </div>
 
       <!-- Status Filter -->
-      <div class="lg:w-48">
+      <div class="md:col-span-1 xl:col-span-1">
         <USelect
           :model-value="selectedStatus"
           @update:model-value="$emit('update:selectedStatus', $event)"
@@ -55,9 +51,19 @@
             { label: 'All Status', value: '' },
             { label: 'Processed', value: 'processed' },
             { label: 'Processing', value: 'processing' },
-            { label: 'Failed', value: 'failed' }
+            { label: 'Failed', value: 'failed' },
           ]"
-          size="lg"
+        />
+      </div>
+
+      <!-- Department Filter -->
+      <div class="md:col-span-2 xl:col-span-1">
+        <USelect
+          :model-value="selectedDepartment"
+          @update:model-value="$emit('update:selectedDepartment', $event)"
+          :options="departmentOptions"
+          option-attribute="label"
+          value-attribute="value"
         />
       </div>
     </div>
@@ -73,10 +79,12 @@ interface Props {
   selectedStatus: string
   availableCategories: string[]
   categoriesLoading?: boolean
+  departmentOptions: any[]
+  selectedDepartment: String
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  categoriesLoading: false
+  categoriesLoading: false,
 })
 
 defineEmits<{
@@ -84,5 +92,6 @@ defineEmits<{
   'update:selectedCategory': [value: string]
   'update:selectedType': [value: string]
   'update:selectedStatus': [value: string]
+  'update:selectedDepartment': [value: String]
 }>()
 </script>

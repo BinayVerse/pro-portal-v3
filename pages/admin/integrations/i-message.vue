@@ -1,15 +1,15 @@
 <template>
   <AdminLayout>
-    <div class="space-y-6">
+    <div class="space-y-4 sm:space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
         <div class="flex items-center space-x-3">
-          <div class="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
+          <div class="w-12 h-12 bg-white/10 rounded-lg flex-shrink-0 flex items-center justify-center">
             <div class="w-8 h-8 bg-blue-400 rounded"></div>
           </div>
-          <div>
-            <h1 class="text-2xl font-bold text-white">iMessage Integration</h1>
-            <p class="text-gray-400">Connect to iMessage services</p>
+          <div class="min-w-0">
+            <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-white truncate">iMessage Integration</h1>
+            <p class="text-xs sm:text-sm text-gray-400 truncate">Connect to iMessage services</p>
           </div>
         </div>
         <div class="hidden">
@@ -32,20 +32,20 @@
       </div>
 
       <!-- Setup Required State -->
-      <div class="bg-dark-800 rounded-lg p-8 border border-dark-700 text-center">
+      <div class="bg-dark-800 rounded-lg p-4 sm:p-6 xl:p-8 border border-dark-700 text-center">
         <div
           class="w-16 h-16 bg-blue-400/20 rounded-full flex items-center justify-center mx-auto mb-4"
         >
           <div class="w-8 h-8 bg-blue-400 rounded"></div>
         </div>
-        <h3 class="text-xl font-semibold text-white mb-2">iMessage Setup Required</h3>
-        <p class="text-gray-400 mb-6">
+        <h3 class="text-lg sm:text-xl font-semibold text-white mb-2">iMessage Setup Required</h3>
+        <p class="text-xs sm:text-sm text-gray-400 mb-6">
           iMessage integration requires additional setup and configuration. This feature is
           currently in development.
         </p>
 
         <!-- Feature Status -->
-        <div class="bg-dark-900 rounded-lg p-6 mb-6 text-left">
+        <div class="bg-dark-900 rounded-lg p-4 sm:p-6 mb-6 text-left">
           <h4 class="text-lg font-medium text-white mb-4">Integration Status:</h4>
           <div class="space-y-3">
             <div class="flex items-center justify-between p-3 bg-dark-800 rounded-lg">
@@ -152,6 +152,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'iMessage Integration - Admin Dashboard - provento.ai' })
 definePageMeta({
   layout: 'admin',
   middleware: 'auth',

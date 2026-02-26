@@ -2,106 +2,126 @@
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div>
-      <h1 class="text-2xl font-bold text-white mb-2">Dashboard Overview</h1>
-      <p class="text-gray-400">Manage your artefact chatting platform from here.</p>
+    <div class="space-y-1 sm:space-y-2">
+      <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-white">Dashboard Overview</h1>
+      <p class="text-xs sm:text-sm lg:text-base text-gray-400">
+        Manage your artifact chatting platform from here.
+      </p>
     </div>
 
+    <!-- PLAN UPGRADE ALERT -->
+    <PlanUpgradeAlert :data="usageAlertData" @upgrade="goToPlans" />
+
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 xl:gap-6">
       <!-- Total Users -->
-      <UCard class="bg-dark-800 border-dark-700">
+      <div class="bg-dark-800 rounded-lg p-4 sm:p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Total Users</p>
-            <p class="text-3xl font-bold text-white mt-2">
-              {{ loading ? '...' : stats.totalUsers.toLocaleString() }}
+
+            <p :class="`text-lg font-bold mt-2 ${usersTextColor}`">
+              {{
+                loading
+                  ? '...'
+                  : `${stats.totalUsers} / ${profileStore.getUserProfile?.plan_details && (usersLimit === 0 || usersLimit === -1) ? 'Unlimited' : usersLimit || 0}`
+              }}
             </p>
-            <!-- <p class="text-sm mt-2">
-              <span :class="stats.userGrowth >= 0 ? 'text-green-400' : 'text-red-400'">
-                {{ stats.userGrowth >= 0 ? '+' : '' }}{{ stats.userGrowth }}% from last month
-              </span>
-            </p> -->
           </div>
+
           <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
             <UIcon name="heroicons:users" class="w-6 h-6 text-blue-400" />
           </div>
         </div>
-      </UCard>
+      </div>
 
-      <!-- Documents -->
-      <UCard class="bg-dark-800 border-dark-700">
+      <!-- Artifacts -->
+      <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-gray-400 text-sm font-medium">Artefacts</p>
-            <p class="text-3xl font-bold text-white mt-2">
-              {{ loading ? '...' : stats.totalArtefacts.toLocaleString() }}
+            <p class="text-gray-400 text-sm font-medium">Artifacts</p>
+
+            <p :class="`text-lg font-bold mt-2 ${artefactsTextColor}`">
+              {{
+                loading
+                  ? '...'
+                  : `${stats.totalArtefacts} / ${profileStore.getUserProfile?.plan_details && (artefactsLimit === 0 || artefactsLimit === -1) ? 'Unlimited' : artefactsLimit || 0}`
+              }}
             </p>
-            <!-- <p class="text-sm mt-2">
-              <span class="text-green-400">+{{ stats.artefactsToday }} today</span>
-            </p> -->
           </div>
+
           <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
             <UIcon name="heroicons:document-text" class="w-6 h-6 text-green-400" />
           </div>
         </div>
-      </UCard>
+      </div>
 
       <!-- Conversations -->
-      <UCard class="bg-dark-800 border-dark-700">
+      <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-gray-400 text-sm font-medium">Conversations</p>
-            <p class="text-3xl font-bold text-white mt-2">
-              {{ loading ? '...' : stats.totalConversations.toLocaleString() }}
+            <p class="text-gray-400 text-sm font-medium">Total Queries</p>
+
+            <p :class="`text-lg font-bold mt-2 ${conversationsTextColor}`">
+              {{
+                loading
+                  ? '...'
+                  : `${stats.totalConversations} / ${profileStore.getUserProfile?.plan_details && (conversationsLimit === 0 || conversationsLimit === -1) ? 'Unlimited' : formatCompactNumber(conversationsLimit || 0)}`
+              }}
             </p>
-            <!-- <p class="text-sm mt-2">
-              <span :class="stats.conversationGrowth >= 0 ? 'text-green-400' : 'text-red-400'">
-                {{ stats.conversationGrowth >= 0 ? '+' : '' }}{{ stats.conversationGrowth }}% from last month
-              </span>
-            </p> -->
           </div>
+
           <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
             <UIcon name="heroicons:chat-bubble-left-right" class="w-6 h-6 text-purple-400" />
           </div>
         </div>
-      </UCard>
+      </div>
 
       <!-- Tokens Used -->
-      <UCard class="bg-dark-800 border-dark-700">
+      <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Tokens Used</p>
-            <p class="text-3xl font-bold text-white mt-2">
-              {{ loading ? '...' : formatTokens(stats.tokensUsed) }}
+
+            <p class="text-lg font-bold mt-2">
+              {{ loading ? '...' : `${formatCompactNumber(stats.tokensUsed)}` }}
             </p>
-            <!-- <p class="text-sm mt-2">
-              <span :class="stats.tokenGrowth >= 0 ? 'text-green-400' : 'text-red-400'">
-                {{ stats.tokenGrowth >= 0 ? '+' : '' }}{{ stats.tokenGrowth }}% from last month
-              </span>
-            </p> -->
           </div>
+
           <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center">
             <UIcon name="heroicons:bolt" class="w-6 h-6 text-orange-400" />
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- Main Content Grid -->
-    <div class="grid lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 xl:gap-6">
       <!-- Recent Users -->
       <div class="bg-dark-800 rounded-lg border border-dark-700">
-        <div class="flex items-center justify-between p-6 border-b border-dark-700">
-          <h2 class="text-lg font-semibold text-white">Recent Users</h2>
+        <div
+          class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-dark-700 gap-3 sm:gap-0"
+        >
+          <h2 class="text-base sm:text-lg font-semibold text-white">Recent Users</h2>
           <div class="text-sm text-gray-400">Latest user registrations and activity</div>
-          <button @click="navigateTo('/admin/users')"
-            class="text-primary-400 hover:text-primary-300 text-sm font-medium flex items-center gap-1">
+          <!-- :disabled="disableAddUser" -->
+          <!-- :title="
+              disableAddUser
+                ? 'Please complete the Meta account integration to enable Add User and Bulk Upload features.'
+                : ''
+            " -->
+          <button
+            @click="navigateToUsers"
+            :class="[
+              'text-primary-400 hover:text-primary-300',
+              'text-sm font-medium flex items-center gap-1',
+            ]"
+          >
             <UIcon name="heroicons:plus" class="w-4 h-4" />
             Add User
           </button>
         </div>
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
           <div v-if="loading" class="space-y-4">
             <div v-for="i in 4" :key="i" class="flex items-center space-x-3 animate-pulse">
               <div class="w-10 h-10 bg-gray-600 rounded-full"></div>
@@ -134,22 +154,25 @@
               </UBadge>
             </template>
           </UTable>
-
         </div>
       </div>
 
       <!-- Recent Documents -->
       <div class="bg-dark-800 rounded-lg border border-dark-700">
-        <div class="flex items-center justify-between p-6 border-b border-dark-700">
-          <h2 class="text-lg font-semibold text-white">Recent Artefacts</h2>
-          <div class="text-sm text-gray-400">Latest artefact uploads and processing status</div>
-          <button @click="navigateTo('/admin/artefacts')"
-            class="text-primary-400 hover:text-primary-300 text-sm font-medium flex items-center gap-1">
+        <div
+          class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-dark-700 gap-3 sm:gap-0"
+        >
+          <h2 class="text-base sm:text-lg font-semibold text-white">Recent Artifacts</h2>
+          <div class="text-sm text-gray-400">Latest artifact uploads and processing status</div>
+          <button
+            @click="navigateToArtefacts"
+            class="text-primary-400 hover:text-primary-300 text-sm font-medium flex items-center gap-1"
+          >
             <UIcon name="heroicons:cloud-arrow-up" class="w-4 h-4" />
             Upload
           </button>
         </div>
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
           <div v-if="loading" class="space-y-4">
             <div v-for="i in 4" :key="i" class="flex items-center space-x-3 animate-pulse">
               <div class="flex-1">
@@ -173,8 +196,8 @@
                 {{ row.status }}
               </UBadge>
             </template>
-            <template #createdAt-data="{ row }">
-              <span class="text-gray-400 text-xs">{{ formatTime(row.createdAt) }}</span>
+            <template #updatedAt-data="{ row }">
+              <span class="text-gray-400 text-xs">{{ row.updatedAt }}</span>
             </template>
           </UTable>
         </div>
@@ -183,54 +206,67 @@
 
     <!-- Platform Integrations -->
     <div class="bg-dark-800 rounded-lg border border-dark-700">
-      <div class="flex items-center justify-between p-6 border-b border-dark-700">
-        <h2 class="text-lg font-semibold text-white">Platform Integrations</h2>
-        <div class="text-sm text-gray-400">Manage connections to external platforms</div>
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b border-dark-700 gap-2 sm:gap-0">
+        <h2 class="text-base sm:text-lg font-semibold text-white">Platform Integrations</h2>
+        <div class="text-xs sm:text-sm text-gray-400">Manage connections to external platforms</div>
       </div>
-      <div class="p-6">
-        <div class="grid md:grid-cols-3 gap-6">
-          <div v-for="integration in integrations" :key="integration.id"
-            class="flex items-center justify-between p-4 bg-dark-900 rounded-lg border border-dark-700">
+      <div class="p-4 sm:p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
+          <div
+            v-for="integration in integrations"
+            :key="integration.id"
+            class="flex items-center justify-between p-4 bg-dark-900 rounded-lg border border-dark-700"
+          >
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                <UIcon :name="getIntegrationIcon(integration.name)" class="w-6 h-6"
-                  :class="getIntegrationIconColor(integration.name)" />
+                <UIcon
+                  :name="getIntegrationIcon(integration.name)"
+                  class="w-6 h-6"
+                  :class="getIntegrationIconColor(integration.name)"
+                />
               </div>
               <div>
                 <p class="text-white font-medium">{{ integration.name }}</p>
                 <p class="text-gray-400 text-sm">{{ integration.description }}</p>
               </div>
             </div>
-            <UButton @click="navigateTo(integration.path)" :color="integration.isConnected ? 'green' : 'blue'" size="xs"
-              :icon="integration.isConnected ? 'heroicons:check' : 'heroicons:link'">
-              {{ integration.isConnected ? 'Connected' : 'Connect' }}
+            <UButton
+              @click="navigateToIntegration(integration.path)"
+              :color="integration.isConnected ? 'green' : 'blue'"
+              size="xs"
+              :icon="integration.isConnected ? 'heroicons:check' : 'heroicons:link'"
+            >
+              {{ integration.isConnected ? 'Manage' : 'Manage' }}
             </UButton>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { formatDateTime } from '~/utils'
+useHead({ title: 'Dashboard - Admin Dashboard - provento.ai' })
+import { handleAuthError as handleAuthErrorShared } from '~/composables/useAuthError'
+import PlanUpgradeAlert from '@/components/ui/PlanUpgradeAlert.vue'
 
 definePageMeta({
   layout: 'admin',
   middleware: 'auth',
 })
 
-// Import stores - UPDATED PATHS
-import { useArtefactsStore } from '~/stores/artefacts'
-import { useUsersStore, useIntegrationsStore, useAuthStore, useAnalyticsStore } from '~/stores'
+// Import stores - keep only necessary ones
+import { useAuthStore } from '~/stores'
+import { useDashboardStore } from '~/stores/dashboard'
+import { useProfileStore } from '~/stores/profile'
+
+const profileStore = useProfileStore()
+
+const planDetails = computed(() => profileStore.getUserProfile?.plan_details || {})
 
 const loading = ref(true)
-const usersStore = useUsersStore()
-const artefactsStore = useArtefactsStore()
-const integrationsStore = useIntegrationsStore()
 const authStore = useAuthStore()
-const analyticsStore = useAnalyticsStore()
+const dashboardStore = useDashboardStore()
 
 const authUser = computed(() => authStore.getAuthUser)
 
@@ -243,9 +279,9 @@ const userColumns = [
 ]
 
 const artefactColumns = [
-  { key: 'fileInfo', label: 'Artefact', sortable: false },
+  { key: 'fileInfo', label: 'Artifact', sortable: false },
   { key: 'status', label: 'Status', sortable: false },
-  { key: 'createdAt', label: 'Created', sortable: false },
+  { key: 'updatedAt', label: 'Updated At', sortable: false },
 ]
 
 // Reactive data
@@ -258,14 +294,99 @@ const stats = ref({
   conversationGrowth: 0,
   tokensUsed: 0,
   tokenGrowth: 0,
+  processedArtefacts: 0,
 })
+
+// ---- PLAN USAGE METRICS ----
+
+// 1. Users usage
+const usersLimit = computed(() => (planDetails.value as any)?.users || 0)
+const usersUsage = computed(() => {
+  const current = stats.value.totalUsers
+  const limit = usersLimit.value
+  const percentage = limit > 0 ? (current / limit) * 100 : 0
+  return { name: 'Users', current, limit, percentage }
+})
+
+// 2. Artifacts usage
+const artefactsLimit = computed(() => (planDetails.value as any)?.artefacts || 0)
+const artefactsUsage = computed(() => {
+  const current = stats.value.totalArtefacts
+  const limit = artefactsLimit.value
+  const percentage = limit > 0 ? (current / limit) * 100 : 0
+  return { name: 'Artifacts', current, limit, percentage }
+})
+
+// 3. Conversations usage (Query Limit)
+const conversationsLimit = computed(() => (planDetails.value as any)?.limit_requests || 0)
+const conversationsUsage = computed(() => {
+  const current = stats.value.totalConversations
+  const limit = conversationsLimit.value
+  const percentage = limit > 0 ? (current / limit) * 100 : 0
+  return { name: 'Total Queries', current, limit, percentage }
+})
+
+// 4. Tokens usage (Token Limit)
+const tokensLimit = computed(() => (planDetails.value as any)?.tokens || 0)
+const tokensUsage = computed(() => {
+  const current = stats.value.tokensUsed
+  const limit = tokensLimit.value
+  const percentage = limit > 0 ? (current / limit) * 100 : 0
+  return { name: 'Tokens', current, limit, percentage }
+})
+
+const usageMetrics = computed(() => [
+  usersUsage.value,
+  artefactsUsage.value,
+  conversationsUsage.value,
+  tokensUsage.value,
+])
+
+const usageAlertData = computed(() => {
+  const metrics = usageMetrics.value
+  return {
+    metrics,
+    exceededMetrics: metrics.filter((m) => m.percentage >= 100),
+    highMetrics: metrics.filter((m) => m.percentage >= 80 && m.percentage < 100),
+    hasExceeded: metrics.some((m) => m.percentage >= 100),
+    hasHigh: metrics.some((m) => m.percentage >= 80 && m.percentage < 100),
+  }
+})
+
+const goToPlans = () => {
+  navigateTo('/admin/plans')
+}
+
+const getUsageColor = (current: number, limit?: number) => {
+  if (!limit) return 'text-white'
+  const percent = (current / limit) * 100
+  if (percent >= 100) return 'text-red-400'
+  if (percent >= 80) return 'text-orange-400'
+  return 'text-white'
+}
+
+// ---- COLOR CLASSES FOR DASHBOARD CARDS ----
+
+// Users
+const usersTextColor = computed(() => getUsageColor(stats.value.totalUsers, usersLimit.value))
+
+// Artifacts
+const artefactsTextColor = computed(() =>
+  getUsageColor(stats.value.totalArtefacts, artefactsLimit.value),
+)
+
+// Conversations (queries)
+const conversationsTextColor = computed(() =>
+  getUsageColor(stats.value.totalConversations, conversationsLimit.value),
+)
 
 const recentUsers = ref([])
 const recentArtefacts = ref([])
 const integrations = ref([])
 
-// Get organization ID from auth user
-const organizationId = computed(() => authUser.value?.org_id)
+const isWhatsAppConnected = computed(() => {
+  return integrations.value.some((i: any) => i.name === 'WhatsApp Business' && i.isConnected)
+})
 
 const formatTokens = (tokens: number) => {
   if (tokens >= 1000000) {
@@ -275,11 +396,6 @@ const formatTokens = (tokens: number) => {
   }
   return tokens.toString()
 }
-
-const formatTime = (date: Date) => {
-  return formatDateTime(date)
-}
-
 
 const sortedArtefacts = computed(() => {
   const docs = [...recentArtefacts.value]
@@ -299,7 +415,7 @@ const getStatusColor = (status: string): BadgeColor => {
   const colors: Record<string, BadgeColor> = {
     Active: 'green',
     Inactive: 'red',
-    Pending: 'yellow'
+    Pending: 'yellow',
   }
   return colors[status] || 'gray'
 }
@@ -308,11 +424,10 @@ const getArtefactStatusColor = (status: string): BadgeColor => {
   const colors: Record<string, BadgeColor> = {
     processed: 'green',
     processing: 'yellow',
-    failed: 'red'
+    failed: 'red',
   }
   return colors[status] || 'gray'
 }
-
 
 const getIntegrationIcon = (name: string) => {
   const iconMap: Record<string, string> = {
@@ -332,17 +447,73 @@ const getIntegrationIconColor = (name: string) => {
   return colorMap[name] || 'text-gray-400'
 }
 
-// Fetch dashboard data
-const fetchDashboardData = async () => {
+// Fetch dashboard data (single API call)
+const fetchDashboardData = async (orgId?: string | null) => {
   loading.value = true
   try {
-    await fetchUsersData()
-    await fetchArtefactsData()
-    await fetchIntegrationsData()
-    await fetchStatsData()
+    await dashboardStore.fetchDashboard(orgId)
 
+    // Map recent users
+    recentUsers.value = dashboardStore.recentUsers.map((u: any) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      status: u.status,
+      role: u.role,
+      updated_at: u.updated_at,
+    }))
+
+    // Map recent artifacts
+    recentArtefacts.value = dashboardStore.recentArtefacts.map((d: any) => ({
+      id: d.id,
+      title: d.title,
+      fileName: d.fileName,
+      fileSize: d.fileSize,
+      status: d.status,
+      updatedAt: d.updatedAt,
+    }))
+
+    // Map integrations overview into UI integrations list
+    if (dashboardStore.overview) {
+      const overview = dashboardStore.overview
+      integrations.value = [
+        {
+          id: 1,
+          name: 'Slack',
+          description: 'Team communication',
+          isConnected: overview.integrationStatus?.slack === 'connected',
+          path: '/admin/integrations/slack',
+        },
+        {
+          id: 2,
+          name: 'Microsoft Teams',
+          description: 'Video conferencing',
+          isConnected: overview.integrationStatus?.teams === 'connected',
+          path: '/admin/integrations/teams',
+        },
+        {
+          id: 3,
+          name: 'WhatsApp Business',
+          description: 'Customer messaging',
+          isConnected: overview.integrationStatus?.whatsapp === 'connected',
+          path: '/admin/integrations/whatsapp',
+        },
+      ]
+
+      // Populate stats
+      stats.value.totalUsers = overview.userCounts?.total || stats.value.totalUsers
+      stats.value.totalArtefacts =
+        overview.artefactsStats?.totalArtefacts || stats.value.totalArtefacts
+      stats.value.processedArtefacts =
+        overview.artefactsStats?.processedArtefacts || stats.value.processedArtefacts
+      stats.value.tokensUsed = overview.tokenUsage?.allTime?.tokens || stats.value.tokensUsed
+      // Map conversations count
+      stats.value.totalConversations =
+        overview.conversations?.total || stats.value.totalConversations
+    }
   } catch (error) {
     console.error('Failed to fetch dashboard data:', error)
+    if (await handleAuthErrorShared(error)) return
     const { showError } = useNotification()
     showError('Failed to load dashboard data. Please try again.')
   } finally {
@@ -350,109 +521,37 @@ const fetchDashboardData = async () => {
   }
 }
 
-// Fetch users data
-const fetchUsersData = async () => {
-  try {
-    await usersStore.fetchUsers()
+import { useRoute } from 'vue-router'
+const route = useRoute()
 
-    // First sort by updated_at, then take top 5
-    const sortedUsers = [...usersStore.users].sort((a, b) => {
-      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-    })
-
-    // Update recent users with sorted data INCLUDING updated_at
-    recentUsers.value = sortedUsers.slice(0, 5).map(user => ({
-      id: user.user_id,
-      name: user.name,
-      email: user.email,
-      status: user.status || 'Active',
-      role: user.role,
-      updated_at: user.updated_at // Add this line
-    }))
-    stats.value.totalUsers = usersStore.users.length
-  } catch (error) {
-    console.error('Failed to fetch users data:', error)
-    throw error
-  }
-}
-// Fetch artefacts data
-const fetchArtefactsData = async () => {
-  try {
-    await artefactsStore.fetchArtefacts()
-
-    // Update recent artefacts with proper date handling
-    recentArtefacts.value = artefactsStore.artefacts.slice(0, 5).map(artefact => ({
-      id: artefact.id,
-      title: artefact.name,
-      fileName: artefact.name,
-      fileSize: artefact.file_size || 0,
-      status: artefact.status,
-      createdAt: artefact.created_at
-        ? formatDateTime(artefact.created_at)
-        : formatDateTime(artefact.updatedAt)
-    }))
-
-
-    stats.value.totalArtefacts = artefactsStore.stats.totalArtefacts
-  } catch (error) {
-    console.error('Failed to fetch artefacts data:', error)
-    throw error
-  }
-}
-// Fetch integrations data
-const fetchIntegrationsData = async () => {
-  try {
-
-    const response = await integrationsStore.fetchOverview(true)
-
-    if (response.success) {
-
-      integrations.value = [
-        {
-          id: 1,
-          name: 'Slack',
-          description: 'Team communication',
-          isConnected: integrationsStore.getIntegrationStatus('slack') === 'connected',
-          path: '/admin/integrations/slack',
-        },
-        {
-          id: 2,
-          name: 'Microsoft Teams',
-          description: 'Video conferencing',
-          isConnected: integrationsStore.getIntegrationStatus('teams') === 'connected',
-          path: '/admin/integrations/teams',
-        },
-        {
-          id: 3,
-          name: 'WhatsApp Business',
-          description: 'Customer messaging',
-          isConnected: integrationsStore.getIntegrationStatus('whatsapp') === 'connected',
-          path: '/admin/integrations/whatsapp',
-        },
-      ]
-    } else {
-      console.error('fetchOverview failed:', response.message)
-    }
-  } catch (error) {
-    console.error('Failed to fetch integrations data:', error)
-    throw error
-  }
+const getOrgQuery = () => {
+  return route.query?.org || route.query?.org_id
+    ? String(route.query?.org || route.query?.org_id)
+    : null
 }
 
-
-const fetchStatsData = async () => {
-  try {
-    const tokenUsage = integrationsStore.getTokenUsageAllTime
-    stats.value.totalConversations = tokenUsage.messages
-    stats.value.tokensUsed = tokenUsage.tokens
-
-  } catch (error) {
-    console.error('Failed to fetch stats data:', error)
-  }
+const navigateToUsers = () => {
+  const orgId = getOrgQuery()
+  navigateTo(orgId ? { path: '/admin/users', query: { org: orgId } } : '/admin/users')
 }
+
+const navigateToArtefacts = () => {
+  const orgId = getOrgQuery()
+  navigateTo(orgId ? { path: '/admin/artefacts', query: { org: orgId } } : '/admin/artefacts')
+}
+
+// Navigate to integration path while preserving org query for superadmin
+const navigateToIntegration = (path: string) => {
+  const orgId = getOrgQuery()
+  navigateTo(orgId ? { path, query: { org: orgId } } : path)
+}
+
+// Allow Add User for admin or superadmin regardless of WhatsApp connection
+const isAdminOrSuperAdmin = computed(() => authStore.isAdmin || authStore.isSuperAdmin)
+const disableAddUser = computed(() => !(isWhatsAppConnected.value || isAdminOrSuperAdmin.value))
 
 onMounted(async () => {
-  await fetchDashboardData()
-  await analyticsStore.fetchOrganizationDetail(organizationId.value)
+  const orgId = getOrgQuery()
+  await fetchDashboardData(orgId)
 })
 </script>

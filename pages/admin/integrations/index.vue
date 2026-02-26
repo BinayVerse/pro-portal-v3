@@ -1,15 +1,19 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-4 sm:space-y-6">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
       <div>
-        <h1 class="text-2xl font-bold text-white mb-2">Integrations Overview</h1>
-        <p class="text-gray-400">Configure and manage integrations with messaging platforms</p>
+        <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-1 sm:mb-2">
+          Integrations Overview
+        </h1>
+        <p class="text-xs sm:text-sm lg:text-base text-gray-400">
+          Configure and manage integrations with messaging platforms
+        </p>
       </div>
       <button
         @click="refreshData"
         :disabled="integrationsStore.isLoading"
-        class="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+        class="flex items-center justify-center sm:justify-start px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex-shrink-0 w-full sm:w-auto"
       >
         <UIcon
           v-if="integrationsStore.isLoading"
@@ -17,14 +21,15 @@
           class="w-4 h-4 mr-2 animate-spin"
         />
         <UIcon v-else name="heroicons:arrow-path" class="w-4 h-4 mr-2" />
-        Refresh
+        <span class="hidden sm:inline">Refresh</span>
+        <span class="sm:hidden">Refresh Data</span>
       </button>
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 xl:gap-6">
       <!-- Active Integrations -->
-      <UCard class="bg-dark-800 border-dark-700">
+      <div class="bg-dark-800 rounded-lg p-4 sm:p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Active Integrations</p>
@@ -38,10 +43,10 @@
             <UIcon name="heroicons:check-circle" class="w-6 h-6 text-green-400" />
           </div>
         </div>
-      </UCard>
+      </div>
 
       <!-- Total Users -->
-      <UCard class="bg-dark-800 border-dark-700">
+      <div class="bg-dark-800 rounded-lg p-4 sm:p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Total Users</p>
@@ -57,10 +62,10 @@
             <UIcon name="heroicons:user-group" class="w-6 h-6 text-blue-400" />
           </div>
         </div>
-      </UCard>
+      </div>
 
       <!-- Messages Today -->
-      <UCard class="bg-dark-800 border-dark-700">
+      <div class="bg-dark-800 rounded-lg p-4 sm:p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Messages Today</p>
@@ -76,10 +81,10 @@
             <UIcon name="heroicons:chat-bubble-left-ellipsis" class="w-6 h-6 text-purple-400" />
           </div>
         </div>
-      </UCard>
+      </div>
 
       <!-- Token Usage -->
-      <UCard class="bg-dark-800 border-dark-700">
+      <div class="bg-dark-800 rounded-lg p-4 sm:p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Token Usage Today</p>
@@ -87,7 +92,7 @@
               {{
                 integrationsStore.isLoading
                   ? '...'
-                  : integrationsStore.formatTokenUsage(integrationsStore.getTokenUsageToday.tokens)
+                  : formatCompactNumber(integrationsStore.getTokenUsageToday.tokens)
               }}
             </p>
             <!-- <p class="text-xs text-gray-500 mt-1">
@@ -102,11 +107,11 @@
             <UIcon name="heroicons:bolt" class="w-6 h-6 text-orange-400" />
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- Main Content Grid -->
-    <div class="grid lg:grid-cols-2 gap-6">
+    <div class="grid xl:grid-cols-2 gap-6">
       <!-- Integration Status -->
       <UCard class="bg-dark-800 border-dark-700">
         <template #header>
@@ -188,27 +193,22 @@
                 }}
               </span>
 
-              <!-- Connected State Button -->
-              <button
-                v-if="integration.connected"
-                @click="navigateToIntegration(integration.path)"
-                class="flex items-center px-3 py-1 text-xs font-medium bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
-              >
-                <UIcon name="heroicons:cog-6-tooth" class="w-3 h-3 mr-1" />
-                Manage
-              </button>
+              <!-- Always show Manage button (navigates to integration page). For iMessage show Soon. -->
+              <template v-if="integration.name !== 'iMessage'">
+                <button
+                  @click="navigateToIntegration(integration.path)"
+                  class="flex items-center px-3 py-1 text-xs font-medium rounded transition-colors"
+                  :class="
+                    integration.connected
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  "
+                >
+                  <UIcon name="heroicons:cog-6-tooth" class="w-3 h-3 mr-1" />
+                  Manage
+                </button>
+              </template>
 
-              <!-- Disconnected State Button -->
-              <button
-                v-else-if="integration.name !== 'iMessage'"
-                @click="navigateToIntegration(integration.path)"
-                class="flex items-center px-3 py-1 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-              >
-                <UIcon name="heroicons:plus" class="w-3 h-3 mr-1" />
-                Connect
-              </button>
-
-              <!-- Coming Soon State Button -->
               <button
                 v-else
                 disabled
@@ -250,6 +250,7 @@
             <UIcon name="heroicons:clock" class="w-8 h-8 text-gray-500 mx-auto mb-2" />
             <p class="text-gray-400">No recent activity</p>
           </div>
+
           <div
             v-for="activity in integrationsStore.getRecentActivity"
             :key="activity.id"
@@ -285,18 +286,85 @@ definePageMeta({
 
 // Store
 const integrationsStore = useIntegrationsStore()
+const authStore = useAuthStore()
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const isSuperAdmin = computed(() => authStore.isSuperAdmin)
 
-// Fetch data on mount
+// Fetch data on mount and start 15s polling (stop on unmount)
+let integrationsIntervalId: number | null = null
+
 onMounted(async () => {
-  await integrationsStore.fetchOverview()
-  // Start auto-refresh every 5 minutes
-  integrationsStore.startAutoRefresh()
+  // derive orgId from route query for superadmin support
+  const orgId =
+    route.query?.org || route.query?.org_id ? String(route.query?.org || route.query?.org_id) : null
+
+  // initial load (pass orgId if present)
+  await integrationsStore.fetchOverview(orgId)
+
+  // start polling every 15 seconds (silent, no loading indicator)
+  integrationsIntervalId = window.setInterval(() => {
+    if (!integrationsStore.loading) {
+      integrationsStore.fetchOverview(orgId, true, false)
+    }
+  }, 15000)
+})
+
+onUnmounted(() => {
+  if (integrationsIntervalId) {
+    clearInterval(integrationsIntervalId)
+    integrationsIntervalId = null
+  }
+
+  // Remove focus listener if set
+  try {
+    if (onWindowFocus && process.client) {
+      window.removeEventListener('focus', onWindowFocus)
+      onWindowFocus = null
+    }
+  } catch (e) {
+    // ignore errors
+  }
 })
 
 // Methods
-const navigateToIntegration = (path: string) => {
+const navigateToIntegration = (path: string, preserveOrg: boolean = true) => {
+  if (!path) return
   if (path.includes('i-message')) return // Disabled for iMessage
-  navigateTo(path)
+
+  // ensure leading slash
+  const target = path.startsWith('/') ? path : `/${path}`
+
+  // preserve org query param for superadmin flows
+  const orgQuery = route.query?.org || route.query?.org_id || null
+  if (preserveOrg && orgQuery) {
+    navigateTo({ path: target, query: { org: String(orgQuery) } })
+  } else {
+    navigateTo(target)
+  }
+}
+
+const onIntegrationClick = (integration: any) => {
+  // If already connected, manage should remain enabled
+  if (integration.connected) {
+    navigateToIntegration(integration.path)
+    return
+  }
+
+  // For disconnected integrations, disable action for superadmin except WhatsApp
+  if (isSuperAdmin.value && integration.name !== 'WhatsApp') {
+    // show a tooltip or notification (non-blocking)
+    if (process.client) {
+      const { showInfo } = useNotification()
+      showInfo(
+        'Super admin cannot connect integrations. Switch to an organization admin to connect.',
+      )
+    }
+    return
+  }
+
+  // otherwise navigate to integration page (connect flow)
+  navigateToIntegration(integration.path)
 }
 
 const getActivityColor = (type: string) => {
@@ -329,19 +397,37 @@ const getIntegrationDetailText = (integration: any) => {
 }
 
 const refreshData = async () => {
-  await integrationsStore.refreshOverview()
+  const orgId =
+    route.query?.org || route.query?.org_id ? String(route.query?.org || route.query?.org_id) : null
+  await integrationsStore.refreshOverview(orgId, true, true)
 }
 
 // Auto-refresh on focus
+let onWindowFocus: (() => void) | null = null
 if (process.client) {
-  window.addEventListener('focus', () => {
+  onWindowFocus = () => {
     if (integrationsStore.needsRefresh) {
       refreshData()
     }
-  })
+  }
+  window.addEventListener('focus', onWindowFocus)
 }
 
+onUnmounted(() => {
+  // existing interval cleanup
+  if (integrationsIntervalId) {
+    clearInterval(integrationsIntervalId)
+    integrationsIntervalId = null
+  }
+
+  // remove focus listener
+  if (onWindowFocus && process.client) {
+    window.removeEventListener('focus', onWindowFocus)
+    onWindowFocus = null
+  }
+})
+
 useHead({
-  title: 'Integrations Overview - Admin Dashboard',
+  title: 'Integrations Overview - Admin Dashboard - provento.ai',
 })
 </script>

@@ -98,7 +98,19 @@ const fileUrl = ref<string | null>(null)
 const fileType = ref<string | null>(null)
 
 // Import stores and composables
+import { useAuthStore } from '~/stores/auth'
+import { useRoute } from 'vue-router'
 const artefactsStore = useArtefactsStore()
+const authStore = useAuthStore()
+const route = useRoute()
+const authUser = computed(() => authStore.getAuthUser)
+const modalOrgId = computed(() => {
+  if (authUser.value?.role_id === 0) {
+    const q = route && route.query ? route.query.org || route.query.org_id : null
+    if (q && String(q).trim()) return String(q)
+  }
+  return authUser.value?.org_id || null
+})
 const { showError } = useNotification()
 
 // Helper function to clear content
@@ -110,7 +122,7 @@ const clearContent = () => {
   isLoading.value = false
 }
 
-// Watch for both artefact and modal state changes
+// Watch for both artifact and modal state changes
 watch(
   () => [props.artefact, props.isOpen],
   async ([newArtefact, isOpen]) => {
@@ -133,7 +145,7 @@ const loadDocument = async () => {
   fileUrl.value = null
 
   try {
-    const result = await artefactsStore.viewArtefact(props.artefact.id)
+    const result = await artefactsStore.viewArtefact(props.artefact.id, modalOrgId.value)
 
     if (result.success && result.data) {
       fileUrl.value = result.data.fileUrl
@@ -205,7 +217,11 @@ const renderContentByFileType = async (fileType: string, fileUrl: string) => {
         let arrayBuffer
 
         try {
-          if (decodedData.startsWith('data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,')) {
+          if (
+            decodedData.startsWith(
+              'data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,',
+            )
+          ) {
             // Extract base64 content after the prefix
             const base64Content = decodedData.split(',')[1]
             const binaryString = atob(base64Content)
@@ -297,7 +313,8 @@ const parseCSVToHTML = (csvContent: string): string => {
   // Remove quotes from headers
   const headers = parsedRows[0].map((header) => header?.replace(/"/g, ''))
 
-  let tableHTML = '<div style="height: calc(100vh - 190px); overflow-y: auto; margin: 20px; background: #1e293b; border-radius: 0.375rem; padding: 1rem;"><table class="table-auto border-collapse border border-gray-300"><thead><tr>'
+  let tableHTML =
+    '<div style="height: calc(100vh - 190px); overflow-y: auto; margin: 20px; background: #1e293b; border-radius: 0.375rem; padding: 1rem;"><table class="table-auto border-collapse border border-gray-300"><thead><tr>'
 
   headers.forEach((col) => {
     tableHTML += `<th class="border border-gray-300 p-2">${escapeHtml(col)}</th>`

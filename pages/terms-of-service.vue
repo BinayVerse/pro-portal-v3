@@ -1,4 +1,6 @@
 <script setup>
+useHead({ title: 'Terms of Service - provento.ai' })
+
 definePageMeta({
   layout: 'main',
 })

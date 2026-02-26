@@ -5,7 +5,7 @@
       <div class="text-center">
         <NuxtLink to="/" class="inline-flex items-center space-x-3 mb-6">
           <img
-            src="https://cdn.builder.io/api/v1/image/assets%2Fb2a7382a9c9146babd538ccc60e9d0b5%2Fbddd43caf4614f99a3fbff498927abcc?format=webp&width=800"
+            src="~/assets/media/logo.svg"
             alt="Provento Logo"
             class="w-10 h-10"
           />
@@ -76,6 +76,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Forgot Password - provento.ai' })
 import { useAuthStore } from '~/stores/auth/index'
 
 definePageMeta({

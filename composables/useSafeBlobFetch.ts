@@ -1,6 +1,7 @@
 // composables/useSafeBlobFetch.ts
 
 import { navigateTo, useNuxtApp } from '#app'
+import { handleAuthError as handleAuthErrorShared } from '~/composables/useAuthError'
 
 export async function useSafeBlobFetch(url: string, options: RequestInit = {}): Promise<Blob> {
   const { showError } = useNotification()
@@ -15,9 +16,8 @@ export async function useSafeBlobFetch(url: string, options: RequestInit = {}): 
   })
 
   if (response.status === 401) {
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('authUser')
-
+    // Let shared handler clear auth and redirect
+    await handleAuthErrorShared({ statusCode: 401, response: { status: 401 }, message: 'Unauthorized' })
     showError?.('Session expired. Please sign in again.')
     navigateTo('/login')
     throw new Error('Unauthorized')

@@ -1,0 +1,13 @@
+<svg 
+  width="20" 
+  height="20" 
+  viewBox="0 0 24 24" 
+  fill="none" 
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path d="M3 10C3 10 3 19 3 20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20C21 19 21 10 21 10H3Z" fill="#EAB308" fill-opacity="0.8"/>
+  <path d="M21 6C21 4.89543 20.1046 4 19 4H5C3.89543 4 3 4.89543 3 6V10H21V6Z" fill="#3B82F6"/>
+  <path d="M3 10H21" stroke="white" stroke-width="0.5" opacity="0.3"/>
+  <rect x="7" y="2" width="2" height="4" rx="1" fill="#94A3B8"/>
+  <rect x="15" y="2" width="2" height="4" rx="1" fill="#94A3B8"/>
+</svg>

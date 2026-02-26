@@ -1,48 +1,98 @@
-<!-- /pages/admin/users.vue -->
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-white mb-2">User Management</h1>
-        <p class="text-gray-400">
+    <div
+      class="space-y-4 sm:space-y-0 sm:flex sm:flex-row sm:items-start sm:justify-between"
+      style="margin-top: 0"
+    >
+      <div class="w-full sm:w-auto">
+        <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-1 sm:mb-2">
+          User Management
+        </h1>
+        <p class="text-xs sm:text-sm lg:text-base text-gray-400">
           Manage user accounts, roles, and permissions across your organization.
         </p>
       </div>
-      <div class="flex items-center space-x-3">
-        <button
-          @click="openBulkUplaod"
-          :class="[
-            baseButtonClass,
-            'bg-dark-800 text-white hover:bg-dark-700',
-            'flex items-center space-x-2',
-          ]"
+      <div
+        class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto flex-shrink-0"
+      >
+        <AppTooltip
+          :text="
+            isDepartmentAdmin
+              ? 'You don’t have permission to bulk upload. This action is limited to Company Admins.'
+              : availableDepartmentsForForm.length === 0
+                ? 'No departments available'
+                : ''
+          "
         >
-          <UIcon name="i-heroicons-cloud-arrow-up" class="w-4 h-4" />
-          <span>Bulk Upload</span>
-        </button>
-        <button
-          @click="openAddUserModal"
-          :class="[
-            baseButtonClass,
-            'bg-blue-600 hover:bg-blue-700 text-white',
-            'flex items-center space-x-2',
-          ]"
+          <button
+            @click="!disableUserActions && !isDepartmentAdmin && openBulkUplaod()"
+            :disabled="disableUserActions || isDepartmentAdmin"
+            :class="[
+              baseButtonClass,
+              'bg-dark-800 text-white hover:bg-dark-700',
+              'flex items-center justify-center sm:justify-start space-x-2',
+              disableUserActions || isDepartmentAdmin ? 'opacity-50 cursor-not-allowed' : '',
+              'flex-1 sm:flex-auto',
+            ]"
+          >
+            <UIcon name="i-heroicons-cloud-arrow-up" class="w-4 h-4" />
+            <span>Bulk Upload</span>
+          </button>
+        </AppTooltip>
+        <AppTooltip
+          :text="
+            isDepartmentAdmin
+              ? 'You don’t have permission to add users. This action is limited to Company Admins.'
+              : availableDepartmentsForForm.length === 0
+                ? 'No departments available'
+                : ''
+          "
         >
-          <UIcon name="i-heroicons-plus" class="w-4 h-4" />
-          <span>Add User</span>
-        </button>
+          <button
+            @click="
+              !disableUserActions &&
+              availableDepartmentsForForm.length > 0 &&
+              !isDepartmentAdmin &&
+              openAddUserModal()
+            "
+            :disabled="
+              disableUserActions || isDepartmentAdmin || availableDepartmentsForForm.length === 0
+            "
+            :class="[
+              baseButtonClass,
+              'bg-blue-600 hover:bg-blue-700 text-white',
+              'flex items-center justify-center sm:justify-start space-x-2',
+              disableUserActions || isDepartmentAdmin || availableDepartmentsForForm.length === 0
+                ? 'opacity-50 cursor-not-allowed'
+                : '',
+              'flex-1 sm:flex-auto',
+            ]"
+          >
+            <UIcon name="i-heroicons-plus" class="w-4 h-4" />
+            <span class="truncate">Add User</span>
+          </button>
+        </AppTooltip>
       </div>
     </div>
 
+    <PlanUpgradeAlert :data="usageAlertData" @upgrade="goToPlans" />
+
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 xl:gap-6">
       <!-- Total Users -->
-      <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
+      <div class="bg-dark-800 rounded-lg p-3 sm:p-4 xl:p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Total Users</p>
-            <p class="text-3xl font-bold text-white mt-2">{{ stats.totalUsers }}</p>
+            <p :class="`text-lg font-bold mt-2 ${usersTextColor}`">
+              {{ stats.totalUsers }} /
+              {{
+                profileStore.getUserProfile?.plan_details && (usersLimit === 0 || usersLimit === -1)
+                  ? 'Unlimited'
+                  : usersLimit || 0
+              }}
+            </p>
           </div>
           <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
             <UIcon name="i-heroicons-users" class="w-6 h-6 text-blue-400" />
@@ -51,11 +101,11 @@
       </div>
 
       <!-- Active Users -->
-      <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
+      <div class="bg-dark-800 rounded-lg p-4 sm:p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Active Users</p>
-            <p class="text-3xl font-bold text-white mt-2">{{ stats.activeUsers }}</p>
+            <p class="text-lg font-bold text-white mt-2">{{ stats.activeUsers }}</p>
           </div>
           <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
             <UIcon name="i-heroicons-check-circle" class="w-6 h-6 text-green-400" />
@@ -64,11 +114,11 @@
       </div>
 
       <!-- Admins -->
-      <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
+      <div class="bg-dark-800 rounded-lg p-4 sm:p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">Admins</p>
-            <p class="text-3xl font-bold text-white mt-2">{{ stats.adminUsers }}</p>
+            <p class="text-lg font-bold text-white mt-2">{{ stats.adminUsers }}</p>
           </div>
           <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
             <UIcon name="i-heroicons-shield-check" class="w-6 h-6 text-purple-400" />
@@ -77,11 +127,11 @@
       </div>
 
       <!-- New This Month -->
-      <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
+      <div class="bg-dark-800 rounded-lg p-4 sm:p-6 border border-dark-700">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-400 text-sm font-medium">New This Month</p>
-            <p class="text-3xl font-bold text-white mt-2">{{ stats.newThisMonth }}</p>
+            <p class="text-lg font-bold text-white mt-2">{{ stats.newThisMonth }}</p>
           </div>
           <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center">
             <UIcon name="i-heroicons-user-plus" class="w-6 h-6 text-orange-400" />
@@ -91,39 +141,52 @@
     </div>
 
     <!-- Search, Filters and Sort -->
-    <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
-      <div class="flex flex-col sm:flex-row gap-4 items-center">
-        <!-- Search Input -->
-        <div class="flex-1">
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <UIcon name="i-heroicons-magnifying-glass" class="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search users..."
-              :class="baseInputWithIcon"
-            />
-          </div>
+    <div class="bg-dark-800 rounded-lg p-4 sm:p-6 border border-dark-700">
+      <div class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <!-- Search -->
+        <div class="w-full">
+          <UInput
+            :model-value="searchQuery"
+            @update:model-value="searchQuery = $event"
+            placeholder="Search users..."
+            size="md"
+            icon="i-heroicons-magnifying-glass"
+          />
         </div>
 
-        <!-- Role Filter -->
-        <div class="sm:w-48">
-          <select v-model="selectedRole" :class="baseInputClass">
-            <option value="">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="user">User</option>
-          </select>
+        <!-- Role -->
+        <div class="w-full">
+          <USelect
+            v-model="selectedRole"
+            :options="[{ label: 'All Roles', value: '' }, ...roleOptions]"
+            option-attribute="label"
+            value-attribute="value"
+            size="md"
+          />
         </div>
 
-        <!-- Status Filter -->
-        <div class="sm:w-48">
-          <select v-model="selectedStatus" :class="baseInputClass">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+        <!-- Status -->
+        <div class="w-full">
+          <USelect
+            v-model="selectedStatus"
+            :options="[
+              { label: 'All Status', value: '' },
+              { label: 'Active', value: 'active' },
+              { label: 'Inactive', value: 'inactive' },
+            ]"
+            size="md"
+          />
+        </div>
+
+        <!-- Department -->
+        <div class="w-full">
+          <USelect
+            v-model="selectedDepartment"
+            :options="departmentFilterOptions"
+            option-attribute="label"
+            value-attribute="value"
+            size="md"
+          />
         </div>
       </div>
     </div>
@@ -131,9 +194,9 @@
     <!-- Users Table -->
     <div class="bg-dark-800 rounded-lg border border-dark-700 overflow-hidden">
       <!-- Table Header -->
-      <div class="px-6 py-4 border-b border-dark-700">
-        <h2 class="text-lg font-semibold text-white">All Users</h2>
-        <p class="text-gray-400 text-sm">
+      <div class="px-4 sm:px-6 py-4 border-b border-dark-700">
+        <h2 class="text-base sm:text-lg font-semibold text-white">All Users</h2>
+        <p class="text-gray-400 text-xs sm:text-sm mt-1">
           A list of all users in your organization including their contact information and roles.
         </p>
       </div>
@@ -149,138 +212,279 @@
         <UIcon name="i-heroicons-exclamation-triangle" class="w-12 h-12 text-red-400 mx-auto" />
         <p class="text-red-400 mt-2">Failed to load users</p>
         <button
-          @click="loadUsers"
+          @click="() => loadUsers()"
           class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
         >
           Retry
         </button>
       </div>
 
-      <!-- Table Content -->
       <div v-else>
-        <UTable :columns="columns" :rows="paginatedUsers" v-model:sort="sort" class="text-white">
-          <!-- Custom cells -->
-          <template #name-data="{ row }">
-            <div class="flex items-center">
-              <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                <span class="text-blue-400 font-medium text-sm">{{ row.initials }}</span>
-              </div>
-              <div class="ml-3">
-                <div class="text-sm font-medium text-white flex items-center gap-2">
-                  {{ row.name }}
-                  <UBadge
-                    v-if="row.id === authUser?.user_id"
-                    size="xs"
-                    class="bg-custom1-300 text-[10px]"
-                    :ui="{ rounded: 'rounded-full' }"
-                  >
-                    Self
-                  </UBadge>
+        <!-- Bulk Actions Bar -->
+        <div
+          v-if="selectedUsers.size > 0"
+          class="mb-4 p-4 bg-blue-900/20 border border-blue-800 rounded-lg flex items-center justify-between"
+        >
+          <div class="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              :checked="
+                paginatedUsers.filter(canBulkAssignUser).every((u) => selectedUsers.has(u.id))
+              "
+              @change="selectAllUsers"
+              class="w-4 h-4 rounded cursor-pointer"
+            />
+            <span class="text-sm text-gray-300">
+              {{ selectedUsers.size }} user{{ selectedUsers.size !== 1 ? 's' : '' }} selected
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button
+              @click="openBulkAssignmentModal('assign')"
+              class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors flex items-center gap-2"
+            >
+              <UIcon name="heroicons:plus" class="w-4 h-4" />
+              Assign Department
+            </button>
+            <button
+              @click="openBulkAssignmentModal('unassign')"
+              class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded text-sm transition-colors flex items-center gap-2"
+            >
+              <UIcon name="heroicons:minus" class="w-4 h-4" />
+              Unassign Department
+            </button>
+          </div>
+        </div>
 
-                  <!-- Primary badge -->
-                  <UBadge
-                    v-if="row.primaryContact"
-                    size="xs"
-                    class="bg-custom1-300 text-[10px]"
-                    :ui="{ rounded: 'rounded-full' }"
-                  >
-                    Primary
-                  </UBadge>
+        <!-- Table Content -->
+        <div>
+          <UTable
+            :columns="columns"
+            :rows="paginatedUsers"
+            v-model:sort="sort"
+            sort-mode="manual"
+            class="text-white"
+          >
+            <!-- Checkbox column -->
+            <template #select-data="{ row }">
+              <AppTooltip v-if="!canBulkAssignUser(row)" :text="getBulkAssignDisabledReason(row)">
+                <input
+                  type="checkbox"
+                  disabled
+                  class="w-4 h-4 rounded opacity-40 cursor-not-allowed"
+                />
+              </AppTooltip>
+
+              <input
+                v-else
+                type="checkbox"
+                :checked="selectedUsers.has(row.id)"
+                @change="toggleUserSelection(row.id)"
+                class="w-4 h-4 rounded cursor-pointer"
+              />
+            </template>
+
+            <!-- Custom cells -->
+            <template #name-data="{ row }">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+                  <span class="text-blue-400 font-medium text-sm">{{ row.initials }}</span>
                 </div>
-                <!-- <div class="text-sm text-gray-400">{{ row.username }}</div> -->
+                <div class="ml-3">
+                  <div class="text-sm font-medium text-white flex items-center gap-2">
+                    {{ row.name }}
+                    <UBadge
+                      v-if="row.id === authUser?.user_id"
+                      size="xs"
+                      class="bg-custom1-300 text-[10px]"
+                      :ui="{ rounded: 'rounded-full' }"
+                    >
+                      Self
+                    </UBadge>
+
+                    <!-- Primary badge -->
+                    <UBadge
+                      v-if="row.primaryContact"
+                      size="xs"
+                      class="bg-custom1-300 text-[10px]"
+                      :ui="{ rounded: 'rounded-full' }"
+                    >
+                      Primary
+                    </UBadge>
+                  </div>
+                  <!-- <div class="text-sm text-gray-400">{{ row.username }}</div> -->
+                </div>
+              </div>
+            </template>
+
+            <template #contact-data="{ row }">
+              <div class="text-sm text-white">{{ row.email }}</div>
+              <div class="text-sm text-gray-400">{{ row.phone || '-' }}</div>
+            </template>
+
+            <template #role-data="{ row }">
+              <span
+                class="inline-flex px-2 py-1 text-xs font-medium rounded-full"
+                :class="{
+                  'bg-red-500/20 text-red-400': row.role === 'super admin',
+                  'bg-purple-500/20 text-purple-400': row.role === 'admin',
+                  'bg-emerald-500/20 text-emerald-400': row.role === 'department admin',
+                  'bg-gray-500/20 text-gray-400': row.role === 'user',
+                }"
+              >
+                {{ row.role }}
+              </span>
+            </template>
+
+            <template #departments-data="{ row }">
+              <!-- Admin: All departments -->
+              <AppTooltip v-if="row.role_id === 1" text="Access to all departments">
+                <UBadge
+                  size="xs"
+                  color="emerald"
+                  class="font-medium"
+                  :ui="{ rounded: 'rounded-full' }"
+                >
+                  All
+                </UBadge>
+              </AppTooltip>
+
+              <!-- Scoped departments -->
+              <div
+                v-else-if="row.departments && row.departments.length > 0"
+                class="flex flex-wrap gap-1"
+              >
+                <UBadge
+                  v-for="dept in row.departments"
+                  :key="dept"
+                  size="xs"
+                  variant="solid"
+                  color="blue"
+                  class="font-medium"
+                  :ui="{ rounded: 'rounded-full' }"
+                >
+                  {{ dept }}
+                </UBadge>
+              </div>
+
+              <!-- Unassigned -->
+              <span v-else class="text-gray-400 text-xs">—</span>
+            </template>
+
+            <template #status-data="{ row }">
+              <span
+                class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full"
+                :class="{
+                  'bg-green-500/20 text-green-400': row.status === 'active',
+                  'bg-red-500/20 text-red-400': row.status === 'inactive',
+                }"
+              >
+                <div
+                  class="w-1.5 h-1.5 rounded-full mr-1"
+                  :class="{
+                    'bg-green-400': row.status === 'active',
+                    'bg-red-400': row.status === 'inactive',
+                  }"
+                ></div>
+                {{ row.status }}
+              </span>
+            </template>
+
+            <template #tokensUsed-data="{ row }">
+              {{ formatTokenCount(row.tokensUsed) }}
+            </template>
+
+            <template #actions-data="{ row }">
+              <div class="flex items-center space-x-2">
+                <AppTooltip
+                  v-if="!canEditUser(row)"
+                  text="You can only edit users in your departments"
+                >
+                  <button
+                    @click="editUser(row)"
+                    :disabled="!canEditUser(row)"
+                    :class="`transition-colors ${
+                      canEditUser(row)
+                        ? 'text-blue-400 hover:text-blue-300'
+                        : 'text-gray-500 cursor-not-allowed opacity-50'
+                    }`"
+                  >
+                    <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
+                  </button>
+                </AppTooltip>
+                <button
+                  v-else
+                  @click="editUser(row)"
+                  :disabled="!canEditUser(row)"
+                  :class="`transition-colors ${
+                    canEditUser(row)
+                      ? 'text-blue-400 hover:text-blue-300'
+                      : 'text-gray-500 cursor-not-allowed opacity-50'
+                  }`"
+                >
+                  <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
+                </button>
+                <AppTooltip :text="row.isActive ? 'Deactivate user' : 'Activate user'">
+                  <button
+                    :disabled="row.id === authUser?.user_id || row.primaryContact"
+                    @click="
+                      (row.id !== authUser?.user_id || !row.primaryContact) &&
+                      showToggleConfirm(row)
+                    "
+                    :class="`transition-colors ${
+                      row.id === authUser?.user_id || row.primaryContact
+                        ? 'cursor-not-allowed disabled:opacity-50 text-gray-500'
+                        : row.isActive
+                          ? 'text-red-400 hover:text-red-300'
+                          : 'text-green-400 hover:text-green-300'
+                    }`"
+                    :aria-label="row.isActive ? 'Deactivate user' : 'Activate user'"
+                  >
+                    <UIcon
+                      :name="row.isActive ? 'heroicons:no-symbol' : 'heroicons:bolt'"
+                      class="w-4 h-4"
+                    />
+                  </button>
+                </AppTooltip>
+                <!-- <button
+                  @click="deleteUser(row)"
+                  class="text-red-400 hover:text-red-300 transition-colors"
+                  title="Delete user"
+                >
+                  <UIcon name="i-heroicons-trash" class="w-4 h-4" />
+                </button> -->
+              </div>
+            </template>
+          </UTable>
+          <div
+            class="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-dark-700 gap-4 sm:gap-0"
+          >
+            <div class="flex items-center space-x-3 text-xs sm:text-sm">
+              <div class="text-gray-400 hidden sm:block">Rows per page</div>
+              <div class="w-20 sm:w-24">
+                <USelect v-model="perPage" :options="perPageOptions" size="sm" />
               </div>
             </div>
-          </template>
 
-          <template #contact-data="{ row }">
-            <div class="text-sm text-white">{{ row.email }}</div>
-            <div class="text-sm text-gray-400">{{ row.phone || '-' }}</div>
-          </template>
-
-          <template #role-data="{ row }">
-            <span
-              class="inline-flex px-2 py-1 text-xs font-medium rounded-full"
-              :class="{
-                'bg-red-500/20 text-red-400': row.role === 'super admin',
-                'bg-purple-500/20 text-purple-400': row.role === 'admin',
-                'bg-gray-500/20 text-gray-400': row.role === 'user',
-              }"
-            >
-              {{ row.role }}
-            </span>
-          </template>
-
-          <template #status-data="{ row }">
-            <span
-              class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full"
-              :class="{
-                'bg-green-500/20 text-green-400': row.status === 'active',
-                'bg-red-500/20 text-red-400': row.status === 'inactive',
-              }"
-            >
-              <div
-                class="w-1.5 h-1.5 rounded-full mr-1"
-                :class="{
-                  'bg-green-400': row.status === 'active',
-                  'bg-red-400': row.status === 'inactive',
-                }"
-              ></div>
-              {{ row.status }}
-            </span>
-          </template>
-
-          <template #tokensUsed-data="{ row }">
-            {{ formatTokenCount(row.tokensUsed) }}
-          </template>
-
-          <template #actions-data="{ row }">
-            <div class="flex items-center space-x-2">
-              <button
-                @click="editUser(row)"
-                class="text-blue-400 hover:text-blue-300 transition-colors"
-                title="Edit user"
-              >
-                <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
-              </button>
-              <button
-                :disabled="row.id === authUser?.user_id || row.primaryContact"
-                @click="(row.id !== authUser?.user_id || !row.primaryContact) && deleteUser(row)"
-                :class="`text-red-500 hover:text-red-700 ${
-                  row.id === authUser?.user_id || row.primaryContact
-                    ? 'cursor-not-allowed disabled:opacity-50'
-                    : ''
-                }`"
-                aria-label="Delete User"
-              >
-                <UIcon name="i-heroicons-trash-20-solid" class="w-4 h-4" />
-              </button>
-              <!-- <button
-                @click="deleteUser(row)"
-                class="text-red-400 hover:text-red-300 transition-colors"
-                title="Delete user"
-              >
-                <UIcon name="i-heroicons-trash" class="w-4 h-4" />
-              </button> -->
+            <div class="overflow-x-auto">
+              <UPagination
+                v-model="page"
+                :total="sortedRows.length"
+                :page-count="computedPageCount"
+                :show-first="false"
+                :show-last="false"
+                :show-edges="false"
+                size="sm"
+                color="blue"
+              />
             </div>
-          </template>
-        </UTable>
-        <div class="p-4 flex justify-end border-t border-dark-700">
-          <UPagination
-            v-model="page"
-            :total="sortedRows.length"
-            :page-count="pageSize"
-            :show-first="true"
-            :show-last="true"
-            :show-edges="true"
-            size="sm"
-            color="blue"
-          />
+          </div>
         </div>
       </div>
     </div>
 
     <!-- User Modal (Add/Edit) -->
-    <UModal v-model="showUserModal">
+    <UModal v-model="showUserModal" prevent-close>
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
@@ -300,10 +504,12 @@
               v-model="userForm.name"
               type="text"
               placeholder="Enter full name"
+              inputClass="custom-input"
               :ui="{
                 base: 'w-full px-3 py-3 border border-dark-700 rounded-lg bg-dark-900 text-white focus:outline-none focus:ring-2 focus:ring-blue-500',
                 padding: { sm: 'p-3' },
               }"
+              icon="i-heroicons-user"
             />
           </UFormGroup>
 
@@ -313,10 +519,12 @@
               v-model="userForm.email"
               type="email"
               placeholder="Enter email address"
+              inputClass="custom-input"
               :ui="{
                 base: 'w-full px-3 py-3 border border-dark-700 rounded-lg bg-dark-900 text-white focus:outline-none focus:ring-2 focus:ring-blue-500',
                 padding: { sm: 'p-3' },
               }"
+              icon="i-heroicons-envelope"
             />
           </UFormGroup>
 
@@ -331,18 +539,92 @@
           </UFormGroup>
 
           <!-- Role -->
-          <UFormGroup label="Role" name="role_id" required>
+          <UFormGroup
+            label="Role"
+            name="role_id"
+            required
+            :area-disabled="
+              usersStore.users.find((u) => u.user_id === userForm.user_id)?.primary_contact ||
+              isDepartmentAdmin
+            "
+          >
             <USelect
               v-model="userForm.role_id"
-              :options="roleOptions"
+              :options="roleOptionsForForm"
               option-attribute="label"
               value-attribute="value"
               placeholder="Select Role"
+              selectClass="custom-select"
+              :disabled="
+                usersStore.users.find((u) => u.user_id === userForm.user_id)?.primary_contact ||
+                isDepartmentAdmin
+              "
               :ui="{
                 base: 'w-full px-3 py-3 border border-dark-700 rounded-lg bg-dark-900 text-white focus:outline-none focus:ring-2 focus:ring-blue-500',
                 padding: { sm: 'p-3' },
               }"
+              icon="i-heroicons-cursor-arrow-ripple"
             />
+            <p v-if="isDepartmentAdmin" class="text-xs text-gray-400 mt-2">
+              {{
+                isEditMode
+                  ? 'Department Admins cannot change user roles'
+                  : 'Department Admins can only create users with USER role'
+              }}
+            </p>
+          </UFormGroup>
+
+          <!-- Departments (Required for USER and DEPARTMENT ADMIN) -->
+          <UFormGroup
+            v-if="
+              userForm.role_id === 2 ||
+              userForm.role_id === 3 ||
+              String(userForm.role_id) === '2' ||
+              String(userForm.role_id) === '3'
+            "
+            label="Departments"
+            name="departments"
+            required
+          >
+            <USelectMenu
+              v-model="userForm.departments"
+              :options="availableDepartmentsForForm"
+              option-attribute="name"
+              value-attribute="dept_id"
+              multiple
+              searchable
+              placeholder="Select departments"
+              icon="i-heroicons-building-office"
+              class="w-full"
+              selectClass="custom-select"
+              :disabled="isUserOutsideDepartmentAdminScope"
+            >
+              <!-- Custom selected value display -->
+              <template #label>
+                <span v-if="!userForm.departments.length" class="text-gray-400">
+                  Select departments
+                </span>
+
+                <span v-else>
+                  {{ selectedDepartmentsLabel }}
+                </span>
+              </template>
+            </USelectMenu>
+            <p
+              v-if="isDepartmentAdmin && availableDepartmentsForForm.length > 0"
+              class="text-xs text-gray-400 mt-2"
+            >
+              <template v-if="isEditMode && isUserOutsideDepartmentAdminScope">
+                You can only edit users in your department(s)
+              </template>
+              <template v-else>
+                {{
+                  isEditMode
+                    ? 'Limited to your department(s)'
+                    : 'You can only assign from your department(s)'
+                }}
+              </template>
+            </p>
           </UFormGroup>
 
           <!-- Primary Contact -->
@@ -350,9 +632,13 @@
             <UCheckbox
               v-model="userForm.primaryContact"
               label="Make Primary Contact"
+              :disabled="isDepartmentAdmin"
               :ui="{ base: 'rounded bg-dark-900 border-dark-700' }"
               @click="handlePrimaryContactToggle"
             />
+            <p v-if="isDepartmentAdmin" class="text-xs text-gray-400 mt-2">
+              Department Admins cannot change the primary contact
+            </p>
           </UFormGroup>
 
           <!-- Active Status -->
@@ -393,7 +679,7 @@
     </UModal>
 
     <!-- Delete User Modal -->
-    <UModal v-model="showDeleteUserModal">
+    <UModal v-model="showDeleteUserModal" prevent-close>
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold text-white">Delete User</h3>
@@ -424,8 +710,65 @@
       </UCard>
     </UModal>
 
+    <!-- Confirm Activate/Deactivate Modal -->
+    <UModal v-model="showToggleConfirmModal" prevent-close>
+      <UCard>
+        <template #header>
+          <h3 class="text-lg font-semibold text-white">Confirm Action</h3>
+        </template>
+
+        <p class="text-gray-300 mb-2">
+          Are you sure you want to
+          <span class="font-semibold">{{
+            selectedUser?.isActive ? 'deactivate' : 'activate'
+          }}</span>
+          user <span class="font-semibold">{{ selectedUser?.name }}</span
+          >?
+        </p>
+        <p class="text-sm text-gray-400 mb-6">
+          <!-- Role-aware message: only mention sign-in restriction for admin/super admin -->
+          <template v-if="selectedUser?.isActive">
+            <template v-if="selectedUser?.role_id === 0 || selectedUser?.role_id === 1">
+              Deactivating will immediately revoke this user's access, prevent them from signing in,
+              and they will lose bot access.
+            </template>
+            <template v-else>
+              Deactivating will remove this user's access within the organization and they'll lose
+              bot access.
+            </template>
+          </template>
+
+          <template v-else>
+            <template v-if="selectedUser?.role_id === 0 || selectedUser?.role_id === 1">
+              Activating will restore this user's access, allow them to sign in, and restore their
+              bot access.
+            </template>
+            <template v-else>
+              Activating will restore this user's access within the organization.
+            </template>
+          </template>
+        </p>
+
+        <div class="flex space-x-3">
+          <UButton
+            @click="showToggleConfirmModal = false"
+            label="Cancel"
+            color="gray"
+            class="flex-1 px-3 py-3 justify-center"
+          />
+          <UButton
+            @click="confirmToggleActive"
+            :loading="togglingUser"
+            label="Confirm"
+            color="blue"
+            class="flex-1 px-3 py-3 justify-center"
+          />
+        </div>
+      </UCard>
+    </UModal>
+
     <!-- Confirm Primary COntact -->
-    <UModal v-model="showPrimaryContactConfirm">
+    <UModal v-model="showPrimaryContactConfirm" prevent-close>
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold text-white">Confirm Primary Contact</h3>
@@ -500,6 +843,7 @@
         <!-- Modal Body -->
         <div class="upload-area space-y-4">
           <!-- File Upload Section -->
+
           <div
             class="drag-area border-dashed border-2 border-gray-300 rounded-md p-6 flex flex-col items-center justify-center cursor-pointer"
             @dragover.prevent
@@ -566,12 +910,106 @@
         </template>
       </UCard>
     </UModal>
+
+    <!-- Bulk Assignment Modal -->
+    <UModal v-model="showBulkAssignmentModal" prevent-close>
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ bulkActionMode === 'assign' ? 'Assign' : 'Unassign' }} Department
+            </h3>
+            <UButton
+              color="gray"
+              variant="ghost"
+              icon="i-heroicons-x-mark-20-solid"
+              class="-my-1"
+              @click="closeBulkAssignmentModal"
+            />
+          </div>
+        </template>
+
+        <div class="space-y-4">
+          <div>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              {{ bulkActionMode === 'assign' ? 'Assign' : 'Unassign' }}
+              {{ selectedUsers.size }} user{{ selectedUsers.size !== 1 ? 's' : '' }}
+              {{ bulkActionMode === 'assign' ? 'to' : 'from' }} department(s)
+            </p>
+
+            <!-- Department selection -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-900 dark:text-white">
+                Select Department{{ selectedBulkDepartments.length !== 1 ? 's' : '' }}
+              </label>
+              <div class="space-y-3 max-h-72 overflow-y-auto">
+                <div v-if="departmentsForBulkModal.length === 0" class="text-center py-4">
+                  <p class="text-sm text-gray-500">
+                    {{
+                      bulkActionMode === 'unassign'
+                        ? 'No departments assigned to selected users'
+                        : 'No departments available'
+                    }}
+                  </p>
+                </div>
+                <div
+                  v-for="dept in departmentsForBulkModal"
+                  :key="dept.dept_id"
+                  @click="toggleBulkDepartment(dept.dept_id)"
+                  class="flex items-center justify-between px-4 py-3 rounded-lg border cursor-pointer transition-all"
+                  :class="
+                    selectedBulkDepartments.includes(dept.dept_id)
+                      ? 'bg-blue-900/40 border-blue-500'
+                      : 'bg-dark-900 border-dark-700 hover:border-blue-400 hover:bg-dark-800'
+                  "
+                >
+                  <span class="text-sm font-medium">
+                    {{ dept.name }}
+                  </span>
+
+                  <!-- Right check icon -->
+                  <UIcon
+                    v-if="selectedBulkDepartments.includes(dept.dept_id)"
+                    name="i-heroicons-check"
+                    class="w-5 h-5 text-blue-400"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end space-x-2">
+            <UButton
+              color="gray"
+              @click="closeBulkAssignmentModal"
+              :disabled="bulkAssignmentLoading"
+            >
+              Cancel
+            </UButton>
+            <UButton
+              :color="bulkActionMode === 'assign' ? 'green' : 'orange'"
+              @click="executeBulkAssignment"
+              :loading="bulkAssignmentLoading"
+              :disabled="selectedBulkDepartments.length === 0 || bulkAssignmentLoading"
+            >
+              {{ bulkActionMode === 'assign' ? 'Assign' : 'Unassign' }}
+            </UButton>
+          </div>
+        </template>
+      </UCard>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { z } from 'zod'
+import { useRoute } from 'vue-router'
+import PlanUpgradeAlert from '@/components/ui/PlanUpgradeAlert.vue'
+import Papa from 'papaparse'
+import 'github-markdown-css/github-markdown.css'
 
 // Types
 interface ApiUser {
@@ -585,6 +1023,7 @@ interface ApiUser {
   added_by: string
   primary_contact: boolean
   org_name: string
+  last_active: string
   updated_at: string
   created_at: string
   source: string
@@ -609,6 +1048,8 @@ interface MappedUser {
   source: string
   primaryContact?: boolean
   isActive?: boolean
+  departments?: string[] // department names for Department Admin users
+  rawDepartmentIds?: string[]
 }
 
 interface UserStats {
@@ -623,14 +1064,16 @@ interface UserForm {
   name: string
   email: string
   phone: string
-  role_id?: number
+  role_id?: number | string // Can be string from USelect or number from defaults
   primaryContact: boolean
   isActive: boolean
+  departments?: string[] // for Department Admin role (dept_id array)
 }
 
 // Using admin layout
 definePageMeta({
   layout: 'admin',
+  middleware: 'auth',
 })
 
 // Store
@@ -642,13 +1085,208 @@ const baseInputWithIcon =
 const baseButtonClass = 'px-4 py-2 rounded-lg border border-dark-700 transition-colors'
 const profileStore = useProfileStore()
 const authStore = useAuthStore()
+const integrationsStore = useIntegrationsStore()
+
+const planDetails = computed(() => profileStore.getUserProfile?.plan_details || {})
+const usersLimit = computed(() => (planDetails.value as any)?.users || 0)
+const selectedDepartment = ref('')
+
+const departmentFilterOptions = computed(() => [
+  { label: 'All Departments', value: '' },
+  ...departmentsList.value
+    .filter((d) => d.id !== 'ALL') // safeguard
+    .map((d) => ({
+      label: d.name,
+      value: String(d.dept_id),
+    })),
+])
+
+// 🔑 For Department Admin: only show their own departments
+const availableDepartmentsForForm = computed(() => {
+  if (!isDepartmentAdmin.value) {
+    // Non-Department Admin can select from all departments
+    return departmentsList.value.filter((d) => d.id !== 'ALL')
+  }
+
+  // Department Admin can only select their own departments
+  return departmentsList.value.filter(
+    (d) => d.id !== 'ALL' && currentUserDepartments.value.includes(String(d.dept_id)),
+  )
+})
+
+// 🔑 Get departments available for bulk unassign (intersection of DA's depts and selected users' depts)
+const departmentsForBulkModal = computed(() => {
+  // For assign mode, use all available departments
+  if (bulkActionMode.value === 'assign') {
+    return availableDepartmentsForForm.value
+  }
+
+  // For unassign mode, show only departments that are actually assigned to selected users
+  if (selectedUsers.value.size === 0) {
+    return []
+  }
+
+  // Collect all department IDs from selected users
+  const selectedUserDepts = new Set<string>()
+  selectedUsers.value.forEach((userId) => {
+    const user = usersList.value.find((u) => u.id === userId)
+    if (user?.rawDepartmentIds) {
+      user.rawDepartmentIds.forEach((deptId) => selectedUserDepts.add(deptId))
+    }
+  })
+
+  // Filter available departments to only those in selected users
+  return availableDepartmentsForForm.value.filter((d) => selectedUserDepts.has(String(d.dept_id)))
+})
 
 const authUser = computed(() => authStore.getAuthUser)
+
+// 🔑 DEPARTMENT ADMIN RESTRICTIONS
+// Get the current authenticated user's departments
+const currentUserDepartments = computed(() => {
+  const userId = authUser.value?.user_id
+  if (!userId) return []
+
+  const userRecord = usersStore.users.find((u) => u.user_id === userId)
+  if (!userRecord) return []
+
+  const deptIds: string[] = Array.isArray((userRecord as any).departments)
+    ? (userRecord as any).departments
+    : []
+
+  return deptIds
+})
+
+// Check if current user is a Department Admin
+const isDepartmentAdmin = computed(() => authUser.value?.role_id === 3)
+
+// 🔑 Check if a user can be edited by the current Department Admin
+const canEditUser = (user: MappedUser): boolean => {
+  // Non-Department Admin can edit anyone (except primary contact restrictions handled elsewhere)
+  if (!isDepartmentAdmin.value) return true
+
+  // 🔑 Department Admin cannot edit other Department Admins or Org Admins
+  if (user.role_id === 3 || user.role_id === 1) {
+    return false
+  }
+
+  // Department Admin can only edit users who:
+  // 1. Are in their department(s), OR
+  // 2. Are unassigned (no departments)
+  if (user.rawDepartmentIds && user.rawDepartmentIds.length > 0) {
+    // User has departments - check if any overlap with Department Admin's departments
+    return user.rawDepartmentIds.some((deptId) => currentUserDepartments.value.includes(deptId))
+  }
+
+  // User is unassigned - Department Admin can edit
+  return true
+}
+
+// 🔑 Get the departments of the user currently being edited
+const currentEditingUserAssignedDepartments = computed(() => {
+  if (!isEditMode.value || !userForm.user_id) return []
+  const user = usersList.value.find((u) => u.id === userForm.user_id)
+  return user?.rawDepartmentIds || []
+})
+
+// 🔑 Check if user being edited is outside Department Admin's scope
+const isUserOutsideDepartmentAdminScope = computed(() => {
+  if (!isDepartmentAdmin.value || !isEditMode.value) return false
+
+  // Check if user has any departments
+  if (currentEditingUserAssignedDepartments.value.length === 0) return false // unassigned user - can edit
+
+  // Check if user has ANY department that overlaps with Department Admin's departments
+  const hasOverlap = currentEditingUserAssignedDepartments.value.some((deptId) =>
+    currentUserDepartments.value.includes(deptId),
+  )
+
+  // Return true (disable) only if user has NO overlap with Department Admin's departments
+  return !hasOverlap
+})
+
+// WhatsApp connection status
+const isWhatsAppConnected = computed(() => {
+  try {
+    // Prefer overview status if available and connected
+    const status = integrationsStore.getIntegrationStatus('whatsapp')
+    if (status === 'connected') return true
+
+    // If overview reports disconnected (or not available) check whatsappDetails directly
+    const wd = integrationsStore.whatsappDetails
+    if (wd && wd.whatsapp_status && wd.business_whatsapp_number) return true
+
+    // Otherwise not connected
+    return false
+  } catch (e) {
+    return false
+  }
+})
+
+const usersUsage = computed(() => {
+  const current = stats.value.totalUsers
+  const limit = usersLimit.value
+  const percentage = limit > 0 ? (current / limit) * 100 : 0
+
+  return {
+    name: 'Users',
+    current,
+    limit,
+    percentage: percentage,
+  }
+})
+
+const usageAlertData = computed(() => {
+  const metrics = [usersUsage.value]
+
+  return {
+    metrics,
+    exceededMetrics: metrics.filter((m) => m.percentage >= 100),
+    highMetrics: metrics.filter((m) => m.percentage >= 80 && m.percentage < 100),
+    hasExceeded: metrics.some((m) => m.percentage >= 100),
+    hasHigh: metrics.some((m) => m.percentage >= 80 && m.percentage < 100),
+  }
+})
+
+const disableUserActions = computed(() => usageAlertData.value.hasExceeded)
+
+const goToPlans = () => {
+  navigateTo('/admin/plans')
+}
+
+const getUsageColor = (current: number, limit?: number) => {
+  if (!limit) return 'text-white'
+  const percent = (current / limit) * 100
+  if (percent >= 100) return 'text-red-400'
+  if (percent >= 80) return 'text-orange-400'
+  return 'text-white'
+}
+
+const selectedDepartmentsLabel = computed(() => {
+  if (!userForm.departments.length) return ''
+
+  const selected = departmentsList.value.filter((d) =>
+    userForm.departments.includes(String(d.dept_id)),
+  )
+
+  const names = selected.map((d) => d.name)
+
+  if (names.length <= 2) {
+    return names.join(', ')
+  }
+
+  const visible = names.slice(0, 2).join(', ')
+  const remaining = names.length - 2
+
+  return `${visible} +${remaining} more`
+})
+
+const usersTextColor = computed(() => getUsageColor(stats.value.totalUsers, usersLimit.value))
 
 // Reactive state
 const phoneRef = ref(null)
 const phoneValidation = ref({ status: true, message: '' })
-
+const route = useRoute()
 const searchQuery = ref('')
 const selectedRole = ref('')
 const selectedStatus = ref('')
@@ -663,11 +1301,23 @@ const error = ref<string | null>(null)
 const usersList = ref<MappedUser[]>([])
 const selectedUser = ref<MappedUser | null>(null)
 const isEditMode = ref(false)
+const departmentsList = ref<any[]>([]) // stores organization departments
 
 const showPrimaryContactConfirm = ref(false)
 const pendingPrimaryContactChange = ref(false)
 const primaryContactConfirmMessage = ref('')
 const isPrimaryContactConfirming = ref(false)
+
+// Toggle confirm modal state
+const showToggleConfirmModal = ref(false)
+const togglingUser = ref(false)
+
+// Bulk assignment state
+const selectedUsers = ref<Set<string>>(new Set())
+const showBulkAssignmentModal = ref(false)
+const bulkActionMode = ref<'assign' | 'unassign'>('assign')
+const selectedBulkDepartments = ref<string[]>([])
+const bulkAssignmentLoading = ref(false)
 
 const confirmPrimaryContactChange = async () => {
   userForm.primaryContact = true
@@ -685,15 +1335,18 @@ const userForm = reactive<UserForm>({
   role_id: 2, // default to 'user'
   primaryContact: false,
   isActive: true,
+  departments: [],
 })
 
 const { showSuccess, showError } = useNotification()
 
 // Table columns with sorting enabled
 const columns = [
+  { key: 'select', label: '', sortable: false, class: 'w-12' },
   { key: 'name', label: 'User', sortable: true },
   { key: 'contact', label: 'Contact', sortable: false },
   { key: 'role', label: 'Role', sortable: true },
+  { key: 'departments', label: 'Department', sortable: false },
   { key: 'status', label: 'Status', sortable: true },
   { key: 'lastActive', label: 'Last Active', sortable: true },
   { key: 'created', label: 'Created', sortable: true },
@@ -701,6 +1354,24 @@ const columns = [
   { key: 'tokensUsed', label: 'Tokens Used', sortable: true },
   { key: 'actions', label: 'Actions' },
 ]
+
+const filteredUsers = computed(() => {
+  return usersList.value.filter((user) => {
+    const matchesSearch =
+      !searchQuery.value ||
+      user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
+
+    const matchesRole = !selectedRole.value || String(user.role_id) === String(selectedRole.value)
+
+    const matchesStatus = !selectedStatus.value || user.status === selectedStatus.value
+
+    const matchesDepartment =
+      !selectedDepartment.value || user.rawDepartmentIds?.includes(String(selectedDepartment.value))
+
+    return matchesSearch && matchesRole && matchesStatus && matchesDepartment
+  })
+})
 
 const sort = ref<{ column: string; direction: 'asc' | 'desc' | null }>({
   column: 'name',
@@ -721,49 +1392,47 @@ applySort()
 const sortedRows = computed(() => {
   if (!sort.value.column || !sort.value.direction) return filteredUsers.value
 
+  const colKey = sort.value.column
+  const dir = sort.value.direction === 'asc' ? 1 : -1
+
+  const fieldMap: Record<string, string> = {
+    lastActive: 'lastActive',
+    created: 'created',
+    tokensUsed: 'tokensUsedRaw',
+    name: 'name',
+    contact: 'email',
+    role: 'role',
+    status: 'status',
+    source: 'source',
+  }
+
+  const field = fieldMap[colKey] || colKey
+
   return [...filteredUsers.value].sort((a, b) => {
-    const colKey = sort.value.column || 'name'
-    const dir = sort.value.direction === 'asc' ? 1 : -1
+    let aVal = (a as any)[field]
+    let bVal = (b as any)[field]
 
-    // Map column keys to actual object properties
-    const fieldMap: Record<string, string> = {
-      name: 'name',
-      contact: 'email',
-      role: 'role',
-      status: 'status',
-      lastActive: 'lastActive',
-      created: 'created',
-      source: 'source',
-      tokensUsed: 'tokensUsedRaw',
-    }
+    // For date fields
+    if (field === 'lastActive' || field === 'created') {
+      const parseDate = (dateStr: string) => {
+        if (!dateStr) return new Date(0)
+        const parts = dateStr.split('/')
+        if (parts.length !== 3) return new Date(0)
+        const [day, month, year] = parts.map(Number)
+        return new Date(year, month - 1, day)
+      }
 
-    const field = (fieldMap as any)[colKey] || colKey
+      const aDate = parseDate(aVal)
+      const bDate = parseDate(bVal)
 
-    let aVal: any = (a as any)[field]
-    let bVal: any = (b as any)[field]
-
-    // Special-case numeric sorting for tokensUsedRaw to avoid formatted-string issues
-    if (field === 'tokensUsedRaw') {
-      const aNum = Number((a as any).tokensUsedRaw) || 0
-      const bNum = Number((b as any).tokensUsedRaw) || 0
-      if (aNum < bNum) return -1 * dir
-      if (aNum > bNum) return 1 * dir
+      if (aDate < bDate) return -1 * dir
+      if (aDate > bDate) return 1 * dir
       return 0
     }
 
-    // If both values can be parsed as numbers, compare numerically
-    const aNum = Number(aVal)
-    const bNum = Number(bVal)
-    if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
-      if (aNum < bNum) return -1 * dir
-      if (aNum > bNum) return 1 * dir
-      return 0
-    }
-
-    // Case-insensitive string comparison fallback
+    // Fallback to other fields without changes
     aVal = aVal ? String(aVal).toLowerCase() : ''
     bVal = bVal ? String(bVal).toLowerCase() : ''
-
     if (aVal < bVal) return -1 * dir
     if (aVal > bVal) return 1 * dir
     return 0
@@ -771,47 +1440,104 @@ const sortedRows = computed(() => {
 })
 
 const page = ref(1)
-const pageSize = ref(5) // rows per page
+const perPage = ref(5) // rows per page
+const perPageOptions = [
+  { label: '5', value: 5 },
+  { label: '10', value: 10 },
+  { label: '20', value: 20 },
+  { label: '50', value: 50 },
+  { label: 'All', value: 'all' },
+]
+const computedPageCount = computed(() =>
+  perPage.value === 'all' ? Math.max(sortedRows.value.length, 1) : (perPage.value as number),
+)
+watch(perPage, () => {
+  page.value = 1
+})
 
 const paginatedUsers = computed(() => {
-  const start = (page.value - 1) * pageSize.value
-  const end = start + pageSize.value
+  if (perPage.value === 'all') return sortedRows.value
+  const start = (page.value - 1) * perPage.value
+  const end = start + perPage.value
   return sortedRows.value.slice(start, end)
 })
 
 const roleOptions = computed(() => {
-  // const superAdmin = [{ value: 0, label: 'Super Admin' }]
-
-  const superAdmin = []
-  const mappedRoles = usersStore.roles.map((role: any) => ({
-    value: role.role_id,
+  const allRoles = usersStore.roles.map((role: any) => ({
     label: role.role_name,
+    value: String(role.role_id),
   }))
 
-  if (authUser.value?.role_id === 0) {
-    return [...superAdmin, ...mappedRoles]
-  } else {
-    return mappedRoles
+  // role_id = 2 → normal user → LAST
+  const userRole = allRoles.find((r) => r.value === '2')
+  const others = allRoles.filter((r) => r.value !== '2')
+
+  return [...others, ...(userRole ? [userRole] : [])]
+})
+
+// 🔑 For form: Include current user's role even if not in available roleOptions
+// This ensures Department Admins can see their own role when editing themselves
+const roleOptionsForForm = computed(() => {
+  const baseOptions = roleOptions.value
+
+  // If we're editing a user and their current role is not in the available options, add it
+  if (isEditMode.value && userForm.role_id) {
+    const currentRoleId = String(userForm.role_id)
+    const roleExists = baseOptions.some((r) => r.value === currentRoleId)
+
+    if (!roleExists) {
+      // Find the role from all available roles (including restricted ones)
+      const allRoles = usersStore.roles.map((role: any) => ({
+        label: role.role_name,
+        value: String(role.role_id),
+      }))
+      const currentRole = allRoles.find((r) => r.value === currentRoleId)
+
+      if (currentRole) {
+        return [...baseOptions, currentRole]
+      }
+    }
   }
+
+  return baseOptions
 })
 
-watch([selectedRole, selectedStatus, searchQuery], () => {
+watch([selectedRole, selectedStatus, searchQuery, selectedDepartment], () => {
   page.value = 1
 })
 
-watch(sort, () => {
+watch([sort], () => {
   page.value = 1
 })
 
-const userSchema = z.object({
-  name: z.string().nonempty('Name is required').min(5, 'Name should be at least 5 characters long'),
-  email: z.string().email('Invalid email address'),
-  role_id: z.union([z.string(), z.number()]).refine((val) => val !== '', {
-    message: 'Role is required',
-  }),
-  primaryContact: z.boolean().optional(), // optional
-  isActive: z.boolean().default(true),
-})
+const userSchema = z
+  .object({
+    name: z
+      .string()
+      .nonempty('Name is required')
+      .min(5, 'Name should be at least 5 characters long'),
+    email: z.string().email('Invalid email address'),
+    role_id: z.union([z.string(), z.number()]).refine((val) => val !== '', {
+      message: 'Role is required',
+    }),
+    primaryContact: z.boolean().optional(), // optional
+    isActive: z.boolean().default(true),
+    departments: z.array(z.string()).optional().default([]),
+  })
+  .refine(
+    (data) => {
+      // 🔑 Departments are REQUIRED for both USER (role_id = 2) and DEPARTMENT ADMIN (role_id = 3)
+      const roleId = Number(data.role_id)
+      if (roleId === 2 || roleId === 3) {
+        return data.departments && data.departments.length > 0
+      }
+      return true
+    },
+    {
+      message: 'At least one department must be assigned',
+      path: ['departments'],
+    },
+  )
 
 // Function to validate phone and update UI
 function validatePhoneField() {
@@ -820,51 +1546,35 @@ function validatePhoneField() {
 }
 // Computed properties
 const stats = computed<UserStats>(() => {
-  console.log('Recomputing stats...', usersList.value)
   const totalUsers = usersList.value.length
   const activeUsers = usersList.value.filter((user) => user.status === 'active').length
   const adminUsers = usersList.value.filter((user) => user.role === 'admin').length
   const newThisMonth = usersList.value.filter((user) => {
-    const created = new Date(user.created)
     const now = new Date()
-    return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear()
+    const createdStr = user.created || ''
+    let createdDate: Date | null = null
+
+    // If date is in MM/DD/YYYY format (from server), parse accordingly
+    if (createdStr.includes('/')) {
+      const parts = createdStr.split('/').map(Number)
+      if (parts.length === 3) {
+        const [month, day, year] = parts
+        createdDate = new Date(year, month - 1, day)
+      }
+    } else {
+      // Fallback to native parsing for ISO or other formats
+      const d = new Date(createdStr)
+      if (!isNaN(d.getTime())) createdDate = d
+    }
+
+    if (!createdDate) return false
+    return (
+      createdDate.getMonth() === now.getMonth() && createdDate.getFullYear() === now.getFullYear()
+    )
   }).length
 
   return { totalUsers, activeUsers, adminUsers, newThisMonth }
 })
-
-const filteredUsers = computed(() => {
-  return (
-    usersList.value
-      // .filter((user) => user.role.toLowerCase() !== 'super admin')
-      .filter((user) => {
-        const matchesSearch =
-          !searchQuery.value ||
-          user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
-
-        const matchesRole = !selectedRole.value || user.role === selectedRole.value
-        const matchesStatus = !selectedStatus.value || user.status === selectedStatus.value
-
-        return matchesSearch && matchesRole && matchesStatus
-      })
-  )
-})
-
-// Helper functions
-const formatDate = (dateString: string | undefined): string => {
-  if (!dateString) return '-'
-  try {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-  } catch {
-    return '-'
-  }
-}
 
 const getInitials = (name: string): string => {
   if (!name) return 'UU'
@@ -915,7 +1625,7 @@ const mapRole = (roleId: number, roleName?: string): string => {
   return roleMap[roleId] || 'user'
 }
 
-const mapApiUserToMappedUser = (user: ApiUser): MappedUser => ({
+const mapApiUserToMappedUser = (user: ApiUser, userDepartments?: string[]): MappedUser => ({
   id: user.user_id,
   name: user.name,
   email: user.email,
@@ -924,33 +1634,89 @@ const mapApiUserToMappedUser = (user: ApiUser): MappedUser => ({
   role: mapRole(user.role_id, user.role),
   status: user.status || 'active',
   initials: getInitials(user.name),
+  isActive: (user.status || 'active') === 'active',
   username: user.email.split('@')[0],
-  lastActive: formatDate(user.updated_at),
-  created: formatDate(user.added_at || user.created_at),
+  lastActive: user.last_active || user.updated_at || user.created_at,
+  created: user.added_at || user.created_at,
   tokensUsedRaw: parseFormattedTokens(user.tokens_used),
   tokensUsed: parseFormattedTokens(user.tokens_used),
   source: user.source,
   primaryContact: user.primary_contact,
-  isActive: (user.status || 'active') === 'active',
+  departments: userDepartments,
 })
 
 // API functions
-const loadUsers = async () => {
-  loading.value = true
-  error.value = null
+const loadUsers = async (showLoading = true) => {
+  // Only show the global loading spinner on the first (explicit) load
+  if (showLoading) {
+    loading.value = true
+    error.value = null
+  }
 
   try {
-    await usersStore.fetchUsers()
+    // If superadmin is viewing org-scoped page, pass org query param to store
+    const orgIdFromQuery =
+      route.query?.org || route.query?.org_id
+        ? String(route.query?.org || route.query?.org_id)
+        : null
+    await usersStore.fetchUsers(orgIdFromQuery)
     if (usersStore.users?.length) {
-      usersList.value = usersStore.users.map(mapApiUserToMappedUser)
+      // Map users with their department names (converted from IDs) for display
+      const mappedUsers = usersStore.users.map((user) => {
+        const deptIds: string[] = Array.isArray((user as any).departments)
+          ? (user as any).departments
+          : []
+
+        return {
+          ...mapApiUserToMappedUser(user),
+          rawDepartmentIds: deptIds.map(String), // 🔑 important
+          departments: deptIds.map((id: string) => departmentMapForDisplay.value[String(id)]).filter(Boolean),
+        }
+      })
+
+      usersList.value = mappedUsers
     }
   } catch (err: any) {
     console.error('Failed to load users:', err)
-    error.value = usersStore.getUserError || err.message || 'Failed to load users'
+    // Only surface the error to UI if it was the initial load
+    if (showLoading) {
+      error.value = usersStore.getUserError || err.message || 'Failed to load users'
+    }
   } finally {
-    loading.value = false
+    if (showLoading) loading.value = false
   }
 }
+
+const loadDepartments = async () => {
+  const orgIdFromQuery =
+    route.query?.org || route.query?.org_id ? String(route.query?.org || route.query?.org_id) : null
+  await usersStore.fetchDepartments(orgIdFromQuery)
+  departmentsList.value = usersStore.getDepartments
+}
+
+// 🔑 Load ALL departments for display purposes (no role-based filtering)
+const loadAllDepartmentsForDisplay = async () => {
+  const orgIdFromQuery =
+    route.query?.org || route.query?.org_id ? String(route.query?.org || route.query?.org_id) : null
+  await usersStore.fetchAllDepartments(orgIdFromQuery)
+}
+
+// 🔑 Department map for display purposes (uses all departments, not just managed ones)
+const departmentMapForDisplay = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  usersStore.allDepartments.forEach((d) => {
+    map[String(d.dept_id)] = d.name
+  })
+  return map
+})
+
+const departmentMap = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  departmentsList.value.forEach((d) => {
+    map[String(d.dept_id)] = d.name
+  })
+  return map
+})
 
 const handlePrimaryContactUpdate = async () => {
   if (!userForm.primaryContact) return
@@ -959,12 +1725,24 @@ const handlePrimaryContactUpdate = async () => {
   const currentPrimaryContact = usersStore.users.find((u) => u.primary_contact)
 
   // If the logged-in user is currently primary, unset them
+  const orgIdFromQuery =
+    route.query?.org || route.query?.org_id ? String(route.query?.org || route.query?.org_id) : null
   if (profileStore.userProfile.primary_contact) {
-    await usersStore.editUser(profileStore.userProfile.user_id, { primary_contact: false }, true)
+    await usersStore.editUser(
+      profileStore.userProfile.user_id,
+      { primary_contact: false },
+      true,
+      orgIdFromQuery,
+    )
   }
   // If another user is primary, unset them
   else if (currentPrimaryContact && currentPrimaryContact.user_id !== userForm.user_id) {
-    await usersStore.editUser(currentPrimaryContact.user_id, { primary_contact: false }, true)
+    await usersStore.editUser(
+      currentPrimaryContact.user_id,
+      { primary_contact: false },
+      true,
+      orgIdFromQuery,
+    )
   }
 
   // Optionally refresh profile or users list
@@ -980,17 +1758,33 @@ const saveUser = async () => {
   const phoneData = phoneRef.value?.phoneData
   const phoneNumberWithCountryCode = phoneData?.number || userForm.phone || ''
 
-  const payload = {
+  const payload: any = {
     user_id: userForm.user_id,
     name: userForm.name,
     email: userForm.email,
     contact_number: phoneNumberWithCountryCode,
-    role_id: userForm.role_id,
+    role_id: Number(userForm.role_id), // Ensure role_id is sent as number to API
     primary_contact: userForm.primaryContact || false,
     status: userForm.isActive ? 'active' : 'inactive',
   }
 
-  updatingUser.value = true
+  // 🔑 Include departments for both USER (2) and DEPARTMENT ADMIN (3) roles
+  if (
+    userForm.role_id === 2 ||
+    userForm.role_id === 3 ||
+    String(userForm.role_id) === '2' ||
+    String(userForm.role_id) === '3'
+  ) {
+    payload.departments = userForm.departments || []
+  }
+
+  // Set appropriate loading flag to prevent duplicate submissions
+  if (isEditMode.value) {
+    updatingUser.value = true
+  } else {
+    addingUser.value = true
+  }
+
   try {
     let result
 
@@ -998,21 +1792,39 @@ const saveUser = async () => {
       await handlePrimaryContactUpdate()
     }
 
+    const orgIdFromQuery =
+      route?.query?.org || route?.query?.org_id
+        ? String(route.query?.org || route.query?.org_id)
+        : null
+
+    if (!isEditMode.value && authUser.value?.role_id === 0 && orgIdFromQuery) {
+      // Superadmin creating for selected org — include org_id in payload
+      payload['org_id'] = orgIdFromQuery
+    }
+
     if (isEditMode.value && userForm.user_id) {
-      result = await usersStore.editUser(userForm.user_id, payload)
+      const orgIdFromQuery =
+        route?.query?.org || route?.query?.org_id
+          ? String(route.query?.org || route.query?.org_id)
+          : null
+      result = await usersStore.editUser(userForm.user_id, payload, false, orgIdFromQuery)
     } else {
       result = await usersStore.createUser(payload)
     }
 
-    if (!result?.success) return
+    if (!result?.success) {
+      // show a user-friendly error message from the store
+      return
+    }
 
-    await loadUsers()
     showUserModal.value = false
+    await loadUsers()
   } catch (err) {
     console.error('Unexpected error saving user:', err)
-    showError('Something went wrong while saving user')
   } finally {
+    // reset both flags to be safe
     updatingUser.value = false
+    addingUser.value = false
   }
 }
 
@@ -1025,6 +1837,7 @@ const resetUserForm = () => {
   userForm.role_id = 2
   userForm.primaryContact = false
   userForm.isActive = true
+  userForm.departments = []
 
   // Reset phone component
   if (phoneRef.value && phoneRef.value.resetPhoneField) {
@@ -1037,20 +1850,35 @@ const resetUserForm = () => {
 const openAddUserModal = () => {
   isEditMode.value = false
   resetUserForm()
+
+  // 🔑 For Department Admin: force role to USER (2)
+  if (isDepartmentAdmin.value) {
+    userForm.role_id = 2
+  }
+
+  // Ensure role_id is a string for USelect
+  if (userForm.role_id !== undefined && userForm.role_id !== null) {
+    userForm.role_id = String(userForm.role_id)
+  }
+
   showUserModal.value = true
 }
 
 const openEditUserModal = async (user: any) => {
   isEditMode.value = true
 
+  // Load user's departments if they're a Department Admin
+  let userDepartments: string[] = []
+
   Object.assign(userForm, {
     user_id: user.id,
     name: user.name,
     email: user.email,
-    role_id: user.role_id,
+    role_id: String(user.role_id), // Convert to string to match USelect option values
     phone: user.phone,
     primaryContact: user.primaryContact || false,
     isActive: user.status === 'active',
+    departments: user.rawDepartmentIds || [],
   })
 
   showUserModal.value = true
@@ -1078,12 +1906,60 @@ const confirmDelete = async () => {
 
 // User actions
 const editUser = (user: MappedUser) => {
+  // 🔑 Prevent Department Admin from editing users outside their department
+  if (!canEditUser(user)) {
+    showError('You can only edit users in your departments')
+    return
+  }
   openEditUserModal(user)
 }
 
 const deleteUser = (user: MappedUser) => {
   selectedUser.value = user
   showDeleteUserModal.value = true
+}
+
+// Toggle active/inactive status for a user (replaces delete action)
+const toggleActive = async (user: MappedUser) => {
+  try {
+    const result = await usersStore.setUserActive(user.id, !user.isActive)
+    if (result?.success) {
+      // Update local usersList state for immediate UI feedback
+      const idx = usersList.value.findIndex((u) => u.id === user.id)
+      if (idx !== -1) {
+        const current = usersList.value[idx]
+        const newActive = !current.isActive
+        usersList.value[idx] = {
+          ...current,
+          isActive: newActive,
+          status: newActive ? 'active' : 'inactive',
+        }
+      }
+      // NOTE: success notification is handled by the store. Do not show duplicate toasts here.
+    } else {
+      showError(result?.message || 'Failed to update user status')
+    }
+  } catch (err: any) {
+    console.error('Toggle active error', err)
+    showError('Failed to update user status')
+  }
+}
+
+const showToggleConfirm = (user: MappedUser) => {
+  selectedUser.value = user
+  showToggleConfirmModal.value = true
+}
+
+const confirmToggleActive = async () => {
+  if (!selectedUser.value) return
+  try {
+    togglingUser.value = true
+    // Use the toggleActive helper to perform the action and update local state
+    await toggleActive(selectedUser.value)
+    showToggleConfirmModal.value = false
+  } finally {
+    togglingUser.value = false
+  }
 }
 
 // Handle Primary Contact Toggle
@@ -1137,10 +2013,123 @@ const downloadCsv = async () => {
   }
 }
 
-//Upload
+const canBulkAssignUser = (row: MappedUser) => {
+  const myRole = authUser.value?.role_id
 
-import Papa from 'papaparse'
-import 'github-markdown-css/github-markdown.css'
+  // Super Admin / Admin → can assign to dept admins + users
+  if (myRole === 0 || myRole === 1) {
+    return row.role_id === 2 || row.role_id === 3
+  }
+
+  // Department Admin → users only
+  if (myRole === 3) {
+    return row.role_id === 2
+  }
+
+  return false
+}
+
+const getBulkAssignDisabledReason = (row: MappedUser) => {
+  const myRole = authUser.value?.role_id
+
+  if (myRole === 3 && row.role_id === 3) {
+    return 'Department Admins cannot assign departments to other Department Admins'
+  }
+
+  if (myRole === 3 && row.role_id === 1) {
+    return 'Department Admins cannot assign departments to Admins'
+  }
+
+  if ((myRole === 0 || myRole === 1) && row.role_id === 1) {
+    return 'Admins cannot bulk-assign other Admins'
+  }
+
+  return 'Not allowed'
+}
+
+// Bulk assignment methods
+const toggleUserSelection = (userId: string) => {
+  const user = usersList.value.find((u) => u.id === userId)
+  if (!user) return
+
+  if (!canBulkAssignUser(user)) return
+
+  if (selectedUsers.value.has(userId)) {
+    selectedUsers.value.delete(userId)
+  } else {
+    selectedUsers.value.add(userId)
+  }
+}
+
+const selectAllUsers = () => {
+  const selectable = paginatedUsers.value.filter(canBulkAssignUser)
+
+  if (!selectable.length) return
+
+  const allSelected = selectable.every((u) => selectedUsers.value.has(u.id))
+
+  if (allSelected) {
+    selectable.forEach((u) => selectedUsers.value.delete(u.id))
+  } else {
+    selectable.forEach((u) => selectedUsers.value.add(u.id))
+  }
+}
+
+const openBulkAssignmentModal = (mode: 'assign' | 'unassign') => {
+  if (selectedUsers.value.size === 0) {
+    showError('Please select at least one user')
+    return
+  }
+  bulkActionMode.value = mode
+  selectedBulkDepartments.value = []
+  showBulkAssignmentModal.value = true
+}
+
+const executeBulkAssignment = async () => {
+  if (selectedBulkDepartments.value.length === 0) {
+    showError(`Please select at least one department to ${bulkActionMode.value}`)
+    return
+  }
+
+  bulkAssignmentLoading.value = true
+  try {
+    const userIdArray = Array.from(selectedUsers.value)
+
+    if (bulkActionMode.value === 'assign') {
+      await usersStore.bulkAssignDepartments(userIdArray, selectedBulkDepartments.value)
+    } else {
+      await usersStore.bulkUnassignDepartments(userIdArray, selectedBulkDepartments.value)
+    }
+
+    // Clear selection and close modal
+    selectedUsers.value.clear()
+    selectedBulkDepartments.value = []
+    showBulkAssignmentModal.value = false
+    // showSuccess(`Successfully ${bulkActionMode.value}ed ${userIdArray.length} user(s)`)
+
+    // Refresh users list
+    await loadUsers()
+  } catch (error: any) {
+    // showError(error.message || `Failed to ${bulkActionMode.value} departments`)
+  } finally {
+    bulkAssignmentLoading.value = false
+  }
+}
+
+const toggleBulkDepartment = (deptId: string) => {
+  if (selectedBulkDepartments.value.includes(deptId)) {
+    selectedBulkDepartments.value = selectedBulkDepartments.value.filter((d) => d !== deptId)
+  } else {
+    selectedBulkDepartments.value.push(deptId)
+  }
+}
+
+const closeBulkAssignmentModal = () => {
+  showBulkAssignmentModal.value = false
+  selectedBulkDepartments.value = []
+}
+
+//Upload
 
 const selectedFile = ref(null)
 const userPreview = ref([])
@@ -1255,7 +2244,15 @@ const openPreview = async (file: File) => {
 
     // Call validation API
     validating.value = true
-    const validationResponse = await usersStore.uploadAndValidateJson(parsedData as any)
+    const route = useRoute()
+    const orgIdFromQuery =
+      route?.query?.org || route?.query?.org_id
+        ? String(route.query?.org || route.query?.org_id)
+        : null
+    const validationResponse = await usersStore.uploadAndValidateJson(
+      parsedData as any,
+      orgIdFromQuery,
+    )
 
     if (validationResponse.errors && validationResponse.errors.length > 0) {
       errors.value = validationResponse.errors.map(
@@ -1362,18 +2359,14 @@ const handleUpload = async () => {
     showInlineError('No data to upload.')
     return
   }
-
-  try {
-    const response = await usersStore.createBulkUsers(previewData.value as any)
-    if (response.status) {
-      showSuccess(response.message || 'Users imported successfully!')
-      closePreviewForm()
-    } else {
-      showInlineError(response.message || 'Failed to import data.')
-    }
-  } catch (err: any) {
-    showInlineError(`Unexpected error: ${err.message}`)
-  }
+  const route = useRoute()
+  const orgIdFromQuery =
+    route?.query?.org || route?.query?.org_id
+      ? String(route.query?.org || route.query?.org_id)
+      : null
+  await usersStore.createBulkUsers(previewData.value as any, orgIdFromQuery)
+  closePreviewForm()
+  await loadUsers()
 }
 
 // Render CSV preview with error highlighting
@@ -1423,18 +2416,94 @@ const closePreviewForm = () => {
   hideInline.value = false
 }
 
+// Polling controls
+const pollInterval = ref<number | null>(null)
+
 // Lifecycle
 onMounted(async () => {
-  loadUsers()
-  await usersStore.fetchRoles()
+  loading.value = true
+  error.value = null
+
+  try {
+    const orgId =
+      route.query?.org || route.query?.org_id
+        ? String(route.query?.org || route.query?.org_id)
+        : null
+
+    // 1️⃣ Load dependencies FIRST
+    await Promise.all([usersStore.fetchRoles(), loadDepartments(), loadAllDepartmentsForDisplay()])
+
+    // 2️⃣ Load users AFTER departments exist
+    await loadUsers(true)
+
+    // integrations can be parallel
+    integrationsStore.fetchOverview(orgId, false, false).catch(() => {})
+  } finally {
+    loading.value = false
+  }
+
+  pollInterval.value = window.setInterval(() => {
+    loadUsers(false).catch(() => {})
+  }, 30000)
+})
+
+onBeforeUnmount(() => {
+  if (pollInterval.value) {
+    clearInterval(pollInterval.value)
+    pollInterval.value = null
+  }
 })
 
 useHead({
-  title: 'User Management - Admin Dashboard',
+  title: 'User Management - Admin Dashboard - provento.ai',
 })
 </script>
 
 <style scoped>
+:deep(.custom-input) {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  font-size: 0.875rem !important;
+  padding: 0.875rem 2.5rem !important;
+  transition: all 0.2s ease-in-out !important;
+  width: 100% !important;
+  border-radius: 0.5rem !important;
+}
+
+:deep(.custom-input:hover) {
+  background-color: #1e293b !important;
+}
+
+:deep(.custom-input:focus) {
+  background-color: #1e293b !important;
+  outline: none !important;
+}
+
+:deep(.custom-input::placeholder) {
+  color: #64748b !important;
+}
+
+/* Custom select styles - no border styling to allow UForm errors */
+:deep(.custom-select) {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  font-size: 0.875rem !important;
+  padding: 0.875rem 2.5rem !important;
+  transition: all 0.2s ease-in-out !important;
+  width: 100% !important;
+  cursor: pointer;
+  border-radius: 0.5rem !important;
+}
+
+:deep(.custom-select:hover) {
+  background-color: #1e293b !important;
+}
+
+:deep(.custom-select:focus) {
+  background-color: #1e293b !important;
+  outline: none !important;
+}
+
 /* Custom styling for vue3-tel-input to match the design */
 :deep(.vue-tel-input) {
   border: 1px solid #334155;

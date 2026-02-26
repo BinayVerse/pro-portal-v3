@@ -51,14 +51,16 @@ export default defineEventHandler(async (event) => {
                 o.org_name, 
                 COALESCE(r.role_name, '-') AS role,
                 u.updated_at,
-                CASE 
-                    WHEN u.added_by = 'slack_auto_provision' THEN 'Slack' 
-                    ELSE 'Whatsapp' 
+                CASE WHEN u.is_active = true THEN 'active' ELSE 'inactive' END AS status,
+                CASE
+                    WHEN u.added_by = 'slack_auto_provision' THEN 'Slack'
+                    WHEN u.added_by = 'teams_auto_provision' THEN 'Teams'
+                    ELSE 'Manual'
                 END AS source
             FROM users u
             LEFT JOIN organizations o ON u.org_id = o.org_id
             LEFT JOIN roles r ON u.role_id = r.role_id
-            WHERE u.org_id = $1
+            WHERE u.org_id = $1 AND u.role_id IN (1,2)
             ORDER BY TRIM(LOWER(u.name)) NULLS LAST`,
             [orgId]
         );
@@ -71,7 +73,7 @@ export default defineEventHandler(async (event) => {
                 : 'No users found in the specified organization',
         };
     } catch (err) {
-        console.error('Error fetching users:', err);
+        if (process.dev) console.error('Error fetching users:', err);
         throw new CustomError('Internal Server Error: Failed to fetch users', 500);
     }
 });

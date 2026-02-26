@@ -1,17 +1,17 @@
 <template>
-  <div class="min-h-screen bg-black flex items-center justify-center px-4 sm:px-6 lg:px-8 py-16">
-    <div class="max-w-md w-full space-y-8">
+  <div class="min-h-screen bg-black flex items-center justify-center px-3 sm:px-4 lg:px-8 py-8 sm:py-16">
+    <div class="max-w-md w-full space-y-6 sm:space-y-8">
       <div class="text-center">
-        <NuxtLink to="/" class="inline-flex items-center space-x-3 mb-6">
+        <NuxtLink to="/" class="inline-flex items-center space-x-2 sm:space-x-3 mb-6 justify-center">
           <img
-            src="https://cdn.builder.io/api/v1/image/assets%2Fb2a7382a9c9146babd538ccc60e9d0b5%2Fbddd43caf4614f99a3fbff498927abcc?format=webp&width=800"
+            src="~/assets/media/logo.svg"
             alt="Provento Logo"
-            class="w-10 h-10"
+            class="w-8 sm:w-10 h-8 sm:h-10"
           />
-          <span class="text-white text-2xl font-semibold">provento.ai</span>
+          <span class="text-white text-lg sm:text-2xl font-semibold">provento.ai</span>
         </NuxtLink>
-        <h2 class="text-3xl font-bold text-white">Change your password</h2>
-        <p class="mt-2 text-gray-400">Enter your current and new password below</p>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white">Change your password</h2>
+        <p class="mt-2 text-xs sm:text-sm text-gray-400">Enter your current and new password below</p>
       </div>
 
       <div v-if="passwordUpdated" class="bg-green-900/20 border border-green-500/20 rounded-lg p-4">
@@ -54,7 +54,7 @@
               <UIcon :name="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" class="h-5 w-5" />
             </button>
           </div>
-          <div v-if="form.password" class="mt-3 space-y-2 text-xs text-gray-400">
+          <div v-if="form.password" class="mt-3 space-y-1 sm:space-y-2 text-xs text-gray-400">
             <div :class="passwordValidation.hasMinLength ? 'text-green-400' : ''">• At least 8 characters</div>
             <div :class="passwordValidation.hasUppercase ? 'text-green-400' : ''">• One uppercase letter</div>
             <div :class="passwordValidation.hasLowercase ? 'text-green-400' : ''">• One lowercase letter</div>
@@ -86,9 +86,10 @@
       </form>
 
       <div class="text-center">
-        <NuxtLink to="/" class="inline-flex items-center text-sm text-primary-400 hover:text-primary-300 transition-colors">
-          <UIcon name="i-heroicons-arrow-left" class="h-4 w-4 mr-2" />
-          Back to home
+        <NuxtLink to="/" class="inline-flex items-center text-xs sm:text-sm text-primary-400 hover:text-primary-300 transition-colors">
+          <UIcon name="i-heroicons-arrow-left" class="h-4 w-4 mr-1 sm:mr-2" />
+          <span class="hidden sm:inline">Back to home</span>
+          <span class="sm:hidden">Back</span>
         </NuxtLink>
       </div>
     </div>
@@ -96,6 +97,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Change Password - provento.ai' })
 import { useAuthStore } from '~/stores/auth/index'
 import { useNotification } from '~/composables/useNotification'
 

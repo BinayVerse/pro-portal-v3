@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
             contentType: doc.content_type,
             updatedAt: doc.updated_at,
             formattedUpdatedAt: doc.updated_at
-                ? dayjs(doc.updated_at).tz(userTimezone).format('DD/MM/YYYY hh:mm A')
+                ? dayjs(doc.updated_at).tz(userTimezone).format('MM/DD/YYYY hh:mm A')
                 : 'Unknown',
             fileCategory: doc.file_category,
         }));
@@ -77,7 +77,7 @@ export default defineEventHandler(async (event) => {
             message: 'Documents fetched successfully',
         };
     } catch (err: any) {
-        console.error('Error fetching documents:', err);
+        if (process.dev) console.error('Error fetching documents:', err);
         throw new CustomError(err.message || 'Failed to fetch documents', 500);
     }
 });

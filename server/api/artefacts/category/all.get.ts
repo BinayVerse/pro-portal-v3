@@ -13,13 +13,20 @@ export default defineEventHandler(async (event) => {
   }
 
   let userId
-  let orgId
+  let tokenUserOrg: any
+  let tokenUserRole: any
   try {
-    const decodedToken = jwt.verify(token, config.jwtToken as string)
-    userId = (decodedToken as { user_id: number }).user_id
-    orgId = (decodedToken as { org_id: number }).org_id
+    const decodedToken = jwt.verify(token, config.jwtToken as string) as { user_id: number }
+    userId = decodedToken.user_id
+    const userRow = await query('SELECT org_id, role_id FROM users WHERE user_id = $1', [userId])
+    if (!userRow?.rows?.length) {
+      setResponseStatus(event, 404)
+      throw new CustomError('User not found', 404)
+    }
+    tokenUserOrg = userRow.rows[0].org_id
+    tokenUserRole = userRow.rows[0].role_id
 
-    if (!userId || !orgId) {
+    if (!userId || !tokenUserOrg) {
       setResponseStatus(event, 401)
       throw new CustomError('Unauthorized: Invalid token data', 401)
     }
@@ -27,6 +34,11 @@ export default defineEventHandler(async (event) => {
     setResponseStatus(event, 401)
     throw new CustomError('Unauthorized: Invalid token', 401)
   }
+
+  // Allow superadmin to request categories for specific org via query param
+  const q = getQuery(event) as Record<string, any>
+  const requestedOrg = q?.org || q?.org_id || null
+  const orgId = tokenUserRole === 0 && requestedOrg ? String(requestedOrg) : tokenUserOrg
 
   try {
     const categories = await query(

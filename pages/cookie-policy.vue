@@ -1,4 +1,6 @@
 <script setup>
+useHead({ title: 'Cookie Policy - provento.ai' })
+
 definePageMeta({
   layout: 'main',
 })

@@ -5,6 +5,13 @@ export interface OrganizationState {
   roles: any[]
   userLoading: boolean
   userError: string | null
+  departments: any[]
+  allDepartments: any[]
+  allDepartmentsLoading: boolean
+  allDepartmentsError: string | null
+  departmentsLoading: boolean
+  departmentsError: string | null
+  userDepartments: Record<string, string[]>
 }
 
 export interface OrganizationUser {

@@ -1,5 +1,6 @@
 import type { AuthUser, ApiResponse } from "./types";
 import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
+import { handleAuthError as handleAuthErrorShared, clearAuth } from '~/composables/useAuthError'
 
 export const useAuthStore = defineStore("authStore", {
   state: () => ({
@@ -14,6 +15,7 @@ export const useAuthStore = defineStore("authStore", {
     isLoggedIn: (state) => !!state.user && !!state.token,
     isAuthenticated: (state) => !!state.user && !!state.token,
     isAdmin: (state) => state.user?.role_id === 1,
+    isSuperAdmin: (state) => state.user?.role_id === 0,
     getAuthUser(state) {
       return state.user || null
     },
@@ -30,30 +32,7 @@ export const useAuthStore = defineStore("authStore", {
     },
 
     async handleAuthError(err: any): Promise<boolean> {
-      // Check multiple possible 401 error patterns
-      const is401 = err?.statusCode === 401 ||
-        err?.response?.status === 401 ||
-        err?.status === 401 ||
-        err?.data?.statusCode === 401 ||
-        (err?.message && err.message.includes('401')) ||
-        (err?.message && err.message.toLowerCase().includes('unauthorized'))
-
-      if (is401) {
-        console.log('401 Unauthorized detected, redirecting to login...')
-        if (process.client) {
-          localStorage.removeItem('authUser')
-          localStorage.removeItem('authToken')
-          // Clear any other auth-related storage
-          localStorage.removeItem('user')
-          setTimeout(() => {
-            navigateTo('/login')
-          }, 500)
-        }
-        const authCookie = useCookie('authToken')
-        authCookie.value = null
-        return true
-      }
-      return false
+      return await handleAuthErrorShared(err)
     },
 
     handleError(error: any, fallbackMessage: string, silent: boolean = false): string {
@@ -197,6 +176,20 @@ export const useAuthStore = defineStore("authStore", {
               this.user = user;
               this.token = token;
 
+              // 🔑 Load user departments after auth is set
+              if (process.client && user.user_id) {
+                try {
+                  const usersStore = useUsersStore();
+                  const deptIds = await usersStore.fetchUserDepartments(user.user_id);
+                  // Add departments to user object
+                  this.user = { ...this.user, departments: deptIds };
+                } catch (deptError) {
+                  // Silently fail if departments can't be loaded
+                  // User is still authenticated, just without department info
+                  console.warn('Failed to load user departments during auth initialization:', deptError);
+                }
+              }
+
               // Sync with cookies for SSR
               if (process.client) {
                 const tokenCookie = useCookie('auth-token', {
@@ -297,7 +290,7 @@ export const useAuthStore = defineStore("authStore", {
         return {
           status: "success",
           message: response.message || "Sign-in successful!",
-          redirect: response.redirect || "/profile",
+          redirect: response.redirect || "/admin/profile",
         };
       } finally {
         this.setLoading(false);
@@ -322,6 +315,7 @@ export const useAuthStore = defineStore("authStore", {
 
       try {
         const response = await this.apiCall("/api/auth/update-password", formData);
+        await this.clearAuth();
         return response;
       } finally {
         this.setLoading(false);
@@ -370,7 +364,21 @@ export const useAuthStore = defineStore("authStore", {
 
         if (response.status === 'success') {
           this.user = response.data;
-          return response.data;
+
+          // 🔑 Load user departments after fetching current user
+          if (process.client && this.user.user_id) {
+            try {
+              const usersStore = useUsersStore();
+              const deptIds = await usersStore.fetchUserDepartments(this.user.user_id);
+              // Add departments to user object
+              this.user = { ...this.user, departments: deptIds };
+            } catch (deptError) {
+              // Silently fail if departments can't be loaded
+              console.warn('Failed to load user departments in fetchCurrentUser:', deptError);
+            }
+          }
+
+          return this.user;
         } else {
           await this.clearAuth();
           return null;
@@ -385,8 +393,16 @@ export const useAuthStore = defineStore("authStore", {
       if (!process.client) return;
 
       const route = useRoute();
-      const redirectTo = (route.query.redirect as string) || '/admin/dashboard';
-      await navigateTo(redirectTo);
+      const queryRedirect = (route.query.redirect as string) || '';
+
+      // Super admin goes to superadmin dashboard regardless of query redirect
+      if (this.user?.role_id === 0) {
+        await navigateTo('/admin/superadmin');
+        return;
+      }
+
+      const fallback = '/admin/dashboard';
+      await navigateTo(queryRedirect || fallback);
     },
   },
 });

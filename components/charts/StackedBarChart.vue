@@ -1,3 +1,4 @@
+<!-- old StackedBarChart.vue -->
 <template>
   <div v-if="isMounted">
     <apexchart type="bar" height="400" :options="chartOptions" :series="series" :key="chartKey" />
@@ -5,7 +6,8 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from "vue"
+import { computed, ref, watch, onMounted } from 'vue'
+import { getColorsForLabels, orderLabels } from '@/utils/chartColors'
 
 const isMounted = ref(false)
 
@@ -17,224 +19,169 @@ const props = defineProps({
   chartData: {
     type: Array,
     required: true,
-    default: () => []
+    default: () => [],
   },
 })
 
 // Force re-render key when data changes
 const chartKey = ref(0)
 
-// Extract categories (user names)
+// X-axis categories (user names)
 const categories = computed(() => props.chartData.map((item) => item.name))
+const defaultChannels = ['teams', 'whatsapp', 'slack', 'admin']
 
-// Extract dynamic app keys (all except "name")
-const appKeys = computed(() => {
-  if (!props.chartData.length) return []
-  return Object.keys(props.chartData[0]).filter((k) => k !== "name")
+// Dynamic app keys (all except "name")
+const rawAppKeys = computed(() => {
+  if (!props.chartData.length) return defaultChannels
+  // Include all default channels, even if missing in data
+  const keysInData = Object.keys(props.chartData[0]).filter((k) => k !== 'name')
+  return Array.from(new Set([...defaultChannels, ...keysInData]))
 })
 
-// Build Apex series dynamically
-const series = computed(() =>
-  appKeys.value.map((app) => ({
+// Order keys according to canonical APP_ORDER
+const appKeys = computed(() => orderLabels(rawAppKeys.value))
+
+// Series for ApexCharts (use ordered keys)
+const series = computed(() => {
+  return appKeys.value.map((app) => ({
     name: app,
     data: props.chartData.map((item) => Number(item[app]) || 0),
   }))
-)
+})
 
-// Generate colors automatically based on number of series
-const generateColors = (count) => {
-  const palette = [
-    "#42A5F5", "#4CAF50", "#FFB74D", "#FF7676", "#81C784",
-    "#FFD54F", "#29B6F6", "#66BB6A", "#FF7043", "#F06292",
-    "#BA68C8", "#26C6DA", "#D4E157", "#5C6BC0", "#26A69A",
-    "#EC407A", "#7E57C2", "#FFCA28", "#009688", "#64B5F6"
-  ]
-  return Array.from({ length: count }, (_, i) => palette[i % palette.length])
-}
 
 // Chart options
 const chartOptions = computed(() => ({
   chart: {
-    type: "bar",
+    type: 'bar',
     stacked: true,
-    toolbar: {
-      show: false
-    },
-    foreColor: "#ccc",
+    toolbar: { show: false },
+    foreColor: '#ccc',
     animations: {
       enabled: true,
       easing: 'easeinout',
       speed: 800,
-      animateGradually: {
-        enabled: true,
-        delay: 150
-      },
-      dynamicAnimation: {
-        enabled: true,
-        speed: 350
-      }
-    }
+      animateGradually: { enabled: true, delay: 150 },
+      dynamicAnimation: { enabled: true, speed: 350 },
+    },
   },
   plotOptions: {
     bar: {
       horizontal: false,
-      columnWidth: "60%",
+      columnWidth: '60%',
       borderRadius: 0,
       borderRadiusApplication: 'end',
-      dataLabels: {
-        position: 'top',
-      },
+      dataLabels: { position: 'top' },
     },
   },
   dataLabels: {
-    enabled: true,
-    style: {
-      fontSize: "12px",
-      colors: ["#fff"]
-    },
+    enabled: false,
+    style: { fontSize: '10px', colors: ['#fff'] },
     offsetY: -20,
-    formatter: function (val) {
-      return val > 0 ? val.toLocaleString() : ''
-    }
+    formatter: (val) => (val > 0 ? val.toLocaleString() : ''),
   },
   xaxis: {
     categories: categories.value,
     labels: {
       rotate: -45,
-      style: {
-        fontSize: "12px"
-      }
+      style: { fontSize: '12px' },
+      formatter: function (val) {
+        const maxLength = 20 // max characters to show
+        if (val.length > maxLength) {
+          return val.substring(0, maxLength) + '...' // trim and add ellipsis
+        }
+        return val
+      },
     },
-    axisBorder: {
-      show: true,
-      color: '#78909C',
-      height: 1,
-      width: '100%',
-      offsetX: 0,
-      offsetY: 0
-    },
-    axisTicks: {
-      show: true,
-      borderType: 'solid',
-      color: '#78909C',
-      height: 6,
-      offsetX: 0,
-      offsetY: 0
-    },
+    axisBorder: { show: true, color: '#78909C' },
+    axisTicks: { show: true, color: '#78909C' },
   },
   yaxis: {
-    title: {
-      text: "Total Tokens"
-    },
+    title: { text: 'Total Tokens' },
     labels: {
-      formatter: function (val) {
-        return val.toLocaleString()
-      }
-    }
+      formatter: (val) => val.toLocaleString(),
+    },
   },
   legend: {
-    position: "top",
-    horizontalAlign: "center",
-    fontSize: "14px",
-    markers: {
-      width: 12,
-      height: 12,
-      radius: 6,
-    },
-    itemMargin: {
-      horizontal: 10,
-      vertical: 5
-    },
-    formatter: function (seriesName) {
-      return seriesName.charAt(0).toUpperCase() + seriesName.slice(1)
-    }
+    show: true,
+    showForSingleSeries: true, // always show legend
+    position: 'top',
+    horizontalAlign: 'center',
+    fontSize: '14px',
+    markers: { width: 12, height: 12, radius: 6 },
+    itemMargin: { horizontal: 10, vertical: 5 },
+    formatter: (seriesName) => seriesName.charAt(0).toUpperCase() + seriesName.slice(1),
   },
-  fill: {
-    opacity: 1
-  },
-  colors: generateColors(appKeys.value.length),
+  fill: { opacity: 1 },
+  colors: getColorsForLabels(appKeys.value),
   tooltip: {
-    theme: "dark",
+    theme: 'dark',
     shared: true,
     intersect: false,
     custom: function ({ series, dataPointIndex, w }) {
-      const category = w.globals.labels[dataPointIndex];
+      const category = w.globals.labels[dataPointIndex]
 
-      let rows = w.globals.seriesNames.map((name, i) => {
-        const val = series[i][dataPointIndex];
-        const color = w.globals.colors[i];
-        if (val === 0) return '';
-        return `
-        <div style="display:flex;align-items:center;justify-content:space-between;
-                    padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.1);">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="background:${color};
-                         width:10px;height:10px;border-radius:50%;display:inline-block;"></span>
-            <span>${name}:</span>
-          </div>
-          <div style="font-weight:600;">${val}</div>
-        </div>`;
-      }).join("");
+      let rows = w.globals.seriesNames
+        .map((name, i) => {
+          const val = series[i][dataPointIndex]
+          const color = w.globals.colors[i]
+          if (val === 0) return ''
+          const displayName = name.charAt(0).toUpperCase() + name.slice(1)
+          return `
+          <div style="display:flex;align-items:center;justify-content:space-between;
+                      padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="background:${color};
+                           width:10px;height:10px;border-radius:50%;display:inline-block;"></span>
+              <span>${displayName}:</span>
+            </div>
+            <div style="font-weight:600;">${val}</div>
+          </div>`
+        })
+        .join('')
 
-      // optional total row
-      const total = series.reduce((sum, s) => sum + (s[dataPointIndex] || 0), 0);
+      const total = series.reduce((sum, s) => sum + (s[dataPointIndex] || 0), 0)
       const totalRow = `
-      <div style="margin-top:6px;padding-top:4px;
-                  display:flex;justify-content:space-between;
-                  border-top:1px solid rgba(255,255,255,0.2);">
-        <span><strong>Total</strong></span>
-        <span><strong>${total}</strong></span>
-      </div>`;
+        <div style="margin-top:6px;padding-top:4px;
+                    display:flex;justify-content:space-between;
+                    border-top:1px solid rgba(255,255,255,0.2);">
+          <span><strong>Total</strong></span>
+          <span><strong>${total}</strong></span>
+        </div>`
 
       return `
-      <div style="padding:8px 12px;min-width:160px;">
-        <div style="font-weight:bold;margin-bottom:6px;
-                    border-bottom:1px solid rgba(255,255,255,0.2);
-                    padding-bottom:4px;">
-          ${category}
-        </div>
-        ${rows}
-        ${totalRow}
-      </div>
-    `;
-    }
+        <div style="padding:8px 12px;min-width:160px;">
+          <div style="font-weight:bold;margin-bottom:6px;
+                      border-bottom:1px solid rgba(255,255,255,0.2);
+                      padding-bottom:4px;">
+            ${category}
+          </div>
+          ${rows}
+          ${totalRow}
+        </div>`
+    },
   },
   grid: {
     borderColor: '#424242',
     strokeDashArray: 4,
-    xaxis: {
-      lines: {
-        show: false
-      }
-    },
-    yaxis: {
-      lines: {
-        show: true
-      }
-    }
+    yaxis: { lines: { show: true } },
   },
-  responsive: [{
-    breakpoint: 1000,
-    options: {
-      plotOptions: {
-        bar: {
-          columnWidth: '70%'
-        }
+  responsive: [
+    {
+      breakpoint: 1000,
+      options: {
+        plotOptions: { bar: { columnWidth: '70%' } },
+        dataLabels: { enabled: false },
       },
-      dataLabels: {
-        enabled: false
-      }
-    }
-  }]
+    },
+  ],
 }))
 
-// Watch for data changes and force re-render
-watch(() => props.chartData, () => {
-  chartKey.value++  // trigger chart rerender
-}, { deep: true })
-
-// Also watch for appKeys changes
-watch(appKeys, () => {
-  chartKey.value++
-})
+// Rerender on data/appKeys changes
+watch(
+  () => props.chartData,
+  () => chartKey.value++,
+  { deep: true },
+)
+watch(appKeys, () => chartKey.value++)
 </script>

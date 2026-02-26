@@ -5,11 +5,11 @@
         <div class="text-center mb-16">
           <h1 class="text-4xl sm:text-5xl font-bold text-white mb-6">
             Transforming Industries with
-            <span class="text-primary-400">AI-Powered Artefact Intelligence</span>
+            <span class="text-primary-400">AI-Powered Artifact Intelligence</span>
           </h1>
           <p class="text-xl text-gray-300 max-w-3xl mx-auto">
-            Discover how provento.ai transforms artefact workflows across different industries,
-            helping organizations streamline artefact workflow, enhance productivity, and make
+            Discover how provento.ai transforms artifact workflows across different industries,
+            helping organizations streamline artifact workflow, enhance productivity, and make
             data-driven decisions faster than ever before.
           </p>
         </div>
@@ -115,7 +115,7 @@
             Ready to Transform Your Industry Workflow?
           </h2>
           <p class="text-xl text-gray-300 mb-8">
-            Join industry leaders who are already using provento.ai to revolutionize their artefact
+            Join industry leaders who are already using provento.ai to revolutionize their artifact
             processes.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -133,83 +133,11 @@
 </template>
 
 <script setup lang="ts">
+import { industries } from '~/utils/index'
+useHead({ title: 'Solutions - provento.ai' })
 // Using default layout
 
 const selectedFilter = ref('all')
-
-const industries = [
-  {
-    name: 'Education',
-    slug: 'education',
-    description: 'Enhance learning experiences with intelligent artefact interaction.',
-    icon: 'i-heroicons-academic-cap',
-    useCases: ['Research assistance', 'Study materials', 'Academic papers', 'Student support'],
-  },
-  {
-    name: 'Finance & Banking',
-    slug: 'finance-banking',
-    description: 'Accelerate financial artefact processing and analysis.',
-    icon: 'i-heroicons-currency-dollar',
-    useCases: [
-      'Risk assessment',
-      'Compliance reports',
-      'Financial analysis',
-      'Audit documentation',
-    ],
-  },
-  {
-    name: 'Government',
-    slug: 'government',
-    description: 'Modernize public sector artefact management and citizen services.',
-    icon: 'i-heroicons-building-office',
-    useCases: ['Policy artefacts', 'Public records', 'Regulatory compliance', 'Citizen services'],
-  },
-  {
-    name: 'Healthcare',
-    slug: 'healthcare',
-    description: 'Improve patient care with intelligent medical artefact analysis.',
-    icon: 'i-heroicons-heart',
-    useCases: [
-      'Medical records',
-      'Research studies',
-      'Treatment protocols',
-      'Patient documentation',
-    ],
-  },
-  {
-    name: 'Insurance',
-    slug: 'insurance',
-    description: 'Streamline claims processing and risk assessment workflows.',
-    icon: 'i-heroicons-shield-check',
-    useCases: ['Claims processing', 'Policy analysis', 'Risk assessment', 'Underwriting'],
-  },
-  {
-    name: 'Legal',
-    slug: 'legal',
-    description: 'Streamline legal artefact analysis and contract review processes.',
-    icon: 'i-heroicons-scale',
-    useCases: ['Contract analysis', 'Due diligence', 'Case research', 'Compliance review'],
-  },
-  {
-    name: 'Manufacturing',
-    slug: 'manufacturing',
-    description: 'Optimize technical documentation and quality processes.',
-    icon: 'i-heroicons-cog-6-tooth',
-    useCases: [
-      'Technical specifications',
-      'Quality documentation',
-      'Process manuals',
-      'Compliance records',
-    ],
-  },
-  {
-    name: 'Real Estate',
-    slug: 'real-estate',
-    description: 'Simplify property documentation and transaction management.',
-    icon: 'i-heroicons-home',
-    useCases: ['Property artefacts', 'Contracts & leases', 'Market analysis', 'Due diligence'],
-  },
-]
 
 const filteredIndustries = computed(() => {
   if (selectedFilter.value === 'all') {
@@ -221,15 +149,15 @@ const filteredIndustries = computed(() => {
 const benefits = [
   {
     title: 'Reduce Processing Time by 75%',
-    description: 'Transform hours of manual artefact review into minutes of intelligent analysis.',
+    description: 'Transform hours of manual artifact review into minutes of intelligent analysis.',
   },
   {
     title: 'Improve Accuracy by 90%',
-    description: 'Eliminate human error with AI-powered artefact analysis and extraction.',
+    description: 'Eliminate human error with AI-powered artifact analysis and extraction.',
   },
   {
     title: 'Scale Operations Effortlessly',
-    description: 'Handle increasing artefact volumes without proportional staffing increases.',
+    description: 'Handle increasing artifact volumes without proportional staffing increases.',
   },
   {
     title: 'Ensure Compliance & Security',

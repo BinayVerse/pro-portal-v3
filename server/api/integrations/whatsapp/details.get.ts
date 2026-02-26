@@ -12,14 +12,28 @@ export default defineEventHandler(async (event) => {
         throw new CustomError('Unauthorized: No token provided', 401)
     }
 
+    // Determine effective org: prefer query param for superadmin
     let orgId: number
+    let userId: any
     try {
-        const decodedToken = jwt.verify(token, config.jwtToken as string) as { org_id: number }
-        orgId = decodedToken.org_id
+        const decodedToken = jwt.verify(token, config.jwtToken as string) as { user_id: number }
+        userId = decodedToken.user_id
     } catch {
         setResponseStatus(event, 401)
         throw new CustomError('Unauthorized: Invalid token', 401)
     }
+
+    const userRow = await query('SELECT org_id, role_id FROM users WHERE user_id = $1', [userId])
+    if (!userRow?.rows?.length) {
+      setResponseStatus(event, 404)
+      throw new CustomError('User not found', 404)
+    }
+    const tokenUserOrg = userRow.rows[0].org_id
+    const tokenUserRole = userRow.rows[0].role_id
+
+    const q = getQuery(event) as Record<string, any>
+    const requestedOrg = q?.org || q?.org_id || null
+    orgId = tokenUserRole === 0 && requestedOrg ? String(requestedOrg) : tokenUserOrg
 
     try {
         const result = await query(

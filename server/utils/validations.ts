@@ -18,6 +18,7 @@ export const createUserValidation = z.object({
   contact_number: z.string(),
   primary_contact: z.boolean().optional(),
   role_id: z.any(),
+  departments: z.array(z.string()).optional(), // for Department Admin (role_id = 3)
 })
 
 export const ContactUsValidation = z.object({
@@ -74,6 +75,8 @@ export const SignupValidation = z.object({
     ),
   wpNumber: z.string().max(20, 'Phone number too long').optional(),
   companyName: z.string().min(1, 'Company name is required').max(255, 'Company name too long'),
+  country: z.string().min(1, 'Country is required').max(100, 'Country too long'),
+  taxId: z.string().min(1, 'Tax ID is required').max(50, 'Tax ID too long'),
 })
 
 // Google signup validation schema

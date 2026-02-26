@@ -1,0 +1,73 @@
+{
+  "name": "github",
+  "description": "MCP provider for interacting with GitHub issues",
+  "auth": {
+    "type": "token",
+    "env": "GITHUB_TOKEN"
+  },
+  "tools": [
+    {
+      "name": "list_issues",
+      "description": "List issues from a GitHub repository with optional filters",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo": {
+            "type": "string",
+            "description": "Repository in owner/name format, e.g. openai/chatgpt"
+          },
+          "state": {
+            "type": "string",
+            "enum": ["open", "closed", "all"],
+            "default": "open"
+          },
+          "labels": {
+            "type": "string",
+            "description": "Comma-separated list of label names to filter by"
+          }
+        },
+        "required": ["repo"]
+      }
+    },
+    {
+      "name": "get_issue",
+      "description": "Get details of a specific issue by number",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo": {
+            "type": "string",
+            "description": "Repository in owner/name format"
+          },
+          "number": {
+            "type": "integer",
+            "description": "Issue number"
+          }
+        },
+        "required": ["repo", "number"]
+      }
+    },
+    {
+      "name": "comment_issue",
+      "description": "Post a comment on a GitHub issue",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "repo": {
+            "type": "string",
+            "description": "Repository in owner/name format"
+          },
+          "number": {
+            "type": "integer",
+            "description": "Issue number"
+          },
+          "body": {
+            "type": "string",
+            "description": "The text content of the comment"
+          }
+        },
+        "required": ["repo", "number", "body"]
+      }
+    }
+  ]
+}

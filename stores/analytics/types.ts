@@ -10,6 +10,24 @@ export interface AnalyticsState {
   userAppWiseTokenDetail: any[];
   activeUsersCount: number;
   totalQueriesCount: number;
+  
+  // Department analytics state
+  departmentBarChartData: DepartmentBarChartItem[];
+  departmentPieChartData: DepartmentPieChartItem[];
+  departmentAnalyticsLoading: boolean;
+}
+
+export interface DepartmentBarChartItem {
+  department_id: number;
+  department_name: string;
+  user_count: number;
+  artifact_count: number;
+}
+
+export interface DepartmentPieChartItem {
+  department_name: string;
+  user_count: number;
+  percentage: number;
 }
 
 

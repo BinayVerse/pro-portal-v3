@@ -26,7 +26,9 @@ export const useAuth = () => {
   }
 
   const checkAuth = async () => {
-    if (authStore.token && !authStore.user) {
+    // If a token exists, always attempt to refresh the current user from the server.
+    // This ensures fields like org_id are up-to-date even if localStorage has stale user data.
+    if (authStore.token) {
       await authStore.fetchCurrentUser()
     }
   }

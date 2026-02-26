@@ -48,6 +48,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Toast Demo - provento.ai' })
 definePageMeta({
   layout: false
 })

@@ -12,17 +12,28 @@ export default defineEventHandler(async (event) => {
   }
 
   let userId
+  let userRole
   try {
     const decodedToken = jwt.verify(token, config.jwtToken as string)
     userId = (decodedToken as { user_id: number }).user_id
+
+    // Get user role for Department Admin filtering
+    const userResult = await query('SELECT role_id FROM users WHERE user_id = $1', [userId])
+    if (userResult.rows.length > 0) {
+      userRole = userResult.rows[0].role_id
+    }
   } catch {
     throw new CustomError('Unauthorized: Invalid token', 401)
   }
 
-  const roles = await query(
-    'SELECT * FROM public.roles WHERE role_id != 0 ORDER BY role_id ASC',
-    [],
-  )
+  let rolesQuery = 'SELECT * FROM public.roles WHERE role_id != 0 ORDER BY role_id ASC'
+
+  // 🔑 Department Admin can work with USER role (2) and see their own DEPARTMENT ADMIN role (3)
+  if (userRole === 3) {
+    rolesQuery = 'SELECT * FROM public.roles WHERE role_id IN (2, 3) ORDER BY role_id ASC'
+  }
+
+  const roles = await query(rolesQuery, [])
   if (!roles?.rows?.length) {
     throw new CustomError('Roles not found', 404)
   }

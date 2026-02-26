@@ -8,6 +8,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   if (authStore.isLoggedIn) {
     // If user is authenticated, prevent access to guest-only pages
+    if (authStore.user?.role_id === 0) return navigateTo('/admin/superadmin')
     return navigateTo('/admin/dashboard')
   }
 })

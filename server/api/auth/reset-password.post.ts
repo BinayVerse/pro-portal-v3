@@ -1,11 +1,9 @@
 import { defineEventHandler, readBody, setResponseStatus } from 'h3';
 import { CustomError } from '../../utils/custom.error';
 import { query } from '../../utils/db';
-import sgMail from '@sendgrid/mail';
 import { generateResetLink, sendResetPasswordMail } from '../helper';
 
 const config = useRuntimeConfig();
-sgMail.setApiKey(config.sendgridApiKey as string);
 
 export default defineEventHandler(async (event) => {
   try {
@@ -17,7 +15,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const result = await query(
-      'SELECT name, role_id FROM users WHERE email = $1 AND role_id = 1',
+      'SELECT user_id, name, role_id FROM users WHERE email = $1 AND role_id IN (0, 1, 3)',
       [email]
     );
 
@@ -25,7 +23,7 @@ export default defineEventHandler(async (event) => {
       throw new CustomError('User with this email does not exist or lacks admin access', 404);
     }
 
-    const { name, role_id } = result.rows[0];
+    const { user_id, name, role_id } = result.rows[0];
 
     if (role_id === 2) {
       throw new CustomError(
@@ -34,13 +32,13 @@ export default defineEventHandler(async (event) => {
       );
     }
 
-    const { resetLink } = await generateResetLink(email, config.public.appUrl);
+    const { resetLink } = await generateResetLink(email, config.public.appUrl, user_id);
     await sendResetPasswordMail(name, email, resetLink);
 
-    setResponseStatus(event, 200);
+    setResponseStatus(event, 201);
 
     return {
-      statusCode: 200,
+      statusCode: 201,
       status: 'success',
       message: 'Password reset email sent successfully',
     };

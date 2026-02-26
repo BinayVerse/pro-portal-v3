@@ -52,7 +52,6 @@ export const useGoogleDrive = () => {
       const gsiScript = document.createElement('script')
       gsiScript.src = 'https://accounts.google.com/gsi/client'
       gsiScript.onload = () => {
-        console.log('Google Identity Services (GIS) loaded')
         isGoogleApiLoaded.value = true
         resolve()
       }

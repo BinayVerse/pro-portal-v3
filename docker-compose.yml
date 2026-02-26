@@ -1,23 +1,26 @@
 version: '3.8'
 
 services:
-  stage:
-    image: admin-01:latest
+  provento-admin-portal:
+    image: 154567116744.dkr.ecr.us-east-1.amazonaws.com/provento/provento-admin-portal:${IMAGE_TAG}
     ports:
       - '80:80'
     env_file:
       - .env
-    labels:
-      - service.stack=nuxt
-      - service.name=whatsapp-bot
-      - container.type=fullstack
     networks:
-      - nuxt-internal
-    logging:
-      driver: json-file
-      options:
-        max-file: '10'
-        max-size: 10m
+      - provento
+    deploy:
+      replicas: 1
+      labels:
+        service.project: 'admin-portal'
+        service.agent: 'admin-portal'
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      resources:
+        limits:
+          memory: 1G
 
 networks:
-  nuxt-internal:
+  provento:

@@ -13,15 +13,19 @@ export default defineEventHandler(async (event) => {
     throw new CustomError('Unauthorized: No token provided', 401)
   }
 
-  let tokenOrgId
+  // Determine effective org: prefer query param for superadmin
+  let tokenUserOrg: any
+  let tokenUserRole: any
   try {
-    const decodedToken = jwt.verify(token, config.jwtToken as string)
-    tokenOrgId = (decodedToken as { org_id: number }).org_id
-
-    if (!tokenOrgId) {
-      setResponseStatus(event, 401)
-      throw new CustomError('Unauthorized: Invalid org_id', 401)
+    const decodedToken = jwt.verify(token, config.jwtToken as string) as { user_id: number }
+    const userId = decodedToken.user_id
+    const userRow = await query('SELECT org_id, role_id FROM users WHERE user_id = $1', [userId])
+    if (!userRow?.rows?.length) {
+      setResponseStatus(event, 404)
+      throw new CustomError('User not found', 404)
     }
+    tokenUserOrg = userRow.rows[0].org_id
+    tokenUserRole = userRow.rows[0].role_id
   } catch (error) {
     setResponseStatus(event, 401)
     throw new CustomError('Unauthorized: Invalid token', 401)
@@ -32,8 +36,20 @@ export default defineEventHandler(async (event) => {
     throw new CustomError('Please provide a valid organization ID', 400)
   }
 
-  // Ensure user can only access their organization's categories
-  if (tokenOrgId.toString() !== orgId) {
+  // Determine allowed org for this request:
+  // - If caller is superadmin (role_id === 0): allow either query param org or the path param orgId
+  // - Otherwise: only allow token user's org
+  const q = getQuery(event) as Record<string, any>
+  const requestedOrg = q?.org || q?.org_id || null
+
+  let allowedOrg: string | null = null
+  if (tokenUserRole === 0) {
+    allowedOrg = requestedOrg ? String(requestedOrg) : String(orgId)
+  } else {
+    allowedOrg = String(tokenUserOrg)
+  }
+
+  if (String(allowedOrg) !== String(orgId)) {
     setResponseStatus(event, 403)
     throw new CustomError('Forbidden: Access denied to this organization', 403)
   }

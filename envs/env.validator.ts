@@ -13,8 +13,6 @@ export default function validateEnvs() {
         process.exit(1)
       }
     }
-    // eslint-disable-next-line no-console
-    console.log('Loaded environment variables')
   }
   catch (error) {
     console.error('Unable to parse .env. validation error:', error)

@@ -10,6 +10,7 @@ export interface AuthUser {
   added_by?: string;
   created_at?: string;
   updated_at?: string;
+  departments?: string[]; // 🔑 User's assigned department IDs
 }
 
 export interface ApiResponse<T = any> {

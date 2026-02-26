@@ -5,7 +5,7 @@
       <div class="text-center">
         <NuxtLink to="/" class="inline-flex items-center space-x-3 mb-6">
           <img
-            src="https://cdn.builder.io/api/v1/image/assets%2Fb2a7382a9c9146babd538ccc60e9d0b5%2Fbddd43caf4614f99a3fbff498927abcc?format=webp&width=800"
+            src="~/assets/media/logo.svg"
             alt="Provento Logo"
             class="w-10 h-10"
           />
@@ -25,10 +25,7 @@
               Your password has been updated. You can now sign in with your new password.
             </p>
             <div class="mt-3">
-              <NuxtLink 
-                to="/login" 
-                class="text-sm text-green-400 hover:text-green-300 font-medium"
-              >
+              <NuxtLink to="/login" class="text-sm text-green-400 hover:text-green-300 font-medium">
                 Go to sign in →
               </NuxtLink>
             </div>
@@ -71,7 +68,11 @@
               <!-- Length requirement -->
               <div class="flex items-center space-x-2">
                 <UIcon
-                  :name="passwordValidation.hasMinLength ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
+                  :name="
+                    passwordValidation.hasMinLength
+                      ? 'i-heroicons-check-circle'
+                      : 'i-heroicons-x-circle'
+                  "
                   :class="passwordValidation.hasMinLength ? 'text-green-400' : 'text-red-400'"
                   class="w-4 h-4"
                 />
@@ -86,7 +87,11 @@
               <!-- Uppercase requirement -->
               <div class="flex items-center space-x-2">
                 <UIcon
-                  :name="passwordValidation.hasUppercase ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
+                  :name="
+                    passwordValidation.hasUppercase
+                      ? 'i-heroicons-check-circle'
+                      : 'i-heroicons-x-circle'
+                  "
                   :class="passwordValidation.hasUppercase ? 'text-green-400' : 'text-red-400'"
                   class="w-4 h-4"
                 />
@@ -101,7 +106,11 @@
               <!-- Lowercase requirement -->
               <div class="flex items-center space-x-2">
                 <UIcon
-                  :name="passwordValidation.hasLowercase ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
+                  :name="
+                    passwordValidation.hasLowercase
+                      ? 'i-heroicons-check-circle'
+                      : 'i-heroicons-x-circle'
+                  "
                   :class="passwordValidation.hasLowercase ? 'text-green-400' : 'text-red-400'"
                   class="w-4 h-4"
                 />
@@ -116,7 +125,11 @@
               <!-- Number requirement -->
               <div class="flex items-center space-x-2">
                 <UIcon
-                  :name="passwordValidation.hasNumber ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
+                  :name="
+                    passwordValidation.hasNumber
+                      ? 'i-heroicons-check-circle'
+                      : 'i-heroicons-x-circle'
+                  "
                   :class="passwordValidation.hasNumber ? 'text-green-400' : 'text-red-400'"
                   class="w-4 h-4"
                 />
@@ -131,7 +144,11 @@
               <!-- Special character requirement -->
               <div class="flex items-center space-x-2">
                 <UIcon
-                  :name="passwordValidation.hasSpecialChar ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
+                  :name="
+                    passwordValidation.hasSpecialChar
+                      ? 'i-heroicons-check-circle'
+                      : 'i-heroicons-x-circle'
+                  "
                   :class="passwordValidation.hasSpecialChar ? 'text-green-400' : 'text-red-400'"
                   class="w-4 h-4"
                 />
@@ -153,13 +170,12 @@
                     v-for="i in 5"
                     :key="i"
                     class="w-6 h-1 rounded-full"
-                    :class="i <= passwordStrength ? getStrengthColor(passwordStrength) : 'bg-gray-600'"
+                    :class="
+                      i <= passwordStrength ? getStrengthColor(passwordStrength) : 'bg-gray-600'
+                    "
                   ></div>
                 </div>
-                <span
-                  class="text-xs font-medium"
-                  :class="getStrengthTextColor(passwordStrength)"
-                >
+                <span class="text-xs font-medium" :class="getStrengthTextColor(passwordStrength)">
                   {{ getStrengthText(passwordStrength) }}
                 </span>
               </div>
@@ -201,16 +217,12 @@
                 :class="passwordsMatch ? 'text-green-400' : 'text-red-400'"
                 class="w-4 h-4"
               />
-              <span
-                :class="passwordsMatch ? 'text-green-400' : 'text-red-400'"
-                class="text-xs"
-              >
+              <span :class="passwordsMatch ? 'text-green-400' : 'text-red-400'" class="text-xs">
                 Passwords match
               </span>
             </div>
           </div>
         </div>
-
 
         <button
           type="submit"
@@ -235,11 +247,12 @@
           <div class="ml-3">
             <h3 class="text-sm font-medium text-red-400">Invalid or expired link</h3>
             <p class="mt-1 text-sm text-red-300">
-              This password reset link is invalid or has expired. Please request a new password reset.
+              This password reset link is invalid or has expired. Please request a new password
+              reset.
             </p>
             <div class="mt-3">
-              <NuxtLink 
-                to="/forgot-password" 
+              <NuxtLink
+                to="/forgot-password"
                 class="text-sm text-red-400 hover:text-red-300 font-medium"
               >
                 Request new reset link →
@@ -251,8 +264,8 @@
 
       <!-- Back to login -->
       <div v-if="!tokenError" class="text-center">
-        <NuxtLink 
-          to="/login" 
+        <NuxtLink
+          to="/login"
           class="inline-flex items-center text-sm text-primary-400 hover:text-primary-300 transition-colors"
         >
           <UIcon name="i-heroicons-arrow-left" class="h-4 w-4 mr-2" />
@@ -264,11 +277,12 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Update Password - provento.ai' })
 import { useAuthStore } from '~/stores/auth/index'
 
 definePageMeta({
   layout: 'minimal',
-  middleware: 'guest',
+  // middleware: 'guest',
 })
 
 const route = useRoute()
@@ -303,7 +317,7 @@ const passwordValidation = computed(() => {
     hasUppercase: /[A-Z]/.test(password),
     hasLowercase: /[a-z]/.test(password),
     hasNumber: /\d/.test(password),
-    hasSpecialChar: /[@$!%*?&]/.test(password)
+    hasSpecialChar: /[@$!%*?&]/.test(password),
   }
 })
 
@@ -315,16 +329,18 @@ const passwordStrength = computed(() => {
     validations.hasUppercase,
     validations.hasLowercase,
     validations.hasNumber,
-    validations.hasSpecialChar
+    validations.hasSpecialChar,
   ]
   return checks.filter(Boolean).length
 })
 
 // Password match validation
 const passwordsMatch = computed(() => {
-  return updateForm.value.password === updateForm.value.confirmPassword &&
-         updateForm.value.password.length > 0 &&
-         updateForm.value.confirmPassword.length > 0
+  return (
+    updateForm.value.password === updateForm.value.confirmPassword &&
+    updateForm.value.password.length > 0 &&
+    updateForm.value.confirmPassword.length > 0
+  )
 })
 
 // Form validation
@@ -377,7 +393,7 @@ const handleUpdatePassword = async () => {
   try {
     const result = await authStore.updatePassword({
       token,
-      newPassword: updateForm.value.password
+      newPassword: updateForm.value.password,
     })
 
     if (result?.status === 'success') {
@@ -388,9 +404,9 @@ const handleUpdatePassword = async () => {
         {
           title: 'Password Updated',
           duration: 5000,
-        }
+        },
       )
-      
+
       // Auto redirect after a few seconds
       setTimeout(() => {
         navigateTo('/login')
@@ -398,18 +414,10 @@ const handleUpdatePassword = async () => {
     }
   } catch (error: any) {
     console.error('Update password error:', error)
-    
+
     if (error.message?.includes('Invalid token') || error.message?.includes('expired')) {
       tokenError.value = true
     }
-    
-    showNotification(
-      error.message || 'Failed to update password. Please try again.',
-      'error',
-      {
-        title: 'Update Failed',
-      }
-    )
   } finally {
     loading.value = false
   }

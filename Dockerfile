@@ -1,9 +1,9 @@
 # Stage 1: Build
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 
 WORKDIR /app
 
-# Install dependencies
+# Install only deps needed for build
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
@@ -11,17 +11,17 @@ RUN npm install --legacy-peer-deps
 COPY . .
 RUN npm run build
 
-# Stage 2: Run
-FROM node:22-alpine
+# Stage 2: Production runtime (distroless)
+FROM gcr.io/distroless/nodejs22-debian12:nonroot
 
 WORKDIR /app
 
-# Copy only what we need for runtime
+# Copy only the built output and prod node_modules
 COPY --from=builder /app/.output ./.output
-COPY --from=builder /app/package*.json ./
 
-# Install only production deps
-RUN npm install --omit=dev --legacy-peer-deps
+# If you actually need runtime deps, do this:
+# COPY --from=builder /app/package*.json ./
+# RUN npm install --omit=dev --legacy-peer-deps
 
 ENV NUXT_PUBLIC_APP_URL=http://localhost:80
 ENV HOST=0.0.0.0
@@ -29,5 +29,4 @@ ENV PORT=80
 
 EXPOSE 80
 
-# Nuxt 3 correct entrypoint
-CMD ["node", ".output/server/index.mjs"]
+CMD ["./.output/server/index.mjs"]

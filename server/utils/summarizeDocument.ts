@@ -24,7 +24,6 @@ export async function summarizeDocument(
         documents,
     };
 
-    console.log('Summarize payload:', payload);
 
     try {
         const response = await axios.post(apiUrl, payload, {

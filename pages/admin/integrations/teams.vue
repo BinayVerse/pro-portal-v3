@@ -1,17 +1,17 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-4 sm:space-y-6">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+        <div class="w-10 h-10 bg-blue-500 rounded-lg flex-shrink-0 flex items-center justify-center">
           <UIcon name="mdi:microsoft-teams" class="w-6 h-6 text-white" />
         </div>
-        <div>
-          <h1 class="text-2xl font-bold text-white">Microsoft Teams Integration</h1>
-          <p class="text-gray-400">Connect your Teams workspace to provento</p>
+        <div class="min-w-0">
+          <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-white truncate">Microsoft Teams Integration</h1>
+          <p class="text-xs sm:text-sm text-gray-400 truncate">Connect your Teams workspace to provento</p>
         </div>
       </div>
-      <div class="flex items-center space-x-4">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-shrink-0">
         <!-- Status Badge -->
         <span
           v-if="connectionStatus.isConnected"
@@ -46,23 +46,33 @@
           Disconnect
         </UButton>
 
-        <UButton
-          v-else-if="connectionStatus.hasBeenConnected"
-          @click="launchTeamsOAuthRedirect"
-          color="blue"
-          icon="heroicons:arrow-path"
-        >
-          Reconnect
-        </UButton>
+        <template v-else-if="connectionStatus.hasBeenConnected">
+          <UButton
+            v-if="!isSuperAdmin"
+            @click="launchTeamsOAuthRedirect"
+            color="blue"
+            icon="heroicons:arrow-path"
+          >
+            Reconnect
+          </UButton>
+          <UButton v-else disabled color="gray" icon="heroicons:arrow-path" title="Super admin cannot connect integrations">
+            Reconnect
+          </UButton>
+        </template>
 
-        <UButton v-else @click="launchTeamsOAuthRedirect" color="blue" icon="heroicons:plus">
-          Connect
-        </UButton>
+        <template v-else>
+          <UButton v-if="!isSuperAdmin" @click="launchTeamsOAuthRedirect" color="blue" icon="heroicons:plus">
+            Connect
+          </UButton>
+          <UButton v-else disabled color="gray" icon="heroicons:plus" title="Super admin cannot connect integrations">
+            Connect
+          </UButton>
+        </template>
       </div>
     </div>
 
     <!-- Main Content Grid -->
-    <div class="grid lg:grid-cols-2 gap-6">
+    <div class="grid xl:grid-cols-2 gap-6">
       <!-- Teams Configuration -->
       <UCard>
         <template #header>
@@ -207,14 +217,14 @@
             >
               Download Package
             </UButton>
-            <UTooltip
+            <AppTooltip
               v-else
               text="After giving consent, the Teams app package will be available for download."
             >
               <UButton disabled color="gray" icon="heroicons:arrow-down-tray">
                 Download Package
               </UButton>
-            </UTooltip>
+            </AppTooltip>
           </div>
         </div>
 
@@ -293,6 +303,8 @@ const config = useRuntimeConfig()
 const route = useRoute()
 const router = useRouter()
 const integrationsStore = useIntegrationsStore()
+const authStore = useAuthStore()
+const isSuperAdmin = computed(() => authStore.isSuperAdmin)
 
 // Reactive data
 const showDisconnectModal = ref(false)
@@ -383,7 +395,8 @@ const launchTeamsOAuthRedirect = async () => {
 }
 
 const disconnectTeams = async () => {
-  await integrationsStore.disconnectTeamsApp()
+  const orgQuery = route?.query?.org || route?.query?.org_id || null
+  await integrationsStore.disconnectTeamsApp(orgQuery ? String(orgQuery) : null)
   showDisconnectModal.value = false
 }
 
@@ -405,11 +418,12 @@ onMounted(async () => {
     }, 3000)
   }
 
-  // Fetch current Teams details
-  await integrationsStore.fetchTeamsAppDetails()
+  // Fetch current Teams details (pass selected org for superadmin)
+  const orgQuery = route?.query?.org || route?.query?.org_id || null
+  await integrationsStore.fetchTeamsAppDetails(orgQuery ? String(orgQuery) : null)
 })
 
 useHead({
-  title: 'Microsoft Teams Integration - Admin Dashboard',
+  title: 'Microsoft Teams Integration - Admin Dashboard - provento.ai',
 })
 </script>

@@ -13,17 +13,20 @@ export default defineEventHandler(async (event) => {
     }
 
     let decoded: any;
+    let userId: string | undefined;
     try {
         decoded = jwt.verify(token, config.jwtToken as string);
+        userId = (decoded as any).user_id
     } catch {
         throw new CustomError('Unauthorized: Invalid token', 401);
     }
 
-    if (decoded.org_id !== org_id && !decoded.isAdmin) {
-        console.log("decoded:", decoded);
-        console.log("org_id::", org_id);
-        console.log("decoded.org_id:", decoded.org_id);
-        throw new CustomError("Forbidden: You don't have access to this organization", 403);
+    const roleRes = await query(`SELECT role_id FROM users WHERE user_id = $1 LIMIT 1`, [userId]);
+    const callerRole = Number.isFinite(Number(roleRes?.rows?.[0]?.role_id)) ? Number(roleRes.rows[0].role_id) : null
+    if (callerRole !== 0) {
+        if (decoded.org_id !== org_id) {
+            throw new CustomError("Forbidden: You don't have access to this organization", 403);
+        }
     }
 
     const { startDate, endDate, timezone } = getQuery(event);
@@ -50,28 +53,28 @@ export default defineEventHandler(async (event) => {
 
     const queryText = `
         WITH request_types AS (
-        SELECT UNNEST(ARRAY['whatsapp', 'slack', 'teams']) AS request_type
+        SELECT UNNEST(ARRAY['whatsapp', 'slack', 'teams', 'admin']) AS request_type
         ),
         usage_data AS (
-        SELECT 
+        SELECT
             t.request_type,
             SUM(t.total_tokens) AS total_tokens,
             SUM(t.total_cost) AS total_cost
-        FROM 
+        FROM
             token_cost_calculation t
-        WHERE 
+        WHERE
             t.org_id = $1
-            AND (t.created_at AT TIME ZONE $4)::date BETWEEN $2::date AND $3::date
-        GROUP BY 
+            AND ((t.created_at AT TIME ZONE 'UTC') AT TIME ZONE $4)::date BETWEEN $2::date AND $3::date
+        GROUP BY
             t.request_type
         )
-        SELECT 
+        SELECT
         INITCAP(rt.request_type) AS name,
         COALESCE(ud.total_tokens, 0) AS total_tokens,
         COALESCE(ud.total_cost, 0) AS total_cost
-        FROM 
+        FROM
         request_types rt
-        LEFT JOIN 
+        LEFT JOIN
         usage_data ud ON rt.request_type = ud.request_type;
     `;
 
@@ -95,7 +98,7 @@ export default defineEventHandler(async (event) => {
             },
         };
     } catch (error) {
-        console.error(error);
+        if (process.dev) console.error(error);
         throw new CustomError(
             'Internal Server Error: Failed to fetch token usage data',
             500

@@ -1,4 +1,6 @@
 <script setup>
+useHead({ title: 'Privacy Policy - provento.ai' })
+
 definePageMeta({
   layout: 'main',
 })

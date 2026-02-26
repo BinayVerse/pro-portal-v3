@@ -15,17 +15,21 @@ export default defineEventHandler(async (event) => {
   }
 
   let userId: number
-  let tokenOrgId: number
+  let tokenUserOrg: any
+  let tokenUserRole: any
 
   try {
-    const decodedToken = jwt.verify(token, config.jwtToken as string) as { 
-      user_id: number; 
-      org_id: number 
-    }
+    const decodedToken = jwt.verify(token, config.jwtToken as string) as { user_id: number }
     userId = decodedToken.user_id
-    tokenOrgId = decodedToken.org_id
+    const userRow = await query('SELECT org_id, role_id FROM users WHERE user_id = $1', [userId])
+    if (!userRow?.rows?.length) {
+      setResponseStatus(event, 404)
+      throw new CustomError('User not found', 404)
+    }
+    tokenUserOrg = userRow.rows[0].org_id
+    tokenUserRole = userRow.rows[0].role_id
 
-    if (!userId || !tokenOrgId) {
+    if (!userId || !tokenUserOrg) {
       setResponseStatus(event, 401)
       throw new CustomError('Unauthorized: Invalid token data', 401)
     }
@@ -44,8 +48,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const { name } = categoryDetails
-  // Use org_id from token instead of request body for security
-  const orgId = tokenOrgId
+  // Determine effective org: use requested org for superadmin, otherwise token org
+  const q = getQuery(event) as Record<string, any>
+  const requestedOrg = q?.org || q?.org_id || null
+  const orgId = tokenUserRole === 0 && requestedOrg ? String(requestedOrg) : tokenUserOrg
 
   try {
     // Check for duplicate category name in the same organization

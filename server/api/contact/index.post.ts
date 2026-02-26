@@ -36,8 +36,6 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
   }
 
   try {
-    console.log('Processing contact request - Phone number:', validate.data.phone);
-
     // Save in DB
     await query(
       `INSERT INTO contacts (name, lastname, email, phone, request_for, message, company, job_title, company_size)

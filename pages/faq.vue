@@ -155,14 +155,14 @@ const faqs = [
     category: 'General',
     question: 'What is provento.ai?',
     answer:
-      'provento.ai is an intelligent document chatting platform that transforms your static documents into interactive conversations. Upload your documents and ask questions in natural language to get instant, accurate answers.',
+      'provento.ai is an intelligent artifact chatting platform that transforms your static artifacts into interactive conversations. Upload your artifacts and ask questions in natural language to get instant, accurate answers.',
   },
   {
     id: 2,
     category: 'General',
     question: 'How does provento.ai work?',
     answer:
-      'Our platform uses advanced AI and natural language processing to understand your documents and queries. When you upload documents, we process and index them for intelligent search. You can then ask questions in plain English and get accurate answers with source citations.',
+      'Our platform uses advanced AI and natural language processing to understand your artifacts and queries. When you upload artifacts, we process and index them for intelligent search. You can then ask questions in plain English and get accurate answers with source citations.',
   },
   {
     id: 3,
@@ -176,21 +176,21 @@ const faqs = [
     category: 'General',
     question: 'Can individuals use provento.ai?',
     answer:
-      'No, provento.ai is built specifically for organizations to streamline internal communication and document access.',
+      'No, provento.ai is built specifically for organizations to streamline internal communication and artifact access.',
   },
   {
     id: 5,
     category: 'Onboarding',
     question: 'How can an organization start using provento.ai?',
     answer:
-      'Organizations can sign up via our website, choose a plan, and complete a quick onboarding process involving document upload and bot channel integration.',
+      'Organizations can sign up via our website, choose a plan, and complete a quick onboarding process involving artifact upload and bot channel integration.',
   },
   {
     id: 6,
     category: 'Onboarding',
     question: 'Does the organization need to appoint an admin?',
     answer:
-      'Yes, each organization needs at least one admin to manage users, documents, and settings.',
+      'Yes, each organization needs at least one admin to manage users, artifacts, and settings.',
   },
   {
     id: 7,
@@ -204,7 +204,7 @@ const faqs = [
     category: 'Onboarding',
     question: 'Is the onboarding process time-consuming?',
     answer:
-      'No, onboarding typically takes less than 30 minutes, including setting up channels and uploading initial documents.',
+      'No, onboarding typically takes less than 30 minutes, including setting up channels and uploading initial artifacts.',
   },
   {
     id: 9,
@@ -216,9 +216,9 @@ const faqs = [
   {
     id: 10,
     category: 'Administration',
-    question: 'Who can upload documents to provento.ai?',
+    question: 'Who can upload artifacts to provento.ai?',
     answer:
-      'Only organization admins can upload documents to ensure content accuracy and consistency.',
+      'Only organization admins can upload artifacts to ensure content accuracy and consistency.',
   },
   {
     id: 11,
@@ -238,7 +238,7 @@ const faqs = [
     category: 'Integrations',
     question: 'Which platforms can I integrate with?',
     answer:
-      'provento.ai integrates with popular workplace tools including Slack, Microsoft Teams, WhatsApp. This allows you to query your documents directly from your preferred communication platform.',
+      'provento.ai integrates with popular workplace tools including Slack, Microsoft Teams, WhatsApp. This allows you to query your artifacts directly from your preferred communication platform.',
   },
   {
     id: 14,
@@ -252,7 +252,7 @@ const faqs = [
     category: 'Integrations',
     question: 'Can I integrate with Microsoft Teams?',
     answer:
-      'Yes! Our Microsoft Teams integration allows you to query documents directly from Teams channels. Simply install the provento.ai bot, connect your account, and start chatting with the bot.',
+      'Yes! Our Microsoft Teams integration allows you to query artifacts directly from Teams channels. Simply install the provento.ai bot, connect your account, and start chatting with the bot.',
   },
   {
     id: 16,
@@ -280,7 +280,7 @@ const faqs = [
     category: 'Pricing',
     question: 'Is there a free plan?',
     answer:
-      'We do not provide a free plan. All our plans are paid and tailored to meet different organizational needs, ensuring access to full features, integrations, and dedicated support.',
+      'Yes, we offer a Free Plan for first-time users with limited access. The Free Plan is available once per organization. Continued usage requires upgrading to a paid plan.',
   },
   {
     id: 20,
@@ -299,7 +299,7 @@ const faqs = [
   {
     id: 22,
     category: 'Pricing',
-    question: 'Is there a document upload limit?',
+    question: 'Is there a artifact upload limit?',
     answer:
       'Yes, limits depend on your subscription plan. Basic plans support up to 500 pages per month.',
   },
@@ -307,7 +307,7 @@ const faqs = [
     id: 23,
     category: 'Pricing',
     question: 'Is there a page or file size limit for uploads?',
-    answer: 'Individual documents can be up to 50MB or 500 pages, depending on your plan.',
+    answer: 'Individual artifacts can be up to 50MB or 500 pages, depending on your plan.',
   },
   {
     id: 24,
@@ -321,12 +321,12 @@ const faqs = [
     category: 'Features',
     question: 'What file formats are supported?',
     answer:
-      'We support all major document formats including PDF, Word documents (.doc, .docx), CSV files, Markdown (.md), plain text files (.txt). If you have a specific format requirement, please contact us.',
+      'We support all major artifact formats including PDF, Word artifacts (.doc, .docx), CSV files, Markdown (.md), plain text files (.txt). If you have a specific format requirement, please contact us.',
   },
   {
     id: 26,
     category: 'Features',
-    question: 'Can I upload documents from Google Drive?',
+    question: 'Can I upload artifacts from Google Drive?',
     answer:
       'Yes! We offer seamless Google Drive integration. You can connect your Google Drive account and select multiple files to upload directly to provento.ai.',
   },
@@ -340,7 +340,7 @@ const faqs = [
   {
     id: 28,
     category: 'Features',
-    question: 'What languages are supported for documents?',
+    question: 'What languages are supported for artifacts?',
     answer:
       'Currently, we support only English. Multilingual support is planned for future expansion.',
   },
@@ -348,28 +348,28 @@ const faqs = [
     id: 29,
     category: 'Features',
     question: 'What kind of requests can users make?',
-    answer: "Users can ask questions based on the documents they've uploaded.",
+    answer: "Users can ask questions based on the artifacts they've uploaded.",
   },
   {
     id: 30,
     category: 'Security',
-    question: 'Are uploaded documents secure?',
+    question: 'Are uploaded artifacts secure?',
     answer:
-      'Yes, all documents are encrypted in transit and at rest using industry-standard security protocols.',
+      'Yes, all artifacts are encrypted in transit and at rest using industry-standard security protocols.',
   },
   {
     id: 31,
     category: 'Security',
-    question: 'Where are documents stored?',
+    question: 'Where are artifacts stored?',
     answer:
-      'Documents are securely stored on cloud servers hosted by trusted providers like AWS or Google Cloud.',
+      'Artifacts are securely stored on cloud servers hosted by trusted providers like AWS or Google Cloud.',
   },
   {
     id: 32,
     category: 'Security',
     question: 'Can I delete my data?',
     answer:
-      "Yes, you have complete control over your data. You can delete individual documents or your entire account at any time. When you delete data, it's permanently removed from our servers within 30 days.",
+      "Yes, you have complete control over your data. You can delete individual artifacts or your entire account at any time. When you delete data, it's permanently removed from our servers within 30 days.",
   },
   {
     id: 33,
@@ -390,7 +390,7 @@ const faqs = [
     category: 'Technical',
     question: 'What happens if I exceed my plan limits?',
     answer:
-      "We'll notify you when you're approaching your limits. If you exceed document or query limits, you can upgrade your plan or purchase additional resources. We don't cut off access immediately - we'll work with you to find the right solution.",
+      "We'll notify you when you're approaching your limits. If you exceed artifact or query limits, you can upgrade your plan or purchase additional resources. We don't cut off access immediately - we'll work with you to find the right solution.",
   },
 ]
 

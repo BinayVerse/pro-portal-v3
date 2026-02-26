@@ -1,34 +1,49 @@
 import { defineStore } from 'pinia'
+import { ref, readonly } from 'vue'
+import { handleError, handleSuccess } from '../../utils/apiHandler'
 
-export interface OrganizationState {
-  // Other organization-related state can be added here
-}
+export const useOrganizationStore = defineStore('organizationStore', () => {
+  const currentPlan = ref<any | null>(null)
+  const loading = ref(true)
+  const error = ref<string | null>(null)
 
-import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
+  async function fetchOrgPlan(orgId?: string) {
+    loading.value = true
+    error.value = null
+    try {
+      const url = orgId ? `/api/organizations/plan?org_id=${encodeURIComponent(orgId)}` : '/api/organizations/plan'
+      const res = await fetch(url, { credentials: 'same-origin' })
+      const text = await res.text()
+      let data: any = null
+      try { data = text ? JSON.parse(text) : null } catch { data = null }
+      if (res.ok && data?.success) {
+        currentPlan.value = data.data || null
+        return { success: true, data: currentPlan.value }
+      }
 
-export const useOrganizationStore = defineStore('organizationStore', {
-  state: (): OrganizationState => ({
-    // Organization state
-  }),
+      // Fallback: server may return direct object
+      if (res.ok && data) {
+        currentPlan.value = data || null
+        return { success: true, data: currentPlan.value }
+      }
 
-  getters: {
-    // Organization getters can be added here
-  },
+      const msg = (data && (data.error || data.message)) || 'Failed to fetch org plan'
+      error.value = msg
+      handleError(msg, 'Failed to fetch org plan')
+      return { success: false, error: msg }
+    } catch (err: any) {
+      const msg = handleError(err, 'Failed to fetch org plan')
+      error.value = msg
+      return { success: false, error: msg }
+    } finally {
+      loading.value = false
+    }
+  }
 
-  actions: {
-    // Delegate error/success helpers to shared api handler for consistency
-    handleError(error: any, defaultMessage: string, silent: boolean = false): string {
-      return handleError(error, defaultMessage, silent)
-    },
-
-    handleSuccess(message: string): void {
-      handleSuccess(message)
-    },
-
-    extractErrors(err: any): any[] {
-      return extractErrors(err)
-    },
-
-    // Organization actions can be added here
-  },
+  return {
+    currentPlan: readonly(currentPlan),
+    loading: readonly(loading),
+    error: readonly(error),
+    fetchOrgPlan,
+  }
 })

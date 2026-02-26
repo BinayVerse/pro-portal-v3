@@ -8,7 +8,8 @@ export async function processDocument(
     orgId: string,
     userId: string,
     documents: { id: string; name: string; type: string; link: string }[],
-    authToken: string
+    authToken: string,
+    departments: string[],
 ): Promise<any> {
     const config = useRuntimeConfig();
     const botEndpoint = config.public.botEndpoint;
@@ -19,9 +20,11 @@ export async function processDocument(
         bucketName,
         folderName,
         orgName,
+        industry: "HR",
         orgId,
         userId,
         documents,
+        departments,
     };
 
     // console.log('Process payload:', payload);

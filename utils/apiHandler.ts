@@ -5,9 +5,12 @@ export function handleError(error: any, defaultMessage: string, silent: boolean 
   const errorMessage =
     // prefer Nuxt $fetch unpacked body (_data) for non-2xx responses
     error?.response?._data?.message ||
+    error?.response?._data?.statusMessage ||
     // fallback to axios-like response.data or other shapes
     error?.response?.data?.message ||
+    error?.response?.statusText ||
     error?.data?.message ||
+    error?.statusMessage ||
     error?.message ||
     defaultMessage
 

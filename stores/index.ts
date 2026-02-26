@@ -6,6 +6,7 @@ import { useContactStore } from './contact'
 import { useAnalyticsStore } from './analytics'
 import { useOrganizationStore } from './organization'
 import { useIntegrationsStore } from './integrations'
+import { useOrganizationIntegrationsStore } from './organization-integrations'
 // import { useBillingDetailsStore, useGlobalStore } from './global'
 
-export { useContactStore, useAuthStore, useProfileStore, useUsersStore, useAnalyticsStore, useOrganizationStore, useIntegrationsStore }
+export { useContactStore, useAuthStore, useProfileStore, useUsersStore, useAnalyticsStore, useOrganizationStore, useIntegrationsStore, useOrganizationIntegrationsStore }

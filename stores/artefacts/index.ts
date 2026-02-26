@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import type { ArtefactGoogleDriveFile, DocumentCategory } from './types'
 import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
+import { handleAuthError as handleAuthErrorShared } from '~/composables/useAuthError'
 
 export const useArtefactsStore = defineStore('artefacts', {
   state: () => ({
@@ -13,13 +14,14 @@ export const useArtefactsStore = defineStore('artefacts', {
     newCategory: null as DocumentCategory | null,
     isCategoryLoading: false,
     categoryError: null as string | null,
-    // Artefacts list and stats
+    // Artifacts list and stats
     artefacts: [] as any[],
     previousArtefacts: [] as any[], // Store previous state to detect changes
     stats: {
       totalArtefacts: 0,
       processedArtefacts: 0,
       totalCategories: 0,
+      totalSizeBytes: 0,
       totalSize: '0 Bytes'
     },
     isLoadingArtefacts: false,
@@ -32,6 +34,11 @@ export const useArtefactsStore = defineStore('artefacts', {
     pollingIntervalMs: 10000, // Start with 10 seconds
     maxPollingIntervalMs: 60000, // Max 60 seconds
     minPollingIntervalMs: 5000, // Min 5 seconds
+    // Departments
+    departments: [] as any[],
+    departmentsLoading: false,
+    departmentsError: null as string | null,
+    artefactDepartments: {} as Record<number, string[]>,
   }),
 
   getters: {
@@ -40,12 +47,13 @@ export const useArtefactsStore = defineStore('artefacts', {
     getCategoryNames: (state): string[] => (state.categories || []).map(cat => cat?.name || '').filter(name => name),
     isCategoryLoadingState: (state): boolean => state.isCategoryLoading,
     getCategoryError: (state): string | null => state.categoryError,
-    // Artefacts getters
+    // Artifacts getters
     getArtefacts: (state): any[] => state.artefacts || [],
     getStats: (state) => state.stats || {
       totalArtefacts: 0,
       processedArtefacts: 0,
       totalCategories: 0,
+      totalSizeBytes: 0,
       totalSize: '0 Bytes'
     },
     isArtefactsLoading: (state): boolean => state.isLoadingArtefacts,
@@ -83,6 +91,10 @@ export const useArtefactsStore = defineStore('artefacts', {
         percentage: total > 0 ? Math.round((processed / total) * 100) : 0
       }
     },
+    getDepartments: (state) => state.departments,
+    isDepartmentsLoading: (state) => state.departmentsLoading,
+    getDepartmentsError: (state): string | null => state.departmentsError,
+    getArtefactDepartments: (state) => state.artefactDepartments,
   },
 
   actions: {
@@ -95,9 +107,8 @@ export const useArtefactsStore = defineStore('artefacts', {
           data: ArtefactGoogleDriveFile[]
           otherFiles: number
           message: string
-        }>('/api/artefacts/google-drive-fetch', {
-          method: 'POST',
-          body: { folderUrl },
+        }>(`/api/artefacts/google-drive-fetch?folderUrl=${encodeURIComponent(folderUrl)}`, {
+          method: 'GET',
         })
 
         this.googleDriveFiles = data.data || []
@@ -120,13 +131,14 @@ export const useArtefactsStore = defineStore('artefacts', {
       }
     },
 
-    async uploadGoogleDriveFiles(selectedFiles: ArtefactGoogleDriveFile[], category: string) {
+    async uploadGoogleDriveFiles(selectedFiles: ArtefactGoogleDriveFile[], category: string, orgId?: string | null) {
       this.isUploadingGoogleDrive = true
 
       try {
         const token = localStorage.getItem('authToken')
+        const url = orgId ? `/api/artefacts/google-drive?org=${encodeURIComponent(String(orgId))}` : '/api/artefacts/google-drive'
 
-        const data = await $fetch('/api/artefacts/google-drive', {
+        const data = await $fetch(url, {
           method: 'POST',
           headers: {
             Authorization: token ? `Bearer ${token}` : '',
@@ -139,22 +151,60 @@ export const useArtefactsStore = defineStore('artefacts', {
 
         return {
           success: true,
-          files: data.files || [],
-          message: data.message || 'Files uploaded successfully'
+          files: (data as any).files || [],
+          message: (data as any).message || 'Files uploaded successfully'
         }
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.statusCode === 401) {
-          localStorage.removeItem('authToken')
-          localStorage.removeItem('authUser')
-          await navigateTo('/login')
+        // Handle authentication errors using shared handler
+        if (await handleAuthErrorShared(error)) {
           throw new Error('Session expired. Please sign in again.')
         }
 
         return {
           success: false,
           files: [],
-          message: handleError(error, 'Failed to upload Google Drive files')
+          message: handleError(error, 'Failed to upload Google Drive files', true)
+        }
+      } finally {
+        this.isUploadingGoogleDrive = false
+      }
+    },
+
+    // Upload Google Drive files with departments support
+    async uploadGoogleDriveFilesWithDepartments(payload: { files: ArtefactGoogleDriveFile[]; category: string; departments: string[] }, orgId?: string | null) {
+      this.isUploadingGoogleDrive = true
+
+      try {
+        const token = localStorage.getItem('authToken')
+        const url = orgId ? `/api/artefacts/google-drive?org=${encodeURIComponent(String(orgId))}` : '/api/artefacts/google-drive'
+
+        const data = await $fetch(url, {
+          method: 'POST',
+          headers: {
+            Authorization: token ? `Bearer ${token}` : '',
+          },
+          body: {
+            selectedFileDetails: payload.files,
+            category: payload.category,
+            departments: payload.departments, // 🔑 important - pass departments array
+          },
+        })
+
+        return {
+          success: true,
+          files: (data as any).files || [],
+          message: (data as any).message || 'Files uploaded successfully'
+        }
+      } catch (error: any) {
+        // Handle authentication errors using shared handler
+        if (await handleAuthErrorShared(error)) {
+          throw new Error('Session expired. Please sign in again.')
+        }
+
+        return {
+          success: false,
+          files: [],
+          message: handleError(error, 'Failed to upload Google Drive files', true)
         }
       } finally {
         this.isUploadingGoogleDrive = false
@@ -166,19 +216,21 @@ export const useArtefactsStore = defineStore('artefacts', {
       this.otherFilesCount = 0
     },
 
-    async uploadArtefact(formData: FormData) {
+    async uploadArtefact(formData: FormData, orgId?: string | null) {
       try {
         const token = process.client ? localStorage.getItem('authToken') : null
         if (!token) {
           throw new Error('Authentication required')
         }
 
+        const url = orgId ? `/api/artefacts/upload?org=${encodeURIComponent(String(orgId))}` : '/api/artefacts/upload'
+
         const response = await $fetch<{
           statusCode: number
           status: string
           message: string
           data: any
-        }>('/api/artefacts/upload', {
+        }>(url, {
           method: 'POST',
           body: formData,
           headers: {
@@ -196,20 +248,15 @@ export const useArtefactsStore = defineStore('artefacts', {
           message: response.message
         }
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.statusCode === 401 || error.response?.status === 401) {
-          if (process.client) {
-            localStorage.removeItem('authToken')
-            localStorage.removeItem('authUser')
-          }
-          await navigateTo('/login')
-          throw new Error('Session expired. Please log in again.')
+        // Handle authentication errors using shared handler
+        if (await handleAuthErrorShared(error)) {
+          throw new Error('Session expired. Please sign in again.')
         }
 
         return {
           success: false,
           data: null,
-          message: handleError(error, 'Failed to upload artefact')
+          message: handleError(error, 'Failed to upload artifact', true)
         }
       }
     },
@@ -246,19 +293,7 @@ export const useArtefactsStore = defineStore('artefacts', {
     },
 
     async handleAuthError(err: any): Promise<boolean> {
-      if (err?.statusCode === 401 || err?.response?.status === 401) {
-        if (process.client) {
-          localStorage.removeItem('authUser')
-          localStorage.removeItem('authToken')
-          setTimeout(() => {
-            navigateTo('/login')
-          }, 500)
-        }
-        const authCookie = useCookie('authToken')
-        authCookie.value = null
-        return true
-      }
-      return false
+      return await handleAuthErrorShared(err)
     },
 
     // Category Actions
@@ -371,8 +406,8 @@ export const useArtefactsStore = defineStore('artefacts', {
       this.categoryError = null
     },
 
-    // Artefacts Actions
-    async fetchArtefacts() {
+    // Artifacts Actions
+    async fetchArtefacts(orgId?: string | null) {
       this.isLoadingArtefacts = true
       this.artefactsError = null
       const userTimezone = process.client ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC'
@@ -381,6 +416,24 @@ export const useArtefactsStore = defineStore('artefacts', {
         const token = process.client ? localStorage.getItem('authToken') : null
         if (!token) {
           throw new Error('Authentication required')
+        }
+
+        // If no orgId provided, fall back to route query (useful for superadmin url-based selection)
+        if (!orgId && process.client) {
+          try {
+            const route = useRoute()
+            const q = route?.query?.org || route?.query?.org_id
+            if (q && String(q).trim()) {
+              orgId = String(q)
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        let url = `/api/artefacts/list?timezone=${encodeURIComponent(userTimezone)}`
+        if (orgId) {
+          url += `&org=${encodeURIComponent(String(orgId))}`
         }
 
         const response = await $fetch<{
@@ -392,13 +445,13 @@ export const useArtefactsStore = defineStore('artefacts', {
               totalArtefacts: number
               processedArtefacts: number
               totalCategories: number
+              totalSizeBytes: number
               totalSize: string
             }
           }
           message: string
-        }>('/api/artefacts/list', {
-          method: 'POST',
-          body: { timezone: userTimezone },
+        }>(url, {
+          method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -416,6 +469,7 @@ export const useArtefactsStore = defineStore('artefacts', {
           totalArtefacts: 0,
           processedArtefacts: 0,
           totalCategories: 0,
+          totalSizeBytes: 0,
           totalSize: '0 Bytes'
         }
 
@@ -432,13 +486,8 @@ export const useArtefactsStore = defineStore('artefacts', {
           message: response.message
         }
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.statusCode === 401 || error.response?.status === 401) {
-          if (process.client) {
-            localStorage.removeItem('authToken')
-            localStorage.removeItem('authUser')
-          }
-          await navigateTo('/login')
+        // Handle authentication errors using shared handler
+        if (await handleAuthErrorShared(error)) {
           throw new Error('Session expired. Please log in again.')
         }
 
@@ -459,6 +508,7 @@ export const useArtefactsStore = defineStore('artefacts', {
         totalArtefacts: 0,
         processedArtefacts: 0,
         totalCategories: 0,
+        totalSizeBytes: 0,
         totalSize: '0 Bytes'
       }
       this.artefactsError = null
@@ -468,12 +518,17 @@ export const useArtefactsStore = defineStore('artefacts', {
       this.artefactsError = null
     },
 
-    // View artefact method
-    async viewArtefact(artefactId: number) {
+    // View artifact method
+    async viewArtefact(artefactId: number, orgId?: string | null) {
       try {
         const token = process.client ? localStorage.getItem('authToken') : null
         if (!token) {
           throw new Error('Authentication required')
+        }
+
+        let url = `/api/artefacts/view?artefactId=${encodeURIComponent(String(artefactId))}`
+        if (orgId) {
+          url += `&org=${encodeURIComponent(String(orgId))}`
         }
 
         const response = await $fetch<{
@@ -485,9 +540,8 @@ export const useArtefactsStore = defineStore('artefacts', {
           fileName: string
           contentType?: string
           docType?: string
-        }>('/api/artefacts/view', {
-          method: 'POST',
-          body: { artefactId },
+        }>(url, {
+          method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -509,13 +563,8 @@ export const useArtefactsStore = defineStore('artefacts', {
           }
         }
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.statusCode === 401 || error.response?.status === 401) {
-          if (process.client) {
-            localStorage.removeItem('authToken')
-            localStorage.removeItem('authUser')
-          }
-          await navigateTo('/login')
+        // Handle authentication errors using shared handler
+        if (await handleAuthErrorShared(error)) {
           throw new Error('Session expired. Please log in again.')
         }
 
@@ -526,21 +575,22 @@ export const useArtefactsStore = defineStore('artefacts', {
       }
     },
 
-    // Summarize artefact method
-    async summarizeArtefact(artefactId: number) {
+    // Summarize artifact method
+    async summarizeArtefact(artefactId: number, orgId?: string | null) {
       try {
         const token = process.client ? localStorage.getItem('authToken') : null
         if (!token) {
           throw new Error('Authentication required')
         }
 
+        const url = orgId ? `/api/artefacts/summarize/${artefactId}?org=${encodeURIComponent(String(orgId))}` : `/api/artefacts/summarize/${artefactId}`
         const response = await $fetch<{
           statusCode: number
           status: string
           message: string
           data?: any
-        }>(`/api/artefacts/summarize/${artefactId}`, {
-          method: 'POST',
+        }>(url, {
+          method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -555,13 +605,8 @@ export const useArtefactsStore = defineStore('artefacts', {
           message: response.message || 'Document summarized successfully'
         }
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.statusCode === 401 || error.response?.status === 401) {
-          if (process.client) {
-            localStorage.removeItem('authToken')
-            localStorage.removeItem('authUser')
-          }
-          await navigateTo('/login')
+        // Handle authentication errors using shared handler
+        if (await handleAuthErrorShared(error)) {
           throw new Error('Session expired. Please log in again.')
         }
 
@@ -572,20 +617,21 @@ export const useArtefactsStore = defineStore('artefacts', {
       }
     },
 
-    // Reprocess artefact method
-    async reprocessArtefact(artefactId: number) {
+    // Reprocess artifact method
+    async reprocessArtefact(artefactId: number, orgId?: string | null) {
       try {
         const token = process.client ? localStorage.getItem('authToken') : null
         if (!token) {
           throw new Error('Authentication required')
         }
 
+        const url = orgId ? `/api/artefacts/reprocess/${artefactId}?org=${encodeURIComponent(String(orgId))}` : `/api/artefacts/reprocess/${artefactId}`
         const response = await $fetch<{
           statusCode: number
           status: string
           message: string
           data: any
-        }>(`/api/artefacts/reprocess/${artefactId}`, {
+        }>(url, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -598,32 +644,32 @@ export const useArtefactsStore = defineStore('artefacts', {
 
         return {
           success: true,
-          message: response.message || 'Artefact reprocessing started successfully'
+          message: response.message || 'Artifact reprocessing started successfully'
         }
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.statusCode === 401 || error.response?.status === 401) {
-          if (process.client) {
-            localStorage.removeItem('authToken')
-            localStorage.removeItem('authUser')
-          }
-          await navigateTo('/login')
-          throw new Error('Session expired. Please log in again.')
+        // Handle authentication errors using shared handler
+        if (await handleAuthErrorShared(error)) {
+          throw new Error('Session expired. Please sign in again.')
         }
 
         return {
           success: false,
-          message: handleError(error, 'Failed to reprocess artefact')
+          message: handleError(error, 'Failed to reprocess artifact')
         }
       }
     },
 
-    // Delete artefact method
-    async deleteArtefact(artefactId: number, artefactName: string) {
+    // Delete artifact method
+    async deleteArtefact(artefactId: number, artefactName: string, orgId?: string | null) {
       try {
         const token = process.client ? localStorage.getItem('authToken') : null
         if (!token) {
           throw new Error('Authentication required')
+        }
+
+        let url = `/api/artefacts/delete?artefactId=${encodeURIComponent(String(artefactId))}&artefactName=${encodeURIComponent(artefactName)}`
+        if (orgId) {
+          url += `&org=${encodeURIComponent(String(orgId))}`
         }
 
         const response = await $fetch<{
@@ -631,9 +677,8 @@ export const useArtefactsStore = defineStore('artefacts', {
           status: string
           message: string
           data: any
-        }>('/api/artefacts/delete', {
-          method: 'POST',
-          body: { artefactId, artefactName },
+        }>(url, {
+          method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -643,34 +688,37 @@ export const useArtefactsStore = defineStore('artefacts', {
           throw new Error(response.message)
         }
 
+        handleSuccess(response.message || 'Artifact deleted successfully')
+
         return {
           success: true,
-          message: response.message || 'Artefact deleted successfully'
+          message: response.message || 'Artifact deleted successfully'
         }
+
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.statusCode === 401 || error.response?.status === 401) {
-          if (process.client) {
-            localStorage.removeItem('authToken')
-            localStorage.removeItem('authUser')
-          }
-          await navigateTo('/login')
-          throw new Error('Session expired. Please log in again.')
+        // Handle authentication errors using shared handler
+        if (await handleAuthErrorShared(error)) {
+          throw new Error('Session expired. Please sign in again.')
         }
 
         return {
           success: false,
-          message: handleError(error, 'Failed to delete artefact')
+          message: handleError(error, 'Failed to delete artifact')
         }
       }
     },
 
     // Check if file exists
-    async checkFileExists(fileName: string) {
+    async checkFileExists(fileName: string, orgId?: string | null) {
       try {
         const token = process.client ? localStorage.getItem('authToken') : null
         if (!token) {
           throw new Error('Authentication required')
+        }
+
+        let url = `/api/artefacts/check-exists?fileName=${encodeURIComponent(fileName)}`
+        if (orgId) {
+          url += `&org_id=${encodeURIComponent(String(orgId))}`
         }
 
         const response = await $fetch<{
@@ -683,9 +731,8 @@ export const useArtefactsStore = defineStore('artefacts', {
             category: string
             lastUpdated: string
           }
-        }>('/api/artefacts/check-exists', {
-          method: 'POST',
-          body: { fileName },
+        }>(url, {
+          method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -701,14 +748,9 @@ export const useArtefactsStore = defineStore('artefacts', {
           fileInfo: response.fileInfo
         }
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.statusCode === 401 || error.response?.status === 401) {
-          if (process.client) {
-            localStorage.removeItem('authToken')
-            localStorage.removeItem('authUser')
-          }
-          await navigateTo('/login')
-          throw new Error('Session expired. Please log in again.')
+        // Handle authentication errors using shared handler
+        if (await handleAuthErrorShared(error)) {
+          throw new Error('Session expired. Please sign in again.')
         }
 
         return {
@@ -720,11 +762,17 @@ export const useArtefactsStore = defineStore('artefacts', {
     },
 
     // Check if multiple files exist using unified endpoint
-    async checkFilesExistBulk(fileNames: string[]) {
+    async checkFilesExistBulk(fileNames: string[], orgId?: string | null) {
       try {
         const token = process.client ? localStorage.getItem('authToken') : null
         if (!token) {
           throw new Error('Authentication required')
+        }
+
+        const fileNamesParam = fileNames.map(f => encodeURIComponent(f)).join(',')
+        let url = `/api/artefacts/check-exists?fileNames=${fileNamesParam}`
+        if (orgId) {
+          url += `&org_id=${encodeURIComponent(String(orgId))}`
         }
 
         const response = await $fetch<{
@@ -741,9 +789,8 @@ export const useArtefactsStore = defineStore('artefacts', {
               lastUpdated: string
             }
           }>
-        }>('/api/artefacts/check-exists', {
-          method: 'POST',
-          body: { fileNames },
+        }>(url, {
+          method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -758,14 +805,9 @@ export const useArtefactsStore = defineStore('artefacts', {
           results: response.results
         }
       } catch (error: any) {
-        // Handle authentication errors
-        if (error.statusCode === 401 || error.response?.status === 401) {
-          if (process.client) {
-            localStorage.removeItem('authToken')
-            localStorage.removeItem('authUser')
-          }
-          await navigateTo('/login')
-          throw new Error('Session expired. Please log in again.')
+        // Handle authentication errors using shared handler
+        if (await handleAuthErrorShared(error)) {
+          throw new Error('Session expired. Please sign in again.')
         }
 
         return {
@@ -779,7 +821,7 @@ export const useArtefactsStore = defineStore('artefacts', {
     // Auto-processing methods
     startAutoProcessing() {
       if (this.pollingInterval) {
-        this.stopAutoProcessing()
+        return      // Already running — don’t restart
       }
 
       this.isAutoProcessingEnabled = true
@@ -793,8 +835,8 @@ export const useArtefactsStore = defineStore('artefacts', {
         this.pollingInterval = null
       }
 
-      // Clear processing state but keep attempted summarizations to avoid retries
       this.summarizingDocs.clear()
+      this.summarizingDocs = new Set<number>()
     },
 
     startPolling() {
@@ -804,14 +846,14 @@ export const useArtefactsStore = defineStore('artefacts', {
         try {
           await this.fetchArtefacts()
 
-          // Stop polling only if all documents are processed AND summarized
+          // Stop polling when everything is processed
           if (this.allDocumentsProcessed && this.allDocumentsSummarized) {
             this.stopAutoProcessing()
           } else {
             this.adjustPollingInterval()
           }
         } catch (error) {
-          // Silent error handling for polling
+          // silent
         }
       }, this.pollingIntervalMs)
     },
@@ -823,11 +865,11 @@ export const useArtefactsStore = defineStore('artefacts', {
       const newlyProcessedDocs = currentDocs.filter(currentDoc => {
         const previousDoc = previousDocs.find(prev => prev.id === currentDoc.id)
         return previousDoc &&
-               previousDoc.status !== 'processed' &&
-               currentDoc.status === 'processed' &&
-               currentDoc.summarized === 'No' &&
-               !this.summarizingDocs.has(currentDoc.id) &&
-               !this.attemptedSummarizations.has(currentDoc.id)
+          previousDoc.status !== 'processed' &&
+          currentDoc.status === 'processed' &&
+          currentDoc.summarized === 'No' &&
+          !this.summarizingDocs.has(currentDoc.id) &&
+          !this.attemptedSummarizations.has(currentDoc.id)
       })
 
       if (newlyProcessedDocs.length > 0) {
@@ -835,6 +877,13 @@ export const useArtefactsStore = defineStore('artefacts', {
         for (const doc of newlyProcessedDocs) {
           this.summarizingDocs.add(doc.id)
           this.attemptedSummarizations.add(doc.id)
+
+          // Mark artifact as summarizing for immediate UI feedback
+          const _idx = this.artefacts.findIndex(a => a.id === doc.id)
+          if (_idx !== -1) {
+            this.artefacts[_idx].isSummarizing = true
+            this.artefacts = [...this.artefacts]
+          }
 
           // Show notification when summarization starts
           if (process.client) {
@@ -850,10 +899,16 @@ export const useArtefactsStore = defineStore('artefacts', {
             this.summarizingDocs.delete(doc.id)
             // Force reactivity update
             this.summarizingDocs = new Set(this.summarizingDocs)
+            // Clear artifact isSummarizing flag
+            const _idx2 = this.artefacts.findIndex(a => a.id === doc.id)
+            if (_idx2 !== -1) {
+              this.artefacts[_idx2].isSummarizing = false
+              this.artefacts = [...this.artefacts]
+            }
           })
 
           // Add small delay between starting each summarization
-          setTimeout(() => {}, 500)
+          setTimeout(() => { }, 500)
         }
       }
     },
@@ -898,6 +953,18 @@ export const useArtefactsStore = defineStore('artefacts', {
           const docName = doc?.name || `Document ${docId}`
           showError(`Error summarizing ${docName}: ${error.message || error}`)
         }
+      } finally {
+        // Ensure UI flag is cleared
+        const idx = this.artefacts.findIndex(a => a.id === docId)
+        if (idx !== -1) {
+          this.artefacts[idx].isSummarizing = false
+          this.artefacts = [...this.artefacts]
+        }
+        // Also ensure summarizing set is cleaned
+        if (this.summarizingDocs.has(docId)) {
+          this.summarizingDocs.delete(docId)
+          this.summarizingDocs = new Set(this.summarizingDocs)
+        }
       }
     },
 
@@ -931,6 +998,8 @@ export const useArtefactsStore = defineStore('artefacts', {
       this.stopAutoProcessing()
       this.summarizingDocs.clear()
       this.attemptedSummarizations.clear()
+      // Clear per-artifact isSummarizing flags
+      this.artefacts = (this.artefacts || []).map(a => ({ ...a, isSummarizing: false }))
       this.pollingIntervalMs = 10000 // Reset to default
     },
 
@@ -949,6 +1018,114 @@ export const useArtefactsStore = defineStore('artefacts', {
         allProcessed: this.allDocumentsProcessed,
         allComplete: this.allDocumentsProcessed && this.allDocumentsSummarized,
       }
+    },
+
+    // Department fetching actions
+    async fetchDepartments(orgId?: string | null) {
+      this.departmentsLoading = true
+      this.departmentsError = null
+      try {
+        const token = process.client ? localStorage.getItem('authToken') : null
+        if (!token) {
+          this.departmentsError = 'No auth token available'
+          return
+        }
+
+        const url = orgId
+          ? `/api/organizations/departments?org_id=${encodeURIComponent(String(orgId))}`
+          : '/api/organizations/departments'
+
+        const result = await $fetch<{ data: any[] }>(url, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        this.departments = result?.data || []
+      } catch (err: any) {
+        console.error('Failed to load departments:', err)
+        if (!await this.handleAuthError(err)) {
+          this.departmentsError = this.handleError(err, 'Failed to load departments')
+        }
+        this.departments = []
+      } finally {
+        this.departmentsLoading = false
+      }
+    },
+
+    // 🔑 Fetch ALL departments without role-based filtering
+    // Used for display/mapping purposes so Department Admins can see all department names
+    async fetchAllDepartments(orgId?: string | null) {
+      try {
+        const token = process.client ? localStorage.getItem('authToken') : null
+        if (!token) {
+          console.warn('No auth token available for loading all departments')
+          return []
+        }
+
+        const url = orgId
+          ? `/api/organizations/all-departments?org_id=${encodeURIComponent(String(orgId))}`
+          : '/api/organizations/all-departments'
+
+        const result = await $fetch<{ data: any[] }>(url, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        return result?.data || []
+      } catch (err: any) {
+        console.error('Failed to load all departments:', err)
+        return []
+      }
+    },
+
+    async fetchArtefactDepartments(artefactIds?: number[]) {
+      try {
+        const token = process.client ? localStorage.getItem('authToken') : null
+        if (!token) {
+          console.warn('No auth token available for loading artifact departments')
+          return
+        }
+
+        const idsToFetch = artefactIds || this.artefacts.map(a => a.id)
+        if (idsToFetch.length === 0) return
+
+        // Fetch departments for each artifact in parallel
+        await Promise.allSettled(
+          idsToFetch.map(async (artefactId) => {
+            try {
+              const result = await $fetch<{ departments: Array<{ dept_id: string; name: string }> }>(
+                `/api/artefacts/${artefactId}/departments`,
+                {
+                  method: 'GET',
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              )
+              // Store department IDs for form binding, not names
+              const deptIds = (result?.departments || []).map((d: any) => d.dept_id).filter(Boolean)
+              this.artefactDepartments[artefactId] = deptIds
+            } catch (err: any) {
+              console.error(`Failed to load departments for artifact ${artefactId}:`, err)
+              this.artefactDepartments[artefactId] = []
+            }
+          }),
+        )
+      } catch (error: any) {
+        console.error('Error fetching artifact departments:', error)
+      }
+    },
+
+    // Helper to get department names from IDs for display
+    getDepartmentNames(deptIds: string[]): string[] {
+      return deptIds
+        .map((deptId: string) => {
+          const dept = this.departments.find((d: any) => d.dept_id === deptId)
+          return dept?.name || ''
+        })
+        .filter(Boolean)
     },
   },
 })

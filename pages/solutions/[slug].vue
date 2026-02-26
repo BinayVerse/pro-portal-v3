@@ -118,7 +118,7 @@
             Ready to Transform Your {{ solution.name }} Workflow?
           </h2>
           <p class="text-xl text-gray-300 mb-8">
-            See how provento.ai can streamline your {{ solution.name.toLowerCase() }} artefact
+            See how provento.ai can streamline your {{ solution.name.toLowerCase() }} artifact
             processes.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -149,24 +149,24 @@ const route = useRoute()
 const slug = route.params.slug as string
 
 const allIndustries = [
-  { name: 'Education', slug: 'education' },
   { name: 'Finance & Banking', slug: 'finance-banking' },
-  { name: 'Government', slug: 'government' },
   { name: 'Healthcare', slug: 'healthcare' },
+  { name: 'Real Estate', slug: 'real-estate' },
   { name: 'Insurance', slug: 'insurance' },
   { name: 'Legal', slug: 'legal' },
   { name: 'Manufacturing', slug: 'manufacturing' },
-  { name: 'Real Estate', slug: 'real-estate' },
+  { name: 'Education', slug: 'education' },
+  { name: 'Government', slug: 'government' },
 ]
 
 const solutions: Record<string, any> = {
   education: {
     name: 'Education',
     description:
-      'Enhance learning experiences and administrative efficiency with intelligent artefact management for educational institutions.',
+      'Enhance learning experiences and administrative efficiency with intelligent artifact management for educational institutions.',
     icon: 'i-heroicons-academic-cap',
     keyPoints: [
-      'Time-consuming manual artefact review',
+      'Time-consuming manual artifact review',
       'Difficulty finding relevant case precedents',
       'Complex contract analysis requirements',
       'Regulatory compliance tracking',
@@ -229,7 +229,7 @@ const solutions: Record<string, any> = {
       {
         title: 'Learning Analytics',
         description:
-          'Track artefact usage patterns to understand learning preferences and improve curriculum design.',
+          'Track artifact usage patterns to understand learning preferences and improve curriculum design.',
         icon: 'i-heroicons-chart-bar',
       },
     ],
@@ -237,16 +237,16 @@ const solutions: Record<string, any> = {
   'finance-banking': {
     name: 'Finance & Banking',
     description:
-      'Transform financial research, contract analysis, and case preparation with AI-powered artefact intelligence. Quickly find relevant precedents, analyze contracts, and extract key legal insights.',
+      'Transform financial research, contract analysis, and case preparation with AI-powered artifact intelligence. Quickly find relevant precedents, analyze contracts, and extract key legal insights.',
     icon: 'i-heroicons-currency-dollar',
     keyPoints: [
-      'Complex financial artefact analysis',
+      'Complex financial artifact analysis',
       'Risk assessment requirements',
       'Regulatory compliance challenges',
       'Credit and loan processing',
     ],
     helps: [
-      'Automated financial artefact analysis',
+      'Automated financial artifact analysis',
       'Risk assessment acceleration',
       'Compliance monitoring',
       'Credit decision support',
@@ -255,18 +255,18 @@ const solutions: Record<string, any> = {
       {
         title: 'Credit Analysis',
         description:
-          'Quickly analyze financial statements, credit reports, and supporting artefacts.',
+          'Quickly analyze financial statements, credit reports, and supporting artifacts.',
         question: 'Ask: "What are the key financial ratios in this loan application?"',
       },
       {
         title: 'Risk Assessment',
-        description: 'Identify potential risks and compliance issues in financial artefacts.',
+        description: 'Identify potential risks and compliance issues in financial artifacts.',
         question: 'Ask: "Find any red flags related to data privacy violations in healthcare"',
       },
       {
         title: 'Regulatory Compliance',
         description: 'Ensure all financial products meet current regulatory requirements.',
-        question: 'Ask: "What are the intellectual property risks in these artefacts?"',
+        question: 'Ask: "What are the intellectual property risks in these artifacts?"',
       },
     ],
     testimonial: {
@@ -290,18 +290,18 @@ const solutions: Record<string, any> = {
       {
         title: 'Risk Assessment',
         description:
-          'Automatically identify and categorize financial risks from artefact analysis.',
+          'Automatically identify and categorize financial risks from artifact analysis.',
         icon: 'i-heroicons-magnifying-glass',
       },
       {
         title: 'Regulatory Compliance',
         description:
-          'Ensure artefacts meet current financial regulations and compliance standards.',
+          'Ensure artifacts meet current financial regulations and compliance standards.',
         icon: 'i-heroicons-check-circle',
       },
       {
-        title: 'Artefact Classification',
-        description: 'Automatically categorize and tag financial artefacts by type and importance.',
+        title: 'Artifact Classification',
+        description: 'Automatically categorize and tag financial artifacts by type and importance.',
         icon: 'i-heroicons-folder',
       },
     ],
@@ -309,16 +309,16 @@ const solutions: Record<string, any> = {
   government: {
     name: 'Government',
     description:
-      'Modernize public sector artefact management and citizen services with intelligent artefact processing for policy artefacts, public records, and regulatory compliance.',
+      'Modernize public sector artifact management and citizen services with intelligent artifact processing for policy artifacts, public records, and regulatory compliance.',
     icon: 'i-heroicons-building-office',
     keyPoints: [
-      'Complex policy artefact management',
+      'Complex policy artifact management',
       'Public records accessibility',
       'Regulatory compliance tracking',
       'Inter-department coordination',
     ],
     helps: [
-      'Policy artefact organization',
+      'Policy artifact organization',
       'Public record search capabilities',
       'Compliance automation',
       'Citizen service enhancement',
@@ -327,7 +327,7 @@ const solutions: Record<string, any> = {
       {
         title: 'Policy Research',
         description:
-          'Quickly search through policy artefacts, regulations, and historical records.',
+          'Quickly search through policy artifacts, regulations, and historical records.',
         question: 'Ask: "Find all policies related to environmental regulations from 2020-2023"',
       },
       {
@@ -356,7 +356,7 @@ const solutions: Record<string, any> = {
       {
         title: 'Policy Intelligence',
         description:
-          'Search and analyze complex policy artefacts with intelligent content understanding.',
+          'Search and analyze complex policy artifacts with intelligent content understanding.',
         icon: 'heroicons:document-text',
       },
       {
@@ -373,7 +373,7 @@ const solutions: Record<string, any> = {
       {
         title: 'Citizen Services',
         description:
-          'Enhance citizen services with faster artefact processing and information retrieval.',
+          'Enhance citizen services with faster artifact processing and information retrieval.',
         icon: 'heroicons:funnel',
       },
     ],
@@ -381,7 +381,7 @@ const solutions: Record<string, any> = {
   insurance: {
     name: 'Insurance',
     description:
-      'Streamline claims processing and risk assessment workflows with intelligent artefact analysis for faster, more accurate insurance operations.',
+      'Streamline claims processing and risk assessment workflows with intelligent artifact analysis for faster, more accurate insurance operations.',
     icon: 'heroicons:shield-check',
     keyPoints: [
       'Complex claims processing workflows',
@@ -399,17 +399,17 @@ const solutions: Record<string, any> = {
       {
         title: 'Claims Processing',
         description:
-          'Automatically extract and analyze information from claims artefacts and supporting materials.',
+          'Automatically extract and analyze information from claims artifacts and supporting materials.',
         question: 'Ask: "What are the key details from this auto accident claim?"',
       },
       {
         title: 'Risk Assessment',
-        description: 'Analyze applications and supporting artefacts to assess risk factors.',
+        description: 'Analyze applications and supporting artifacts to assess risk factors.',
         question: 'Ask: "Identify risk factors in this property insurance application"',
       },
       {
         title: 'Policy Analysis',
-        description: 'Review policy artefacts for coverage details and exclusions.',
+        description: 'Review policy artifacts for coverage details and exclusions.',
         question: 'Ask: "What coverage exclusions apply to this water damage claim?"',
       },
     ],
@@ -428,24 +428,24 @@ const solutions: Record<string, any> = {
       {
         title: 'Claims Intelligence',
         description:
-          'Extract key information from claims artefacts with intelligent artefact processing.',
+          'Extract key information from claims artifacts with intelligent artifact processing.',
         icon: 'heroicons:document-text',
       },
       {
         title: 'Risk Analysis',
         description:
-          'Automatically assess risk factors from application artefacts and supporting materials.',
+          'Automatically assess risk factors from application artifacts and supporting materials.',
         icon: 'heroicons:magnifying-glass',
       },
       {
         title: 'Fraud Detection',
         description:
-          'Identify potential fraud indicators through artefact analysis and pattern recognition.',
+          'Identify potential fraud indicators through artifact analysis and pattern recognition.',
         icon: 'heroicons:check-circle',
       },
       {
         title: 'Policy Management',
-        description: 'Organize and search policy artefacts with intelligent categorization.',
+        description: 'Organize and search policy artifacts with intelligent categorization.',
         icon: 'heroicons:funnel',
       },
     ],
@@ -453,10 +453,10 @@ const solutions: Record<string, any> = {
   legal: {
     name: 'Legal',
     description:
-      'Transform legal research, contract analysis, and case preparation with AI-powered artefact intelligence. Quickly find relevant precedents, analyze contracts, and extract key legal insights.',
+      'Transform legal research, contract analysis, and case preparation with AI-powered artifact intelligence. Quickly find relevant precedents, analyze contracts, and extract key legal insights.',
     icon: 'heroicons:scale',
     keyPoints: [
-      'Time-consuming manual artefact review',
+      'Time-consuming manual artifact review',
       'Difficulty finding relevant case precedents',
       'Complex contract analysis requirements',
       'Regulatory compliance tracking',
@@ -481,8 +481,8 @@ const solutions: Record<string, any> = {
       },
       {
         title: 'Due Diligence',
-        description: 'Accelerate due diligence processes with comprehensive artefact analysis.',
-        question: 'Ask: "What are the intellectual property risks in these artefacts?"',
+        description: 'Accelerate due diligence processes with comprehensive artifact analysis.',
+        question: 'Ask: "What are the intellectual property risks in these artifacts?"',
       },
     ],
     testimonial: {
@@ -512,13 +512,13 @@ const solutions: Record<string, any> = {
       {
         title: 'Compliance Monitoring',
         description:
-          'Ensure artefacts meet current legal standards and regulatory requirements across jurisdictions.',
+          'Ensure artifacts meet current legal standards and regulatory requirements across jurisdictions.',
         icon: 'heroicons:check-circle',
       },
       {
-        title: 'Artefact Classification',
+        title: 'Artifact Classification',
         description:
-          'Automatically categorize and tag legal artefacts by type, jurisdiction, and practice area.',
+          'Automatically categorize and tag legal artifacts by type, jurisdiction, and practice area.',
         icon: 'heroicons:funnel',
       },
     ],
@@ -526,7 +526,7 @@ const solutions: Record<string, any> = {
   manufacturing: {
     name: 'Manufacturing',
     description:
-      'Optimize technical documentation and quality processes with intelligent artefact management for manufacturing operations and compliance.',
+      'Optimize technical documentation and quality processes with intelligent artifact management for manufacturing operations and compliance.',
     icon: 'heroicons:building-office-2',
     keyPoints: [
       'Complex technical documentation',
@@ -535,7 +535,7 @@ const solutions: Record<string, any> = {
       'Process optimization needs',
     ],
     helps: [
-      'Technical artefact organization',
+      'Technical artifact organization',
       'Quality process automation',
       'Compliance monitoring',
       'Process optimization insights',
@@ -544,12 +544,12 @@ const solutions: Record<string, any> = {
       {
         title: 'Technical Specifications',
         description:
-          'Quickly search and analyze technical specifications and engineering artefacts.',
+          'Quickly search and analyze technical specifications and engineering artifacts.',
         question: 'Ask: "Find all specifications for steel grade requirements in automotive parts"',
       },
       {
         title: 'Quality Documentation',
-        description: 'Organize and search quality control artefacts and inspection records.',
+        description: 'Organize and search quality control artifacts and inspection records.',
         question: 'Ask: "What are the quality standards for this product line?"',
       },
       {
@@ -573,12 +573,12 @@ const solutions: Record<string, any> = {
       {
         title: 'Technical Intelligence',
         description:
-          'Search and analyze complex technical specifications with intelligent artefact processing.',
+          'Search and analyze complex technical specifications with intelligent artifact processing.',
         icon: 'heroicons:document-text',
       },
       {
         title: 'Quality Management',
-        description: 'Organize and track quality control artefacts and inspection records.',
+        description: 'Organize and track quality control artifacts and inspection records.',
         icon: 'heroicons:magnifying-glass',
       },
       {
@@ -596,7 +596,7 @@ const solutions: Record<string, any> = {
   'real-estate': {
     name: 'Real Estate',
     description:
-      'Simplify property documentation and transaction management with intelligent artefact processing for contracts, leases, and market analysis.',
+      'Simplify property documentation and transaction management with intelligent artifact processing for contracts, leases, and market analysis.',
     icon: 'heroicons:home',
     keyPoints: [
       'Complex property documentation',
@@ -605,16 +605,16 @@ const solutions: Record<string, any> = {
       'Due diligence processes',
     ],
     helps: [
-      'Property artefact organization',
+      'Property artifact organization',
       'Contract analysis automation',
       'Market data insights',
       'Due diligence acceleration',
     ],
     useCases: [
       {
-        title: 'Property artefacts',
-        description: 'Organize and search property artefacts, deeds, and ownership records.',
-        question: 'Ask: "Find all property artefacts for 123 Main Street including deed history"',
+        title: 'Property artifacts',
+        description: 'Organize and search property artifacts, deeds, and ownership records.',
+        question: 'Ask: "Find all property artifacts for 123 Main Street including deed history"',
       },
       {
         title: 'Contracts & Leases',
@@ -635,13 +635,13 @@ const solutions: Record<string, any> = {
     },
     stats: [
       { value: '45%', label: 'Transaction Time Reduced' },
-      { value: '88%', label: 'Artefact Accuracy' },
+      { value: '88%', label: 'Artifact Accuracy' },
       { value: '92%', label: 'Client Satisfaction' },
     ],
     keyFeatures: [
       {
         title: 'Property Intelligence',
-        description: 'Search and analyze property artefacts with intelligent content recognition.',
+        description: 'Search and analyze property artifacts with intelligent content recognition.',
         icon: 'heroicons:document-text',
       },
       {
@@ -656,7 +656,7 @@ const solutions: Record<string, any> = {
       },
       {
         title: 'Due Diligence',
-        description: 'Streamline due diligence processes with comprehensive artefact analysis.',
+        description: 'Streamline due diligence processes with comprehensive artifact analysis.',
         icon: 'heroicons:funnel',
       },
     ],
@@ -664,7 +664,7 @@ const solutions: Record<string, any> = {
   healthcare: {
     name: 'Healthcare',
     description:
-      'Improve patient care with intelligent medical artefact analysis for research studies, treatment protocols, and patient documentation.',
+      'Improve patient care with intelligent medical artifact analysis for research studies, treatment protocols, and patient documentation.',
     icon: 'heroicons:heart',
     keyPoints: [
       'Complex medical documentation',
@@ -673,7 +673,7 @@ const solutions: Record<string, any> = {
       'Patient record accessibility',
     ],
     helps: [
-      'Medical artefact organization',
+      'Medical artifact organization',
       'Research data insights',
       'Protocol standardization',
       'Patient care enhancement',
@@ -709,7 +709,7 @@ const solutions: Record<string, any> = {
     keyFeatures: [
       {
         title: 'Medical Intelligence',
-        description: 'Search and analyze medical artefacts with healthcare-specific understanding.',
+        description: 'Search and analyze medical artifacts with healthcare-specific understanding.',
         icon: 'heroicons:document-text',
       },
       {

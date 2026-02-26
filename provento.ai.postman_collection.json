@@ -1,0 +1,1471 @@
+{
+  "info": {
+    "_postman_id": "9a73cf30-8bdb-4b76-a7ea-8dd9e74e6eb7",
+    "name": "Provento.ai",
+    "description": "Updated Postman collection for Provento.ai API endpoints matching current server structure",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "24987320"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Sign In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/signin",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "signin"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"companyName\": \"Company Name\",\n  \"email\": \"user@example.com\",\n  \"wpNumber\": \"+1234567890\",\n  \"password\": \"SecurePassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/signup",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "signup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Google Sign In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"google_oauth_token\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/google-signin",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "google-signin"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"user-uuid\",\n  \"name\": \"Updated Name\",\n  \"email\": \"user@example.com\",\n  \"contact_number\": \"+1234567890\",\n  \"primary_contact\": true,\n  \"org_id\": \"org-uuid\",\n  \"company\": \"Company Name\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/profile-update",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "profile-update"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "reset-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset_token\",\n  \"newPassword\": \"NewPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/update-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "update-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user-uuid\",\n  \"currentPassword\": \"currentPassword123\",\n  \"newPassword\": \"NewPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "change-password"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Artifacts (Documents)",
+      "item": [
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/file.pdf"
+                },
+                {
+                  "key": "category",
+                  "value": "category-uuid",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "File description",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "upload"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Artifacts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/list?timezone=Asia/Calcutta",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "list"],
+              "query": [
+                {
+                  "key": "timezone",
+                  "value": "Asia/Calcutta",
+                  "description": "User timezone for date/time formatting"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "View Artifact",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/view?artefactId=123",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "view"],
+              "query": [
+                {
+                  "key": "artefactId",
+                  "value": "123",
+                  "description": "ID of the Artifact/document to view"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Artifact",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/delete?artefactId=123&artefactName=document.pdf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "delete"],
+              "query": [
+                {
+                  "key": "artefactId",
+                  "value": "123",
+                  "description": "ID of the Artifact to delete"
+                },
+                {
+                  "key": "artefactName",
+                  "value": "document.pdf",
+                  "description": "Name of the Artifact to delete"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check File Exists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/check-exists?fileName=document.pdf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "check-exists"],
+              "query": [
+                {
+                  "key": "fileName",
+                  "value": "document.pdf",
+                  "description": "Name of the file to check"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Google Drive Files",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/google-drive-fetch?folderUrl=https://drive.google.com/drive/folders/folder-id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "google-drive-fetch"],
+              "query": [
+                {
+                  "key": "folderUrl",
+                  "value": "https://drive.google.com/drive/folders/folder-id",
+                  "description": "Google Drive folder URL"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Google Drive Files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"selectedFileDetails\": [\n    {\n      \"id\": \"file-id\",\n      \"name\": \"document.pdf\",\n      \"mimeType\": \"application/pdf\",\n      \"size\": \"1 MB\",\n      \"webViewLink\": \"https://drive.google.com/file/d/file-id/view\",\n      \"googleAccessToken\": \"google-access-token\"\n    }\n  ],\n  \"categoryId\": \"category-uuid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/google-drive",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "google-drive"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Categories - Add",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Category Name\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/category/add",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "category", "add"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Categories - Get All",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/category/all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "category", "all"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Categories - Get by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/category/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "category", "{{category_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Categories - Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/category/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "category", "{{category_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Summarize Document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/summarize/{{document_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "summarize", "{{document_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reprocess Document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/reprocess/{{document_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "reprocess", "{{document_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chat & RAG",
+      "item": [
+        {
+          "name": "Get Chat History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/chat/history?chat_id=&user_id=&limit=50&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "history"],
+              "query": [
+                {
+                  "key": "chat_id",
+                  "value": ""
+                },
+                {
+                  "key": "user_id",
+                  "value": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Save Chat Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"user-uuid\",\n  \"org_id\": \"org-uuid\",\n  \"chat_id\": \"chat-uuid\",\n  \"role\": \"user\",\n  \"message\": \"User message content\",\n  \"metadata\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat/history",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "history"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/chat/history",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "chat", "history"]
+                }
+              },
+              "status": "Created",
+              "code": 201
+            }
+          ]
+        },
+        {
+          "name": "Ask RAG Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What is the main topic of the document?\",\n  \"user_id\": \"user-uuid\",\n  \"org_id\": \"org-uuid\",\n  \"request_source\": \"admin\",\n  \"chat_id\": \"chat-uuid\",\n  \"history\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/predict_rag",
+              "host": ["{{base_url}}"],
+              "path": ["api", "predict_rag"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/predict_rag",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "predict_rag"]
+                }
+              },
+              "status": "Created",
+              "code": 201
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": null,\n  \"name\": \"User Name\",\n  \"email\": \"user@example.com\",\n  \"role_id\": \"2\",\n  \"contact_number\": \"+1234567890\",\n  \"primary_contact\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/create",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "create"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "all"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"user-uuid\",\n  \"name\": \"Updated Name\",\n  \"email\": \"user@example.com\",\n  \"role_id\": 2,\n  \"contact_number\": \"+1234567890\",\n  \"primary_contact\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set User Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_id}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/roles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "roles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get CSV Template",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/csv-template",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "csv-template"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Bulk Upload CSV",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"Name\": \"User Name\",\n    \"Email\": \"user@example.com\",\n    \"Whatsapp Number\": \"+1234567890\",\n    \"Role\": \"User\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/upload-json",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "upload-json"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Upload Users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"Name\": \"User Name\",\n    \"Email\": \"user@example.com\",\n    \"Whatsapp Number\": \"+1234567890\",\n    \"Role\": \"User\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/bulk-users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "bulk-users"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Integrations",
+      "item": [
+        {
+          "name": "Get Integrations Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/integrations/overview",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "overview"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Integrations Activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/integrations/activity",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "activity"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Slack - Get Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/integrations/slack/details",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "slack", "details"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Slack - Connect",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"slack-oauth-code\",\n  \"state\": \"state-jwt-token\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/integrations/slack/connect",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "slack", "connect"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Slack - Disconnect",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/integrations/slack/disconnect",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "slack", "disconnect"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teams - Get Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/integrations/teams/details",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "teams", "details"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teams - Download Manifest",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/integrations/teams/download-manifest",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "teams", "download-manifest"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Teams - Disconnect",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/integrations/teams/disconnect",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "teams", "disconnect"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "WhatsApp - Get Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/integrations/whatsapp/details",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "whatsapp", "details"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "WhatsApp - Connect",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"business_whatsapp_number\": \"+1234567890\",\n  \"permanent_access_token\": \"token\",\n  \"app_id\": \"app-id\",\n  \"app_secret_key\": \"secret-key\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/integrations/whatsapp/connect",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "whatsapp", "connect"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "WhatsApp - Update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"business_whatsapp_number\": \"+1234567890\",\n  \"permanent_access_token\": \"token\",\n  \"app_id\": \"app-id\",\n  \"app_secret_key\": \"secret-key\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/integrations/whatsapp/update",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "whatsapp", "update"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "WhatsApp - Get QR Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/integrations/whatsapp/qr-code",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "whatsapp", "qr-code"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "WhatsApp - Download QR Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/integrations/whatsapp/qr-code-download",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "whatsapp", "qr-code-download"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "WhatsApp - Disconnect",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/integrations/whatsapp/disconnect",
+              "host": ["{{base_url}}"],
+              "path": ["api", "integrations", "whatsapp", "disconnect"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get App-wise Token Usage",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/{{org_id}}/appwiseTokenUsage?startDate=2025-06-03&endDate=2025-06-09&timezone=Asia/Calcutta",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "{{org_id}}", "appwiseTokenUsage"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-06-03"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-06-09"
+                },
+                {
+                  "key": "timezone",
+                  "value": "Asia/Calcutta"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User-wise Token Usage",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/{{org_id}}/userAppwiseTokenUsage?startDate=2025-06-03&endDate=2025-06-09",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "{{org_id}}", "userAppwiseTokenUsage"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-06-03"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-06-09"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Token Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/{{org_id}}/tokenData?startDate=2025-06-03&endDate=2025-06-09",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "{{org_id}}", "tokenData"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-06-03"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-06-09"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Documents Analytics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timezone\": \"Asia/Calcutta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/analytics/{{org_id}}/documents",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "{{org_id}}", "documents"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Users Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/{{org_id}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "{{org_id}}", "users"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Plans & Pricing",
+      "item": [
+        {
+          "name": "Get All Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "plans"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organization Plan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/plan",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "plan"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Get Braintree Client Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/payments/braintree/client-token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "braintree", "client-token"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Braintree Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"99.99\",\n  \"paymentMethodNonce\": \"braintree-nonce\",\n  \"deviceData\": \"device-data\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/braintree/checkout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "braintree", "checkout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction\": \"braintree-transaction-id\",\n  \"plan_id\": \"plan-uuid\",\n  \"billing\": {\n    \"cardholderName\": \"Name\",\n    \"streetAddress\": \"Street\",\n    \"city\": \"City\",\n    \"state\": \"State\",\n    \"postalCode\": \"12345\",\n    \"countryCode\": \"US\"\n  },\n  \"org_id\": \"org-uuid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/complete-order",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "complete-order"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Chargebee Price",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price_id\": \"price-id\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chargebee/validate-price",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chargebee", "validate-price"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Chargebee Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/chargebee/plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chargebee", "plans"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chargebee Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chargebee/webhook",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chargebee", "webhook"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Contact & Support",
+      "item": [
+        {
+          "name": "Contact Form",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"user@example.com\",\n  \"phoneNumber\": \"+1234567890\",\n  \"requestFor\": \"Demo\",\n  \"message\": \"I would like to schedule a demo\",\n  \"token\": \"recaptcha-token\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/contact",
+              "host": ["{{base_url}}"],
+              "path": ["api", "contact"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Super Admin Only",
+      "item": [
+        {
+          "name": "Get All Organizations (SuperAdmin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/superadmin/organizations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "superadmin", "organizations"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Choose between: local, test, or prod. Update this to point to the environment you want to use."
+    },
+    {
+      "key": "base_url_local",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Local development environment"
+    },
+    {
+      "key": "base_url_test",
+      "value": "https://test.provento.ai",
+      "type": "string",
+      "description": "Test/staging environment"
+    },
+    {
+      "key": "base_url_prod",
+      "value": "https://provento.ai",
+      "type": "string",
+      "description": "Production environment"
+    },
+    {
+      "key": "auth_token",
+      "value": "your-jwt-token-here",
+      "type": "string",
+      "description": "Your JWT authentication token. Set this after logging in via the Sign In endpoint, or paste your token here directly."
+    },
+    {
+      "key": "org_id",
+      "value": "your-org-id",
+      "type": "string",
+      "description": "Your organization UUID"
+    },
+    {
+      "key": "user_id",
+      "value": "your-user-id",
+      "type": "string",
+      "description": "User UUID for specific user operations"
+    },
+    {
+      "key": "document_id",
+      "value": "your-document-id",
+      "type": "string",
+      "description": "Document/Artifact UUID"
+    },
+    {
+      "key": "category_id",
+      "value": "your-category-id",
+      "type": "string",
+      "description": "Category UUID"
+    }
+  ]
+}

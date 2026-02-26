@@ -1,51 +1,54 @@
-<!-- /components/charts/StackedAreaChart.vue -->
 <template>
   <div class="h-80">
     <apexchart type="area" height="100%" :options="chartOptions" :series="series" />
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+dayjs.extend(utc)
 const props = defineProps({
   data: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   categories: {
     type: Array,
-    default: () => []
-  },
-  colors: {
-    type: Array,
-    default: () => ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B']
+    default: () => [],
   },
   timeRange: {
     type: String,
-    default: '7'
-  }
+    default: '7',
+  },
 })
-
+const generateColors = (count: number) => {
+  const colors: string[] = []
+  for (let i = 0; i < count; i++) {
+    const hue = (i * 137.508) % 360
+    colors.push(`hsl(${hue}, 65%, 55%)`)
+  }
+  return colors
+}
+// Generate colors based on number of users
+const dynamicColors = computed(() => generateColors(props.data.length))
 // Convert to numeric timestamps for datetime mode
 const series = computed(() => {
   return props.data.map((userData: any, index: number) => ({
     name: userData.name,
     data: userData.data.map((point: any) => ({
-      x: new Date(point.x).getTime(), // Convert to timestamp
-      y: point.y
+      x: dayjs.utc(point.x).valueOf(),
+      y: point.y,
     })),
-    color: props.colors[index % props.colors.length]
+    color: dynamicColors.value[index], // assign unique color per user
   }))
 })
-
 const getLabelRotation = () => {
   const range = parseInt(props.timeRange) || 7
   if (range <= 30) return 0
   if (range <= 90) return -45
   return -60
 }
-
 const getLabelDensity = () => {
   const range = parseInt(props.timeRange) || 7
   if (range <= 7) return 1 // Show every day
@@ -53,52 +56,40 @@ const getLabelDensity = () => {
   if (range <= 90) return 7 // Show weekly
   return 15 // Show bi-weekly for longer ranges
 }
-
 const chartOptions = ref({
   chart: {
     type: 'area',
     height: '100%',
     stacked: false,
-    toolbar: {
-      show: false
-    },
+    toolbar: { show: false },
     background: 'transparent',
     foreColor: '#9CA3AF',
-    zoom: {
-      enabled: false
-    }
+    zoom: { enabled: false },
   },
-  colors: props.colors,
-  dataLabels: {
-    enabled: false
-  },
-  stroke: {
-    curve: 'smooth',
-    width: 2
-  },
+  colors: dynamicColors.value, // assign dynamic colors
+  dataLabels: { enabled: false },
+  stroke: { curve: 'smooth', width: 2 },
   fill: {
     type: 'gradient',
     gradient: {
       opacityFrom: 0.4,
       opacityTo: 0.8,
-      stops: [0, 90, 100]
-    }
+      stops: [0, 90, 100],
+    },
   },
   legend: {
     position: 'top',
     horizontalAlign: 'right',
-    labels: {
-      colors: '#9CA3AF'
-    }
+    labels: { colors: '#9CA3AF' },
   },
   xaxis: {
     type: 'datetime',
     labels: {
       datetimeFormatter: {
         year: 'yyyy',
-        month: 'MMM \'yy',
+        month: "MMM 'yy",
         day: 'dd MMM',
-        hour: 'HH:mm'
+        hour: 'HH:mm',
       },
       format: 'dd MMM',
       rotate: getLabelRotation(),
@@ -106,67 +97,64 @@ const chartOptions = ref({
       showDuplicates: false,
       style: {
         fontSize: '10px',
-        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace'
-      }
+        fontFamily:
+          'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+      },
     },
-    axisBorder: {
-      color: '#374151',
-      show: true
-    },
-    axisTicks: {
-      color: '#374151',
-      show: true
-    },
-    tooltip: {
-      enabled: true
-    }
+    axisBorder: { color: '#374151', show: true },
+    axisTicks: { color: '#374151', show: true },
+    tooltip: { enabled: true },
   },
   yaxis: {
     labels: {
       formatter: function (val: number) {
         return val >= 1000 ? (val / 1000).toFixed(0) + 'K' : val.toString()
-      }
-    }
+      },
+    },
   },
   tooltip: {
     theme: 'dark',
     shared: true,
     intersect: false,
-    x: {
-      format: 'dd MMM yyyy'
-    },
+    x: { format: 'dd MMM yyyy' },
     y: {
       formatter: function (val: number) {
         return val.toLocaleString() + ' tokens'
-      }
-    }
+      },
+    },
   },
   grid: {
     borderColor: '#374151',
     strokeDashArray: 4,
-    padding: {
-      top: 10,
-      right: 10,
-      bottom: 20,
-      left: 10
-    }
-  }
+    padding: { top: 10, right: 10, bottom: 20, left: 10 },
+  },
 })
-
 // Watch for changes to update chart options
-watch(() => props.timeRange, () => {
-  const rotation = getLabelRotation()
-  
-  chartOptions.value = {
-    ...chartOptions.value,
-    xaxis: {
-      ...chartOptions.value.xaxis,
-      labels: {
-        ...chartOptions.value.xaxis.labels,
-        rotate: rotation
-      }
+watch(
+  () => props.timeRange,
+  () => {
+    const rotation = getLabelRotation()
+    chartOptions.value = {
+      ...chartOptions.value,
+      xaxis: {
+        ...chartOptions.value.xaxis,
+        labels: {
+          ...chartOptions.value.xaxis.labels,
+          rotate: rotation,
+        },
+      },
     }
-  }
-}, { immediate: true })
-
+  },
+  { immediate: true },
+)
+watch(
+  () => props.data,
+  () => {
+    chartOptions.value = {
+      ...chartOptions.value,
+      colors: dynamicColors.value,
+    }
+  },
+  { deep: true },
+)
 </script>

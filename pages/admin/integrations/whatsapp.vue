@@ -1,17 +1,17 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-4 sm:space-y-6">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+        <div class="w-10 h-10 bg-green-500 rounded-lg flex-shrink-0 flex items-center justify-center">
           <UIcon name="mdi:whatsapp" class="w-6 h-6 text-white" />
         </div>
-        <div>
-          <h1 class="text-2xl font-bold text-white">WhatsApp Business Integration</h1>
-          <p class="text-gray-400">Connect your WhatsApp Business account to provento</p>
+        <div class="min-w-0">
+          <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-white truncate">WhatsApp Business Integration</h1>
+          <p class="text-xs sm:text-sm text-gray-400 truncate">Connect your WhatsApp Business account to provento</p>
         </div>
       </div>
-      <div class="flex items-center space-x-4">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-shrink-0">
         <!-- Status Badge -->
         <span
           v-if="connectionStatus.isConnected"
@@ -49,7 +49,7 @@
     </div>
 
     <!-- Main Content Grid -->
-    <div class="grid lg:grid-cols-2 gap-6">
+    <div class="grid xl:grid-cols-2 gap-6">
       <!-- WhatsApp Configuration -->
       <UCard>
         <template #header>
@@ -214,15 +214,12 @@
               <template #label>
                 <div class="flex items-center space-x-2">
                   <span>Webhook URL</span>
-                  <UTooltip
-                    text="Copy this Webhook URL and add it to your Meta Developer Account under 'WhatsApp > Configuration > Webhook'"
-                    :popper="{ placement: 'top' }"
-                  >
+                  <AppTooltip text="Copy this Webhook URL and add it to your Meta Developer Account under WhatsApp > Configuration > Webhook" placement="top">
                     <UIcon
                       name="heroicons:information-circle"
                       class="w-4 h-4 text-blue-400 cursor-help"
                     />
-                  </UTooltip>
+                  </AppTooltip>
                 </div>
               </template>
               <div class="relative">
@@ -547,6 +544,7 @@ import { useIntegrationsStore } from '~/stores'
 const integrationsStore = useIntegrationsStore()
 const { showSuccess, showError } = useNotification()
 const config = useRuntimeConfig()
+const route = useRoute()
 
 // Reactive data
 const showDisconnectModal = ref(false)
@@ -610,7 +608,8 @@ const webhookUrl = computed(() => {
 
 const disconnectWhatsApp = async () => {
   try {
-    await integrationsStore.disconnectWhatsApp()
+    const orgQuery = route?.query?.org || route?.query?.org_id || null
+    await integrationsStore.disconnectWhatsApp(orgQuery ? String(orgQuery) : null)
     showDisconnectModal.value = false
   } catch (error) {
     console.error('Error disconnecting WhatsApp:', error)
@@ -629,7 +628,8 @@ const refreshQrCode = async () => {
 
 const downloadQrCode = async () => {
   try {
-    await integrationsStore.downloadQrCode()
+    const orgQuery = route?.query?.org || route?.query?.org_id || null
+    await integrationsStore.downloadQrCode(orgQuery ? String(orgQuery) : null)
   } catch (error) {
     console.error('Download failed:', error)
     showError('Error downloading QR code, please try again.')
@@ -716,17 +716,17 @@ const saveConfiguration = async () => {
     // Check if this is an update or create
     const isUpdate = Boolean(integrationsStore.whatsappDetails?.business_whatsapp_number)
 
+    const orgQuery = route?.query?.org || route?.query?.org_id || null
     if (isUpdate) {
-      await integrationsStore.updateWhatsAppAccount(whatsappData)
+      await integrationsStore.updateWhatsAppAccount(whatsappData, orgQuery ? String(orgQuery) : null)
     } else {
-      await integrationsStore.createWhatsAppAccount(whatsappData)
+      await integrationsStore.createWhatsAppAccount(whatsappData, orgQuery ? String(orgQuery) : null)
     }
 
     // Fetch QR code after successful save
     try {
       await integrationsStore.fetchQrCode()
     } catch (error) {
-      console.log('QR code will be available shortly')
     }
 
     // Exit edit mode and reset password visibility
@@ -742,21 +742,21 @@ const saveConfiguration = async () => {
 
 // Lifecycle
 onMounted(async () => {
-  // Fetch current WhatsApp details
-  await integrationsStore.fetchWhatsAppDetails()
+  // Fetch current WhatsApp details (pass selected org for superadmin)
+  const orgQuery = route?.query?.org || route?.query?.org_id || null
+  await integrationsStore.fetchWhatsAppDetails(orgQuery ? String(orgQuery) : null)
 
   // Fetch QR code if WhatsApp is configured
   if (integrationsStore.whatsappDetails?.business_whatsapp_number) {
     try {
       await integrationsStore.fetchQrCode()
     } catch (error) {
-      console.log('QR code not available yet')
     }
   }
 })
 
 useHead({
-  title: 'WhatsApp Business Integration - Admin Dashboard',
+  title: 'WhatsApp Business Integration - Admin Dashboard - provento.ai',
 })
 </script>
 
