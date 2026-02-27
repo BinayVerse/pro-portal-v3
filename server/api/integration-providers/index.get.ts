@@ -23,7 +23,6 @@ export default defineEventHandler(async (event) => {
     const result = await query(
       `SELECT id, name, code, description, is_active, created_at, updated_at
        FROM public.integration_providers
-       WHERE is_active = true
        ORDER BY name ASC`,
       []
     )

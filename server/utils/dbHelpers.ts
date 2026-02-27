@@ -4,25 +4,25 @@ import { getOrgFromToken } from './auth'
 import { getHeader } from 'h3';
 
 function extractUuid(value: string): string | null {
-    if (!value) return null
-    const match = value.match(
-        /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/
-    )
-    return match ? match[0].trim() : null
+  if (!value) return null
+  const match = value.match(
+    /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/
+  )
+  return match ? match[0].trim() : null
 }
 
 /**
  * ✅ Update organization with Chargebee customer ID and tax number
  */
 export async function updateOrganizationCustomer(
-    event: H3Event,
-    customerId: string,
-    taxNumber?: string
+  event: H3Event,
+  customerId: string,
+  taxNumber?: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
-    try {
-        const { orgId } = getOrgFromToken(event)
+  try {
+    const { orgId } = getOrgFromToken(event)
 
-        const sql = `
+    const sql = `
             UPDATE public.organizations
             SET 
             chargebee_customer_id = $1,
@@ -31,57 +31,57 @@ export async function updateOrganizationCustomer(
             WHERE org_id = $3
             RETURNING org_id, chargebee_customer_id, org_tax_id;
         `
-        const res = await query(sql, [customerId, taxNumber || null, orgId])
-        if (!res.rowCount) throw new Error(`Organization not found: ${orgId}`)
+    const res = await query(sql, [customerId, taxNumber || null, orgId])
+    if (!res.rowCount) throw new Error(`Organization not found: ${orgId}`)
 
-        return { success: true, data: res.rows[0] }
-    } catch (error: any) {
-        console.error('❌ DB Error: updateOrganizationCustomer failed', {
-            error: error.message || error,
-        })
-        return { success: false, error: error.message || 'Update failed' }
-    }
+    return { success: true, data: res.rows[0] }
+  } catch (error: any) {
+    console.error('❌ DB Error: updateOrganizationCustomer failed', {
+      error: error.message || error,
+    })
+    return { success: false, error: error.message || 'Update failed' }
+  }
 }
 
 /**
  * ✅ Insert billing address
  */
 export async function upsertBillingAddress(
-    event: H3Event,
-    billing: any
+  event: H3Event,
+  billing: any
 ): Promise<{ success: boolean; message: string; id?: string; error?: string }> {
-    try {
-        const { orgId } = getOrgFromToken(event)
+  try {
+    const { orgId } = getOrgFromToken(event)
 
-        const billingData = {
-            org_id: orgId,
-            name: `${billing.firstName || ''} ${billing.lastName || ''}`.trim(),
-            contact_number: billing.phoneNumber || '',
-            email: billing.email || '',
-            address_line1: billing.addressLine1 || '',
-            address_line2: billing.addressLine2 || '',
-            address_city: billing.city || '',
-            address_state: billing.region || '',
-            address_zip: billing.zipcode || '',
-            address_country: billing.country || '',
-            address_phone: billing.phoneNumber || '',
-        }
+    const billingData = {
+      org_id: orgId,
+      name: `${billing.firstName || ''} ${billing.lastName || ''}`.trim(),
+      contact_number: billing.phoneNumber || '',
+      email: billing.email || '',
+      address_line1: billing.addressLine1 || '',
+      address_line2: billing.addressLine2 || '',
+      address_city: billing.city || '',
+      address_state: billing.region || '',
+      address_zip: billing.zipcode || '',
+      address_country: billing.country || '',
+      address_phone: billing.phoneNumber || '',
+    }
 
-        /** -----------------------------------------------------------
-         * CHECK IF BILLING ADDRESS ALREADY EXISTS
-         * ----------------------------------------------------------- */
-        const findExisting = await query(
-            `SELECT id FROM billing_address WHERE org_id = $1 LIMIT 1`,
-            [orgId]
-        )
+    /** -----------------------------------------------------------
+     * CHECK IF BILLING ADDRESS ALREADY EXISTS
+     * ----------------------------------------------------------- */
+    const findExisting = await query(
+      `SELECT id FROM billing_address WHERE org_id = $1 LIMIT 1`,
+      [orgId]
+    )
 
-        /** -----------------------------------------------------------
-         * UPDATE CASE
-         * ----------------------------------------------------------- */
-        if (findExisting.rows.length > 0) {
-            const existingId = findExisting.rows[0].id
+    /** -----------------------------------------------------------
+     * UPDATE CASE
+     * ----------------------------------------------------------- */
+    if (findExisting.rows.length > 0) {
+      const existingId = findExisting.rows[0].id
 
-            const updateSQL = `
+      const updateSQL = `
                 UPDATE billing_address
                 SET
                     name = $1,
@@ -99,33 +99,33 @@ export async function upsertBillingAddress(
                 RETURNING id
             `
 
-            const params = [
-                billingData.name,
-                billingData.contact_number,
-                billingData.email,
-                billingData.address_line1,
-                billingData.address_line2,
-                billingData.address_city,
-                billingData.address_state,
-                billingData.address_zip,
-                billingData.address_country,
-                billingData.address_phone,
-                billingData.org_id,
-            ]
+      const params = [
+        billingData.name,
+        billingData.contact_number,
+        billingData.email,
+        billingData.address_line1,
+        billingData.address_line2,
+        billingData.address_city,
+        billingData.address_state,
+        billingData.address_zip,
+        billingData.address_country,
+        billingData.address_phone,
+        billingData.org_id,
+      ]
 
-            const updateRes = await query(updateSQL, params)
+      const updateRes = await query(updateSQL, params)
 
-            return {
-                success: true,
-                message: 'Billing address updated successfully',
-                id: updateRes.rows[0].id,
-            }
-        }
+      return {
+        success: true,
+        message: 'Billing address updated successfully',
+        id: updateRes.rows[0].id,
+      }
+    }
 
-        /** -----------------------------------------------------------
-         * INSERT CASE
-         * ----------------------------------------------------------- */
-        const insertSQL = `
+    /** -----------------------------------------------------------
+     * INSERT CASE
+     * ----------------------------------------------------------- */
+    const insertSQL = `
             INSERT INTO billing_address (
                 org_id, name, contact_number, email,
                 address_line1, address_line2, address_city,
@@ -135,36 +135,36 @@ export async function upsertBillingAddress(
             RETURNING id
         `
 
-        const insertParams = [
-            billingData.org_id,
-            billingData.name,
-            billingData.contact_number,
-            billingData.email,
-            billingData.address_line1,
-            billingData.address_line2,
-            billingData.address_city,
-            billingData.address_state,
-            billingData.address_zip,
-            billingData.address_country,
-            billingData.address_phone,
-        ]
+    const insertParams = [
+      billingData.org_id,
+      billingData.name,
+      billingData.contact_number,
+      billingData.email,
+      billingData.address_line1,
+      billingData.address_line2,
+      billingData.address_city,
+      billingData.address_state,
+      billingData.address_zip,
+      billingData.address_country,
+      billingData.address_phone,
+    ]
 
-        const insertRes = await query(insertSQL, insertParams)
+    const insertRes = await query(insertSQL, insertParams)
 
-        return {
-            success: true,
-            message: 'Billing address created successfully',
-            id: insertRes.rows[0].id,
-        }
-
-    } catch (err: any) {
-        console.error('❌ Billing Address upsert failed:', err)
-        return {
-            success: false,
-            message: err.message || 'Billing update failed',
-            error: err.message || 'Billing update failed',
-        }
+    return {
+      success: true,
+      message: 'Billing address created successfully',
+      id: insertRes.rows[0].id,
     }
+
+  } catch (err: any) {
+    console.error('❌ Billing Address upsert failed:', err)
+    return {
+      success: false,
+      message: err.message || 'Billing update failed',
+      error: err.message || 'Billing update failed',
+    }
+  }
 }
 
 
@@ -172,30 +172,30 @@ export async function upsertBillingAddress(
  * Update organization subscription
  */
 export async function updateOrganizationSubscription(
-    event: H3Event,
-    planId: string,
-    subscriptionId: string,
-    metadata: any = {},
-    purchaseType: 'subscription' | 'addon',
-    quantity = 1
+  event: H3Event,
+  planId: string,
+  subscriptionId: string,
+  metadata: any = {},
+  purchaseType: 'subscription' | 'addon',
+  quantity = 1
 ): Promise<{ success: boolean; id?: string; error?: string }> {
-    try {
-        const { orgId } = getOrgFromToken(event)
+  try {
+    const { orgId } = getOrgFromToken(event)
 
-        await query('BEGIN', [])
+    await query('BEGIN', [])
 
-        // --------------------------------------------------
-        // 1. Validate & normalize plan ID
-        // --------------------------------------------------
-        const parsedPlanId = extractUuid(planId)
-        if (!parsedPlanId)
-            throw new Error(`Invalid planId format: ${planId}`)
+    // --------------------------------------------------
+    // 1. Validate & normalize plan ID
+    // --------------------------------------------------
+    const parsedPlanId = extractUuid(planId)
+    if (!parsedPlanId)
+      throw new Error(`Invalid planId format: ${planId}`)
 
-        // --------------------------------------------------
-        // 2. Fetch plan limits
-        // --------------------------------------------------
-        const planLimitRes = await query(
-            `
+    // --------------------------------------------------
+    // 2. Fetch plan limits
+    // --------------------------------------------------
+    const planLimitRes = await query(
+      `
                 SELECT 
                 users,
                 limit_requests,
@@ -205,30 +205,30 @@ export async function updateOrganizationSubscription(
                 WHERE id = $1
                 LIMIT 1
             `,
-            [parsedPlanId]
-        )
+      [parsedPlanId]
+    )
 
-        if (!planLimitRes.rows.length)
-            throw new Error(`Plan not found for id: ${parsedPlanId}`)
+    if (!planLimitRes.rows.length)
+      throw new Error(`Plan not found for id: ${parsedPlanId}`)
 
-        const limits = planLimitRes.rows[0]
+    const limits = planLimitRes.rows[0]
 
-        // --------------------------------------------------
-        // 3. Update organization limits
-        // --------------------------------------------------
-        if (purchaseType === 'subscription') {
-            await query(
-                `
+    // --------------------------------------------------
+    // 3. Update organization limits
+    // --------------------------------------------------
+    if (purchaseType === 'subscription') {
+      await query(
+        `
                     UPDATE subscription_details
                     SET status = 'expired'
                     WHERE org_id = $1
                         AND status = 'active'
                 `,
-                [orgId]
-            )
-            // 🔵 BASE SUBSCRIPTION → OVERWRITE LIMITS
-            const res = await query(
-                `
+        [orgId]
+      )
+      // 🔵 BASE SUBSCRIPTION → OVERWRITE LIMITS
+      const res = await query(
+        `
                     UPDATE public.organizations
                     SET
                         plan_id = $1,
@@ -245,25 +245,25 @@ export async function updateOrganizationSubscription(
                     WHERE org_id = $3
                     RETURNING org_id;
                 `,
-                [
-                    parsedPlanId,
-                    subscriptionId,
-                    orgId,
-                    limits.users ?? null,
-                    limits.limit_requests ?? null,
-                    limits.storage_limit_gb ?? null,
-                    limits.artefacts ?? null
-                ]
-            )
+        [
+          parsedPlanId,
+          subscriptionId,
+          orgId,
+          limits.users ?? null,
+          limits.limit_requests ?? null,
+          limits.storage_limit_gb ?? null,
+          limits.artefacts ?? null
+        ]
+      )
 
-            if (!res.rowCount)
-                throw new Error(`Organization not found for subscription update: ${orgId}`)
-        }
+      if (!res.rowCount)
+        throw new Error(`Organization not found for subscription update: ${orgId}`)
+    }
 
-        if (purchaseType === 'addon') {
-            // 🟣 ADDON → ADD LIMITS (PLUS)
-            const res = await query(
-                `
+    if (purchaseType === 'addon') {
+      // 🟣 ADDON → ADD LIMITS (PLUS)
+      const res = await query(
+        `
                     UPDATE public.organizations
                     SET
                         org_users = org_users + COALESCE($1, 0),
@@ -274,24 +274,24 @@ export async function updateOrganizationSubscription(
                     WHERE org_id = $5
                     RETURNING org_id;
                 `,
-                [
-                    (limits.users ?? 0) * quantity,
-                    (limits.limit_requests ?? 0) * quantity,
-                    (limits.storage_limit_gb ?? 0) * quantity,
-                    (limits.artefacts ?? 0) * quantity,
-                    orgId
-                ]
-            )
+        [
+          (limits.users ?? 0) * quantity,
+          (limits.limit_requests ?? 0) * quantity,
+          (limits.storage_limit_gb ?? 0) * quantity,
+          (limits.artefacts ?? 0) * quantity,
+          orgId
+        ]
+      )
 
-            if (!res.rowCount)
-                throw new Error(`Organization not found for addon update: ${orgId}`)
-        }
+      if (!res.rowCount)
+        throw new Error(`Organization not found for addon update: ${orgId}`)
+    }
 
-        // --------------------------------------------------
-        // 4. Insert subscription_details (audit trail)
-        // --------------------------------------------------
-        const insertRes = await query(
-            `
+    // --------------------------------------------------
+    // 4. Insert subscription_details (audit trail)
+    // --------------------------------------------------
+    const insertRes = await query(
+      `
                 INSERT INTO public.subscription_details (
                 org_id,
                 plan_id,
@@ -304,29 +304,29 @@ export async function updateOrganizationSubscription(
                 VALUES ($1, $2, 'active', $3, $4, $5, $6)
                 RETURNING id;
             `,
-            [
-                orgId,
-                parsedPlanId,
-                purchaseType,
-                purchaseType === 'addon' ? quantity : null,
-                purchaseType === 'addon' ? JSON.stringify(limits) : null,
-                JSON.stringify(metadata || {})
-            ]
-        )
+      [
+        orgId,
+        parsedPlanId,
+        purchaseType,
+        purchaseType === 'addon' ? quantity : null,
+        purchaseType === 'addon' ? JSON.stringify(limits) : null,
+        JSON.stringify(metadata || {})
+      ]
+    )
 
-        if (!insertRes.rowCount)
-            throw new Error('Failed to insert subscription_details record')
+    if (!insertRes.rowCount)
+      throw new Error('Failed to insert subscription_details record')
 
-        await query('COMMIT', [])
-        return { success: true, id: insertRes.rows[0].id }
+    await query('COMMIT', [])
+    return { success: true, id: insertRes.rows[0].id }
 
-    } catch (error: any) {
-        await query('ROLLBACK', [])
-        console.error('❌ DB Error: updateOrganizationSubscription failed', {
-            error: error.message || error,
-        })
-        return { success: false, error: error.message || 'Update failed' }
-    }
+  } catch (error: any) {
+    await query('ROLLBACK', [])
+    console.error('❌ DB Error: updateOrganizationSubscription failed', {
+      error: error.message || error,
+    })
+    return { success: false, error: error.message || 'Update failed' }
+  }
 }
 
 /**
@@ -336,82 +336,82 @@ export async function updateOrganizationSubscription(
  * - Explicit & auditable
  */
 export async function activateFreePlanForOrg(
-    event: H3Event,
-    planId: string,
-    metadata: any = {},
-    billing?: {
-        firstName?: string
-        lastName?: string
-        email?: string
-        phoneNumber?: string
-        addressLine1?: string
-        addressLine2?: string
-        city?: string
-        region?: string
-        zipcode?: string
-        country?: string
-        taxId?: string
-    }
+  event: H3Event,
+  planId: string,
+  metadata: any = {},
+  billing?: {
+    firstName?: string
+    lastName?: string
+    email?: string
+    phoneNumber?: string
+    addressLine1?: string
+    addressLine2?: string
+    city?: string
+    region?: string
+    zipcode?: string
+    country?: string
+    taxId?: string
+  }
 ) {
-    const { orgId } = getOrgFromToken(event)
+  const { orgId } = getOrgFromToken(event)
 
-    // Validate plan is actually free
-    const planRes = await query(
-        `
+  // Validate plan is actually free
+  const planRes = await query(
+    `
             SELECT id, users, limit_requests, storage_limit_gb, artefacts, metadata
             FROM plans
             WHERE id = $1
             LIMIT 1
         `,
-        [planId],
+    [planId],
+  )
+
+  const plan = planRes.rows[0]
+  if (!plan || plan.metadata?.free_plan !== true) {
+    return {
+      success: false,
+      error: 'Invalid free plan',
+    }
+  }
+
+  // Insert or update billing address if provided
+
+  if (billing) {
+    await upsertBillingAddress(event, {
+      firstName: billing.firstName,
+      lastName: billing.lastName,
+      email: billing.email,
+      phoneNumber: billing.phoneNumber,
+      addressLine1: billing.addressLine1,
+      addressLine2: billing.addressLine2,
+      city: billing.city,
+      region: billing.region,
+      zipcode: billing.zipcode,
+      country: billing.country,
+    })
+  }
+
+  if (billing?.taxId) {
+    await updateOrganizationCustomer(
+      event,
+      null,
+      billing.taxId
     )
+  }
 
-    const plan = planRes.rows[0]
-    if (!plan || plan.metadata?.free_plan !== true) {
-        return {
-            success: false,
-            error: 'Invalid free plan',
-        }
-    }
-
-    // Insert or update billing address if provided
-
-    if (billing) {
-        await upsertBillingAddress(event, {
-            firstName: billing.firstName,
-            lastName: billing.lastName,
-            email: billing.email,
-            phoneNumber: billing.phoneNumber,
-            addressLine1: billing.addressLine1,
-            addressLine2: billing.addressLine2,
-            city: billing.city,
-            region: billing.region,
-            zipcode: billing.zipcode,
-            country: billing.country,
-        })
-    }
-
-    if (billing?.taxId) {
-        await updateOrganizationCustomer(
-            event,
-            null,
-            billing.taxId
-        )
-    }
-
-    // Expire existing active subscriptions
-    await query(
-        `
+  // Expire existing active subscriptions
+  await query(
+    `
             UPDATE subscription_details
             SET status = 'expired'
             WHERE org_id = $1 AND status = 'active'
         `,
-        [orgId],
-    )
+    [orgId],
+  )
 
-    // Insert new subscription_details row
-    await query(
-        `
+  // Insert new subscription_details row
+  await query(
+    `
             INSERT INTO subscription_details (
             org_id,
             plan_id,
@@ -421,16 +421,16 @@ export async function activateFreePlanForOrg(
             )
             VALUES ($1, $2, 'active', 'subscription', $3)
         `,
-        [
-            orgId,
-            planId,
-            JSON.stringify(metadata),
-        ],
-    )
+    [
+      orgId,
+      planId,
+      JSON.stringify(metadata),
+    ],
+  )
 
-    // Apply org limits directly
-    await query(
-        `
+  // Apply org limits directly
+  await query(
+    `
             UPDATE organizations
             SET
             plan_id = $1,
@@ -443,17 +443,17 @@ export async function activateFreePlanForOrg(
             updated_at = CURRENT_TIMESTAMP
             WHERE org_id = $6
          `,
-        [
-            planId,
-            plan.users,
-            plan.limit_requests,
-            plan.storage_limit_gb,
-            plan.artefacts,
-            orgId,
-        ],
-    )
+    [
+      planId,
+      plan.users,
+      plan.limit_requests,
+      plan.storage_limit_gb,
+      plan.artefacts,
+      orgId,
+    ],
+  )
 
-    return { success: true }
+  return { success: true }
 }
 
 /**
@@ -488,7 +488,7 @@ export async function createOrganizationIntegration(
     const orgIntegrationSql = `
       INSERT INTO public.organization_integrations (
         organization_id, provider_id, agent_id, module_id,
-        connection_name, client_id, client_secret, api_key,
+        client_id, client_secret, api_key,
         access_token, refresh_token, token_expiry, base_url,
         login_url, metadata_json, status
       )
@@ -503,7 +503,6 @@ export async function createOrganizationIntegration(
       providerId,
       agentId,
       moduleId,
-      integrationData.connection_name,
       integrationData.client_id,
       integrationData.client_secret,
       integrationData.api_key,
@@ -530,7 +529,7 @@ export async function createOrganizationIntegration(
     if (providerCode === 'hrms' || integrationData.is_hrms === true) {
       const hrmsData: Record<string, any> = {
         organization_id: orgId,
-        hrms_system: integrationData.hrms_system || integrationData.connection_name,
+        hrms_system: integrationData.hrms_system,
         client_id: integrationData.client_id,
         client_secret_encrypted: integrationData.client_secret,
         access_token: integrationData.access_token,
@@ -599,24 +598,22 @@ export async function updateOrganizationIntegration(
     const orgIntegrationSql = `
       UPDATE public.organization_integrations
       SET
-        connection_name = $1,
-        client_id = $2,
-        client_secret = $3,
-        api_key = $4,
-        access_token = $5,
-        refresh_token = $6,
-        token_expiry = $7,
-        base_url = $8,
-        login_url = $9,
-        metadata_json = $10,
-        status = $11,
+        client_id = $1,
+        client_secret = $2,
+        api_key = $3,
+        access_token = $4,
+        refresh_token = $5,
+        token_expiry = $6,
+        base_url = $7,
+        login_url = $8,
+        metadata_json = $9,
+        status = $10,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $12 AND organization_id = $13
+      WHERE id = $11 AND organization_id = $12
       RETURNING id, provider_id
     `
 
     const orgIntegrationRes = await query(orgIntegrationSql, [
-      integrationData.connection_name,
       integrationData.client_id,
       integrationData.client_secret,
       integrationData.api_key,
@@ -645,7 +642,7 @@ export async function updateOrganizationIntegration(
 
     // If this is an HRMS provider, also update hrms_integration
     if (providerCode === 'hrms' || integrationData.is_hrms === true) {
-      const hrmsSystem = integrationData.hrms_system || integrationData.connection_name
+      const hrmsSystem = integrationData.hrms_system
 
       const hrmsUpdateSql = `
         UPDATE public.hrms_integration

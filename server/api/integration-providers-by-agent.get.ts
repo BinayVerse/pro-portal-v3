@@ -34,7 +34,6 @@ export default defineEventHandler(async (event) => {
       FROM public.integration_providers p
       INNER JOIN public.integration_agent_providers aap ON p.id = aap.provider_id
       WHERE aap.agent_id = $1
-      AND p.is_active = true
     `
     const params: any[] = [agentId]
 

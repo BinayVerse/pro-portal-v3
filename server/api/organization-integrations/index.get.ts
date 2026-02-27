@@ -46,7 +46,6 @@ export default defineEventHandler(async (event) => {
         oi.provider_id,
         oi.agent_id,
         oi.module_id,
-        oi.connection_name,
         oi.client_id,
         oi.client_secret,
         oi.api_key,

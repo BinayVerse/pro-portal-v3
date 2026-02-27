@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
     // Get current integration to verify ownership and get all current values
     const currentRes = await query(
       `SELECT
-        provider_id, connection_name, client_id, client_secret, api_key, access_token,
+        provider_id, client_id, client_secret, api_key, access_token,
         refresh_token, token_expiry, base_url, login_url, metadata_json,
         status
        FROM public.organization_integrations
@@ -63,7 +63,6 @@ export default defineEventHandler(async (event) => {
     // Merge current values with provided updates
     // This prevents null constraint violations when partially updating (e.g., status only)
     const mergedData = {
-      connection_name: body.connection_name ?? currentData.connection_name,
       client_id: body.client_id ?? currentData.client_id,
       client_secret: body.client_secret ?? currentData.client_secret,
       api_key: body.api_key ?? currentData.api_key,
@@ -97,7 +96,7 @@ export default defineEventHandler(async (event) => {
 
     if (body.status && Object.keys(body).length === 1) {
       const statusLabel = body.status.charAt(0).toUpperCase() + body.status.slice(1)
-      message = `${currentData.connection_name}: Status updated to ${statusLabel}`
+      message = `Integration Status updated to ${statusLabel}`
       action = 'status_change'
     }
 
@@ -112,11 +111,51 @@ export default defineEventHandler(async (event) => {
       mergedData
     )
 
+    // SYNC: Also update hrms_integration table if hrms_system is provided
+    if (body.hrms_system) {
+      const hrmsMetadata = {
+        deprecated: true,
+        deprecated_note: 'This table is deprecated. Use organization_integrations instead.',
+        provider_id: currentData.provider_id,
+        agent_id: body.agent_id,
+        module_id: body.module_id,
+        api_key: body.api_key ?? currentData.api_key,
+        login_url: body.login_url ?? currentData.login_url,
+        organization_integration_id: integrationId,
+      }
+
+      await query(
+        `UPDATE public.hrms_integration
+         SET client_id = $1,
+             client_secret_encrypted = $2,
+             access_token = $3,
+             refresh_token_encrypted = $4,
+             token_expiry = $5,
+             base_url = $6,
+             metadata_json = $7,
+             status = $8,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE organization_id = $9 AND hrms_system = $10`,
+        [
+          mergedData.client_id,
+          mergedData.client_secret,
+          mergedData.access_token,
+          mergedData.refresh_token,
+          mergedData.token_expiry,
+          mergedData.base_url,
+          JSON.stringify(hrmsMetadata),
+          mergedData.status,
+          orgId,
+          body.hrms_system,
+        ]
+      )
+    }
+
     setResponseStatus(event, 200)
     return {
       statusCode: 200,
       status: 'success',
-      message
+      message: message + ' (synced with hrms_integration)'
     }
   } catch (error: any) {
     console.error('Organization Integration Update Error:', error)

@@ -6,7 +6,7 @@
     :popper="computedPopper"
     :ui="{
       container: 'z-[9999]',
-      content: 'bg-dark-800 text-gray-100 border border-dark-700 shadow-lg rounded-md opacity-100'
+      content: 'bg-dark-800 text-gray-100 border border-dark-700 shadow-lg rounded-md opacity-100',
     }"
     :open-delay="50"
     :close-delay="100"
@@ -18,10 +18,10 @@
     </template>
 
     <!-- Make the wrapper clickable when needed -->
-    <span 
+    <span
       :class="[
-        sidebar ? 'inline-flex w-fit' : 'inline-flex',
-        disabled ? 'cursor-not-allowed' : (clickable ? 'cursor-pointer' : 'cursor-default')
+        sidebar ? 'inline-flex w-fit' : 'flex w-full',
+        disabled ? 'cursor-not-allowed' : clickable ? 'cursor-pointer' : 'cursor-default',
       ]"
       :style="{ position: 'relative' }"
       @click="handleWrapperClick"
@@ -69,10 +69,9 @@ const handleWrapperClick = (event: MouseEvent) => {
 }
 
 const computedPopper = computed(() => {
-  const placement: 'top' | 'right' | 'bottom' | 'left' =
-    props.sidebar
-      ? 'right'
-      : props.placement ?? 'bottom'
+  const placement: 'top' | 'right' | 'bottom' | 'left' = props.sidebar
+    ? 'right'
+    : (props.placement ?? 'bottom')
 
   const strategy: 'fixed' | 'absolute' = 'fixed'
 
@@ -83,22 +82,22 @@ const computedPopper = computed(() => {
       {
         name: 'offset',
         options: {
-          offset: props.sidebar ? [0, 12] : [0, 8] // Increased offset for sidebar
-        }
+          offset: props.sidebar ? [0, 12] : [0, 8], // Increased offset for sidebar
+        },
       },
       {
         name: 'flip',
         options: {
-          fallbackPlacements: ['bottom', 'top'] // Allow fallback
-        }
+          fallbackPlacements: ['bottom', 'top'], // Allow fallback
+        },
       },
       {
         name: 'preventOverflow',
         options: {
-          boundary: 'viewport'
-        }
-      }
-    ]
+          boundary: 'viewport',
+        },
+      },
+    ],
   }
 })
 </script>

@@ -103,38 +103,61 @@ export const useOrganizationIntegrationsStore = defineStore('organizationIntegra
       return state.providers.filter((p) => intersection.includes(p.id))
     },
 
-    // Get grouped integrations (by provider/agent/module)
+    // Get modules available for an agent and provider combination
+    getModulesForAgentAndProvider: (state) => (agentId: string, providerId: string) => {
+      const modulesForAgent = state.relationships.agentModules
+        .filter((rel) => rel.agent_id === agentId)
+        .map((rel) => rel.module_id)
+
+      const modulesForProvider = state.relationships.providerModules
+        .filter((rel) => rel.provider_id === providerId)
+        .map((rel) => rel.module_id)
+
+      // Get intersection - modules available for both agent and provider
+      const intersection = modulesForAgent.filter((m) => modulesForProvider.includes(m))
+      return state.modules.filter((m) => intersection.includes(m.id))
+    },
+
+    // Get grouped integrations (by provider/agent, with multiple modules)
     getGroupedIntegrations: (state): GroupedIntegration[] => {
       const grouped = new Map<string, GroupedIntegration>()
 
       state.integrations.forEach((integration) => {
-        const key = `${integration.provider_id}|${integration.agent_id}|${integration.module_id}`
+        const key = `${integration.provider_id}|${integration.agent_id}`
 
         if (!grouped.has(key)) {
           grouped.set(key, {
             provider_id: integration.provider_id,
             agent_id: integration.agent_id,
-            module_id: integration.module_id,
             provider_name: integration.provider_name || '',
             provider_code: integration.provider_code || '',
             agent_name: integration.agent_name || '',
             agent_code: integration.agent_code || '',
-            module_name: integration.module_name || '',
-            module_code: integration.module_code || '',
+            modules: [],
             connections: [],
           })
         }
 
-        grouped.get(key)!.connections.push(integration)
+        const group = grouped.get(key)!
+        group.connections.push(integration)
+
+        // Add module info if not already present
+        if (
+          !group.modules!.some((m) => m.id === integration.module_id)
+        ) {
+          group.modules!.push({
+            id: integration.module_id,
+            name: integration.module_name || '',
+            code: integration.module_code || '',
+          })
+        }
       })
 
       return Array.from(grouped.values()).sort((a, b) => {
-        // Sort by provider name, then agent name, then module name
+        // Sort by provider name, then agent name
         const providerSort = a.provider_name.localeCompare(b.provider_name)
         if (providerSort !== 0) return providerSort
-        const agentSort = a.agent_name.localeCompare(b.agent_name)
-        if (agentSort !== 0) return agentSort
-        return a.module_name.localeCompare(b.module_name)
+        return a.agent_name.localeCompare(b.agent_name)
       })
     },
   },

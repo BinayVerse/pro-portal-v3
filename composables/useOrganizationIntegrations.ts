@@ -68,6 +68,8 @@ export const useOrganizationIntegrations = () => {
     getProvidersForAgent: (agentId: string) => store.getProvidersForAgent(agentId),
     getProvidersForAgentAndModule: (agentId: string, moduleId: string) =>
       store.getProvidersForAgentAndModule(agentId, moduleId),
+    getModulesForAgentAndProvider: (agentId: string, providerId: string) =>
+      store.getModulesForAgentAndProvider(agentId, providerId),
 
     // Decryption for display
     decryptIntegrationForDisplay: (integration: OrganizationIntegration) =>
