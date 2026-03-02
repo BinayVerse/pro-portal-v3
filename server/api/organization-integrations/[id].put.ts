@@ -111,51 +111,13 @@ export default defineEventHandler(async (event) => {
       mergedData
     )
 
-    // SYNC: Also update hrms_integration table if hrms_system is provided
-    if (body.hrms_system) {
-      const hrmsMetadata = {
-        deprecated: true,
-        deprecated_note: 'This table is deprecated. Use organization_integrations instead.',
-        provider_id: currentData.provider_id,
-        agent_id: body.agent_id,
-        module_id: body.module_id,
-        api_key: body.api_key ?? currentData.api_key,
-        login_url: body.login_url ?? currentData.login_url,
-        organization_integration_id: integrationId,
-      }
-
-      await query(
-        `UPDATE public.hrms_integration
-         SET client_id = $1,
-             client_secret_encrypted = $2,
-             access_token = $3,
-             refresh_token_encrypted = $4,
-             token_expiry = $5,
-             base_url = $6,
-             metadata_json = $7,
-             status = $8,
-             updated_at = CURRENT_TIMESTAMP
-         WHERE organization_id = $9 AND hrms_system = $10`,
-        [
-          mergedData.client_id,
-          mergedData.client_secret,
-          mergedData.access_token,
-          mergedData.refresh_token,
-          mergedData.token_expiry,
-          mergedData.base_url,
-          JSON.stringify(hrmsMetadata),
-          mergedData.status,
-          orgId,
-          body.hrms_system,
-        ]
-      )
-    }
+    // Note: HRMS integration is already handled by updateOrganizationIntegration helper function
 
     setResponseStatus(event, 200)
     return {
       statusCode: 200,
       status: 'success',
-      message: message + ' (synced with hrms_integration)'
+      message: message
     }
   } catch (error: any) {
     console.error('Organization Integration Update Error:', error)

@@ -56,6 +56,17 @@ export default defineEventHandler(async (event) => {
     const currentData = currentRes.rows[0]
     const providerId = currentData.provider_id
 
+    // Create audit log for deletion BEFORE deleting (to avoid FK constraint)
+    await createIntegrationAuditLog(
+      integrationId,
+      orgId,
+      'delete',
+      userId,
+      event,
+      currentData,
+      undefined
+    )
+
     // Delete integration using helper function
     const result = await deleteOrganizationIntegration(
       integrationId,
@@ -67,17 +78,6 @@ export default defineEventHandler(async (event) => {
       setResponseStatus(event, 500)
       throw new CustomError(result.error || 'Failed to delete integration', 500)
     }
-
-    // Create audit log for deletion
-    await createIntegrationAuditLog(
-      integrationId,
-      orgId,
-      'delete',
-      userId,
-      event,
-      currentData,
-      undefined
-    )
 
     // SYNC: Also delete from hrms_integration table if it references this integration
     const hrmsCheck = await query(

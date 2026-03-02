@@ -492,11 +492,16 @@ export async function createOrganizationIntegration(
         access_token, refresh_token, token_expiry, base_url,
         login_url, metadata_json, status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING id
     `
 
     const metadata: Record<string, any> = integrationData.metadata_json || {}
+
+    // Store hrms_system in metadata for reference on delete
+    if (integrationData.hrms_system) {
+      metadata.hrms_system = integrationData.hrms_system
+    }
 
     const orgIntegrationRes = await query(orgIntegrationSql, [
       orgId,
@@ -525,8 +530,8 @@ export async function createOrganizationIntegration(
 
     const providerCode = providerRes.rows[0]?.code
 
-    // If this is an HRMS provider, also insert/update in hrms_integration
-    if (providerCode === 'hrms' || integrationData.is_hrms === true) {
+    // If this is an HRMS provider or hrms_system is provided, insert/update in hrms_integration
+    if (providerCode === 'hrms' || integrationData.is_hrms === true || integrationData.hrms_system) {
       const hrmsData: Record<string, any> = {
         organization_id: orgId,
         hrms_system: integrationData.hrms_system,
@@ -595,6 +600,11 @@ export async function updateOrganizationIntegration(
     // Update organization_integrations
     const metadata = integrationData.metadata_json || {}
 
+    // Store hrms_system in metadata for reference on delete
+    if (integrationData.hrms_system) {
+      metadata.hrms_system = integrationData.hrms_system
+    }
+
     const orgIntegrationSql = `
       UPDATE public.organization_integrations
       SET
@@ -640,8 +650,8 @@ export async function updateOrganizationIntegration(
 
     const providerCode = providerRes.rows[0]?.code
 
-    // If this is an HRMS provider, also update hrms_integration
-    if (providerCode === 'hrms' || integrationData.is_hrms === true) {
+    // If this is an HRMS provider or hrms_system is provided, also update hrms_integration
+    if (providerCode === 'hrms' || integrationData.is_hrms === true || integrationData.hrms_system) {
       const hrmsSystem = integrationData.hrms_system
 
       const hrmsUpdateSql = `
@@ -700,24 +710,17 @@ export async function deleteOrganizationIntegration(
   try {
     await query('BEGIN', [])
 
-    // Get provider info
-    const providerRes = await query(
-      'SELECT code FROM public.integration_providers WHERE id = $1',
-      [providerId]
+    // Get hrms_system from metadata if this is an HRMS integration
+    const integrationRes = await query(
+      `SELECT metadata_json FROM public.organization_integrations WHERE id = $1`,
+      [integrationId]
     )
 
-    const providerCode = providerRes.rows[0]?.code
-
-    // Get hrms_system if this is HRMS provider
-    if (providerCode === 'hrms') {
-      const integrationRes = await query(
-        `SELECT metadata_json FROM public.organization_integrations WHERE id = $1`,
-        [integrationId]
-      )
-
+    if (integrationRes.rowCount) {
       const metadata = integrationRes.rows[0]?.metadata_json || {}
       const hrmsSystem = metadata.hrms_system
 
+      // Delete from hrms_integration if hrms_system exists
       if (hrmsSystem) {
         await query(
           'DELETE FROM public.hrms_integration WHERE organization_id = $1 AND hrms_system = $2',
