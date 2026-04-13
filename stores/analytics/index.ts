@@ -34,62 +34,62 @@ export const useAnalyticsStore = defineStore('analyticsStore', {
     getOrganizationDetails: (state): any | null => state.organizationDetails,
     getOrganizationUsers: (state): any[] => state.orgUserList,
     getUserAppWiseTokenDetail: (state): AppTokenUsage[] => state.userAppWiseTokenDetail,
-    
-  // For Bar Chart: Users vs Artifacts by Department - HORIZONTAL layout
-  // X-axis: Count, Y-axis: Departments
-  getDepartmentBarChartData: (state): any => {    
-    if (!state.departmentBarChartData || state.departmentBarChartData.length === 0) {
-      return {
-        departments: [],
-        userCounts: [],
-        artifactCounts: []
-      };
-    }
-    
-    // Sort departments by total count (users + artifacts) descending
-    const sortedData = [...state.departmentBarChartData].sort((a, b) => {
-      const aTotal = (Number(a.user_count) || 0) + (Number(a.artifact_count) || 0);
-      const bTotal = (Number(b.user_count) || 0) + (Number(b.artifact_count) || 0);
-      return bTotal - aTotal;
-    });
-    
-    const departments = sortedData.map(d => d.department_name);
-    const userCounts = sortedData.map(d => Number(d.user_count) || 0);
-    const artifactCounts = sortedData.map(d => Number(d.artifact_count) || 0);
-    
-    const result = {
-      departments,
-      userCounts,
-      artifactCounts
-    };
-    
-    return result;
-  },
-  
-  // For Pie Chart: User Distribution by Department
-  getDepartmentPieChartData: (state): any[] => {    
-    if (!state.departmentPieChartData || state.departmentPieChartData.length === 0) {
-      return [];
-    }
-    
-    // Include ALL departments, even those with 0 users
-    const result = state.departmentPieChartData
-      .map((item: any) => {
-        // Handle both possible response formats
-        const name = item.name || item.department_name || 'Unknown';
-        const value = Number(item.users || item.user_count || 0);
-        const percentage = Number(item.percentage || 0);
-        
+
+    // For Bar Chart: Users vs Artifacts by Department - HORIZONTAL layout
+    // X-axis: Count, Y-axis: Departments
+    getDepartmentBarChartData: (state): any => {
+      if (!state.departmentBarChartData || state.departmentBarChartData.length === 0) {
         return {
-          name,
-          value,
-          percentage
+          departments: [],
+          userCounts: [],
+          artifactCounts: []
         };
-      })
-      .sort((a, b) => b.value - a.value);
+      }
+
+      // Sort departments by total count (users + artifacts) descending
+      const sortedData = [...state.departmentBarChartData].sort((a, b) => {
+        const aTotal = (Number(a.user_count) || 0) + (Number(a.artifact_count) || 0);
+        const bTotal = (Number(b.user_count) || 0) + (Number(b.artifact_count) || 0);
+        return bTotal - aTotal;
+      });
+
+      const departments = sortedData.map(d => d.department_name);
+      const userCounts = sortedData.map(d => Number(d.user_count) || 0);
+      const artifactCounts = sortedData.map(d => Number(d.artifact_count) || 0);
+
+      const result = {
+        departments,
+        userCounts,
+        artifactCounts
+      };
+
       return result;
+    },
+
+    // For Pie Chart: User Distribution by Department
+    getDepartmentPieChartData: (state): any[] => {
+      if (!state.departmentPieChartData || state.departmentPieChartData.length === 0) {
+        return [];
+      }
+
+      // Include ALL departments, even those with 0 users
+      const result = state.departmentPieChartData
+        .map((item: any) => {
+          // Handle both possible response formats
+          const name = item.name || item.department_name || 'Unknown';
+          const value = Number(item.users || item.user_count || 0);
+          const percentage = Number(item.percentage || 0);
+
+          return {
+            name,
+            value,
+            percentage
+          };
+        })
+        .sort((a, b) => b.value - a.value);
+      return result;
+    },
   },
-},
 
   actions: {
     handleError(error: any, defaultMessage: string, silent: boolean = false): string {
@@ -256,38 +256,124 @@ export const useAnalyticsStore = defineStore('analyticsStore', {
       }
     },
 
-async fetchDepartmentAnalytics(orgId: string, timezone?: string) {
-    try {
-      this.departmentAnalyticsLoading = true;
-      
-      const params = new URLSearchParams();
-      if (timezone) params.append('timezone', timezone);
-      
-      const url = `/api/analytics/${orgId}/department-analytics${params.toString() ? `?${params.toString()}` : ''}`;
-      
-      const response = await $fetch<{ data: any }>(url, { 
-        headers: this.getAuthHeaders() 
-      });
-      
-      // FIX: Check the structure - the response.data contains bar_chart_data and pie_chart_data
-      if (response.data) {
-        // Reset arrays first to trigger reactivity
-        this.departmentBarChartData = [];
-        this.departmentPieChartData = [];
-        
-        // Then assign new data
-        this.departmentBarChartData = response.data.bar_chart_data || [];
-        this.departmentPieChartData = response.data.pie_chart_data || [];
+    async fetchDepartmentAnalytics(orgId: string, timezone?: string) {
+      try {
+        this.departmentAnalyticsLoading = true;
 
+        const params = new URLSearchParams();
+        if (timezone) params.append('timezone', timezone);
+
+        const url = `/api/analytics/${orgId}/department-analytics${params.toString() ? `?${params.toString()}` : ''}`;
+
+        const response = await $fetch<{ data: any }>(url, {
+          headers: this.getAuthHeaders()
+        });
+
+        // FIX: Check the structure - the response.data contains bar_chart_data and pie_chart_data
+        if (response.data) {
+          // Reset arrays first to trigger reactivity
+          this.departmentBarChartData = [];
+          this.departmentPieChartData = [];
+
+          // Then assign new data
+          this.departmentBarChartData = response.data.bar_chart_data || [];
+          this.departmentPieChartData = response.data.pie_chart_data || [];
+
+        }
+
+        return response;
+      } catch (error) {
+        if (await handleAuthErrorShared(error)) return;
+        this.handleError(error, 'Failed to fetch department analytics');
+      } finally {
+        this.departmentAnalyticsLoading = false;
       }
-      
-      return response;
-    } catch (error) {
-      if (await handleAuthErrorShared(error)) return;
-      this.handleError(error, 'Failed to fetch department analytics');
-    } finally {
-      this.departmentAnalyticsLoading = false;
-    }
-  },
+    },
+
+    async fetchActionableInsights(orgId: string, startDate: string, endDate: string) {
+      try {
+        this.loading = true
+
+        const body: any = {
+          org_id: orgId,
+          start_date: startDate,
+          end_date: endDate,
+        }
+
+        const response = await $fetch(
+          `/api/analytics/${orgId}/actionable-insights`,
+          {
+            method: 'POST',
+            headers: this.getAuthHeaders(),
+            body,
+          }
+        )
+
+        return response
+
+      } catch (error) {
+        if (await handleAuthErrorShared(error)) return
+        this.handleError(error, 'Failed to fetch AI Signals')
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchKnowledgeGap(orgId: string, startDate: string, endDate: string) {
+      try {
+        this.loading = true
+
+        const body: any = {
+          org_id: orgId,
+          start_date: startDate,
+          end_date: endDate,
+        }
+
+        const response = await $fetch(
+          `/api/analytics/${orgId}/knowledge-gap`,
+          {
+            method: 'POST',
+            headers: this.getAuthHeaders(),
+            body,
+          }
+        )
+
+        return response
+
+      } catch (error) {
+        if (await handleAuthErrorShared(error)) return
+        this.handleError(error, 'Failed to fetch Knowledge Gap insights')
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // In stores/analytics/index.ts - update sendInsightsEmail
+    async sendInsightsEmail(orgId: string, insightsData: any) {
+      try {
+        this.loading = true;
+
+        // The URL already contains the orgId, but we also include it in the body for redundancy
+        const response = await $fetch<{ message: string }>(
+          `/api/analytics/${orgId}/send-insights-email`,
+          {
+            method: "POST",
+            headers: this.getAuthHeaders(),
+            body: insightsData,
+          }
+        );
+
+        return response;
+      } catch (error) {
+        console.error("sendInsightsEmail error:", error);
+        if (await handleAuthErrorShared(error)) return;
+        this.handleError(error, "Failed to send insights email");
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
   }
 });

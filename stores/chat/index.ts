@@ -153,7 +153,7 @@ export const useChatStore = defineStore('chat', () => {
       for (const r of rows) {
         const cid = r.chat_id || 'unknown'
         const existing = map.get(cid)
-        if (!existing || new Date(r.created_at) > new Date(existing.created_at)) {
+        if (!existing || new Date(r.updated_at) > new Date(existing.updated_at)) {
           const msg = r.message || {}
           // header
           let header = ''
@@ -199,8 +199,8 @@ export const useChatStore = defineStore('chat', () => {
           body = (body || '').toString().trim()
           if (body.length > 300) body = body.slice(0, 297) + '...'
 
-          const formatted = r.created_at ? dayjs(r.created_at).format('MM/DD/YYYY hh:mm A') : ''
-          map.set(cid, { chat_id: cid, header, body, last_at: r.created_at, last_at_formatted: formatted })
+          const formatted = r.updated_at ? dayjs(r.updated_at).format('MM/DD/YYYY hh:mm A') : ''
+          map.set(cid, { chat_id: cid, header, body, last_at: r.updated_at, last_at_formatted: formatted })
         }
       }
 
@@ -1182,9 +1182,44 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  async function deleteConversation(chatId: string) {
+    if (!chatId) throw new Error('chat_id is required')
+
+    try {
+      const token = auth.token || undefined
+      if (!token) throw new Error('unauthorized')
+
+      await $fetch(`/api/chat/history/${encodeURIComponent(chatId)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      // Remove from conversations list
+      const index = conversations.value.findIndex((c) => c.chat_id === chatId)
+      if (index > -1) {
+        conversations.value.splice(index, 1)
+      }
+
+      return { status: 'success', message: 'Conversation deleted' }
+    } catch (err: any) {
+      throw err
+    }
+  }
+
+  function clearChat() {
+    messages.value = []
+    conversations.value = []
+    currentChatId.value = null
+    selectedCategoryId.value = null
+    selectedDocumentId.value = null
+    loading.value = false
+    historyLoading.value = false
+  }
+
   return {
     messages,
     conversations,
+    currentChatId,
     loading,
     historyLoading,
     fetchConversations,
@@ -1202,5 +1237,7 @@ export const useChatStore = defineStore('chat', () => {
     selectedCategoryId,
     selectedDocumentId,
     setLoading,
+    deleteConversation,
+    clearChat,
   }
 })

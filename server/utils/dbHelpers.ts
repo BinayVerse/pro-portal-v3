@@ -458,17 +458,32 @@ export async function activateFreePlanForOrg(
 
 /**
  * Fields that exist in hrms_integration table
+ * Map: organization_integrations field name → hrms_integration column name
  */
-const HRMS_FIELDS = new Set([
-  'organization_id',
+const HRMS_FIELD_MAPPING: Record<string, string> = {
+  'client_id': 'client_id',
+  'client_secret': 'client_secret_encrypted',
+  'access_token': 'access_token',
+  'refresh_token': 'refresh_token_encrypted',
+  'token_expiry': 'token_expiry',
+  'base_url': 'base_url',
+  'status': 'status'
+}
+
+/**
+ * Fields from organization_integrations that have columns in hrms_integration
+ */
+const HRMS_COLUMN_FIELDS = new Set(Object.keys(HRMS_FIELD_MAPPING))
+
+/**
+ * Fields that should NOT go to metadata when syncing to hrms_integration
+ * (These are system fields or already handled elsewhere)
+ */
+const FIELDS_TO_EXCLUDE_FROM_METADATA = new Set([
+  'metadata_json',
+  'is_hrms',
   'hrms_system',
-  'client_id',
-  'client_secret_encrypted',
-  'access_token',
-  'refresh_token_encrypted',
-  'token_expiry',
-  'base_url',
-  'status'
+  'organization_id'
 ])
 
 /**
@@ -496,12 +511,13 @@ export async function createOrganizationIntegration(
       RETURNING id
     `
 
-    const metadata: Record<string, any> = integrationData.metadata_json || {}
+    // metadata for organization_integrations
+    const orgMetadata: Record<string, any> = {}
 
-    // Store hrms_system in metadata for reference on delete
     if (integrationData.hrms_system) {
-      metadata.hrms_system = integrationData.hrms_system
+      orgMetadata.hrms_system = integrationData.hrms_system
     }
+
 
     const orgIntegrationRes = await query(orgIntegrationSql, [
       orgId,
@@ -516,7 +532,7 @@ export async function createOrganizationIntegration(
       integrationData.token_expiry || null,
       integrationData.base_url || null,
       integrationData.login_url || null,
-      JSON.stringify(metadata),
+      JSON.stringify(orgMetadata),
       integrationData.status || 'active'
     ])
 
@@ -532,45 +548,54 @@ export async function createOrganizationIntegration(
 
     // If this is an HRMS provider or hrms_system is provided, insert/update in hrms_integration
     if (providerCode === 'hrms' || integrationData.is_hrms === true || integrationData.hrms_system) {
-      const hrmsData: Record<string, any> = {
+      // Build hrms_integration data by mapping organization_integrations fields
+      const hrmsData: Record<string, string> = {
         organization_id: orgId,
-        hrms_system: integrationData.hrms_system,
-        client_id: integrationData.client_id,
-        client_secret_encrypted: integrationData.client_secret,
-        access_token: integrationData.access_token,
-        refresh_token_encrypted: integrationData.refresh_token || null,
-        token_expiry: integrationData.token_expiry || null,
-        base_url: integrationData.base_url || null,
-        status: integrationData.status || 'active'
+        hrms_system: integrationData.hrms_system
       }
 
-      // Store fields not in hrms_integration in metadata
-      for (const [key, value] of Object.entries(integrationData)) {
-        if (!HRMS_FIELDS.has(key) && key !== 'metadata_json') {
-          metadata[key] = value
-        }
+      // Map fields that exist in hrms_integration table
+      for (const [orgIntField, hrmsColumn] of Object.entries(HRMS_FIELD_MAPPING)) {
+        const value = integrationData[orgIntField]
+        hrmsData[hrmsColumn] = value !== undefined ? value : null
       }
 
       const hrmsFields = Object.keys(hrmsData).filter(k => k !== 'organization_id')
-      const hrmsValues = hrmsFields.map((_, i) => `$${i + 2}`)
 
       const hrmsSql = `
         INSERT INTO public.hrms_integration (
-          organization_id, ${hrmsFields.join(', ')}
+          organization_id,
+          ${hrmsFields.join(', ')},
+          metadata_json
         )
-        VALUES ($1, ${hrmsValues.join(', ')})
+        VALUES (
+          $1,
+          ${hrmsFields.map((_, i) => `$${i + 2}`).join(', ')},
+          $${hrmsFields.length + 2}
+        )
         ON CONFLICT (organization_id, hrms_system)
         DO UPDATE SET
           ${hrmsFields.map(f => `${f} = EXCLUDED.${f}`).join(', ')},
-          updated_at = CURRENT_TIMESTAMP,
-          metadata_json = $${hrmsFields.length + 2}
+          metadata_json = EXCLUDED.metadata_json,
+          updated_at = CURRENT_TIMESTAMP
         RETURNING id
-      `
+        `
+
+      const hrmsMetadata = {
+        api_key: integrationData.api_key,
+        login_url: integrationData.login_url,
+        base_url: integrationData.base_url,
+        provider_id: providerId,
+        agent_id: agentId,
+        module_ids: integrationData.module_ids || [],
+        hrms_system: integrationData.hrms_system
+      }
+
 
       const hrmsParams = [
         orgId,
         ...hrmsFields.map(f => hrmsData[f]),
-        JSON.stringify(metadata)
+        JSON.stringify(hrmsMetadata)
       ]
 
       await query(hrmsSql, hrmsParams)
@@ -598,7 +623,9 @@ export async function updateOrganizationIntegration(
     await query('BEGIN', [])
 
     // Update organization_integrations
-    const metadata = integrationData.metadata_json || {}
+    const metadata = {
+      hrms_system: integrationData.hrms_system || null
+    }
 
     // Store hrms_system in metadata for reference on delete
     if (integrationData.hrms_system) {
@@ -669,12 +696,16 @@ export async function updateOrganizationIntegration(
         WHERE organization_id = $9 AND hrms_system = $10
       `
 
-      // Store fields not in hrms_integration in metadata
-      for (const [key, value] of Object.entries(integrationData)) {
-        if (!HRMS_FIELDS.has(key) && key !== 'metadata_json' && key !== 'is_hrms') {
-          metadata[key] = value
-        }
+      // Store all fields not in hrms_integration (or in EXCLUDE list) in metadata
+      const hrmsMetadata = {
+        api_key: integrationData.api_key,
+        login_url: integrationData.login_url,
+        base_url: integrationData.base_url,
+        provider_id: providerId,
+        module_ids: integrationData.module_ids || [],
+        hrms_system: integrationData.hrms_system
       }
+
 
       await query(hrmsUpdateSql, [
         integrationData.client_id,
@@ -684,7 +715,7 @@ export async function updateOrganizationIntegration(
         integrationData.token_expiry || null,
         integrationData.base_url || null,
         integrationData.status || 'active',
-        JSON.stringify(metadata),
+        JSON.stringify(hrmsMetadata),
         orgId,
         hrmsSystem
       ])

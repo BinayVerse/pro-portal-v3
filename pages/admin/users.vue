@@ -16,6 +16,22 @@
       <div
         class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto flex-shrink-0"
       >
+        <!-- Unassigned Users Toggle -->
+        <div
+          class="flex items-center gap-2 px-3 py-2 bg-dark-800 rounded-lg border border-dark-700"
+        >
+          <div class="flex items-center">
+            <UToggle
+              v-model="showUnassignedOnly"
+              :ui="{
+                base: 'flex items-center',
+                thumb: 'translate-y-0',
+              }"
+            />
+          </div>
+
+          <span class="text-sm text-gray-300 leading-none"> Unassigned Users </span>
+        </div>
         <AppTooltip
           :text="
             isDepartmentAdmin
@@ -162,6 +178,8 @@
             option-attribute="label"
             value-attribute="value"
             size="md"
+            :class="isUnassignedMode ? 'opacity-50 cursor-not-allowed' : ''"
+            :disabled="isUnassignedMode"
           />
         </div>
 
@@ -186,6 +204,8 @@
             option-attribute="label"
             value-attribute="value"
             size="md"
+            :class="isUnassignedMode ? 'opacity-50 cursor-not-allowed' : ''"
+            :disabled="isUnassignedMode"
           />
         </div>
       </div>
@@ -217,6 +237,14 @@
         >
           Retry
         </button>
+      </div>
+
+      <div v-else-if="!filteredUsers.length" class="p-8 text-center">
+        <UIcon name="i-heroicons-user" class="w-10 h-10 text-gray-500 mx-auto" />
+
+        <p class="text-gray-400 mt-2">
+          {{ showUnassignedOnly ? 'No unassigned users found' : 'No users found' }}
+        </p>
       </div>
 
       <div v-else>
@@ -424,16 +452,24 @@
                 >
                   <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
                 </button>
-                <AppTooltip :text="row.isActive ? 'Deactivate user' : 'Activate user'">
+                <AppTooltip
+                  :text="
+                    canToggleUser(row)
+                      ? row.isActive
+                        ? 'Deactivate user'
+                        : 'Activate user'
+                      : 'You can only activate/deactivate users within your departments'
+                  "
+                >
                   <button
-                    :disabled="row.id === authUser?.user_id || row.primaryContact"
+                    :disabled="!canToggleUser(row)"
                     @click="
                       (row.id !== authUser?.user_id || !row.primaryContact) &&
                       showToggleConfirm(row)
                     "
                     :class="`transition-colors ${
-                      row.id === authUser?.user_id || row.primaryContact
-                        ? 'cursor-not-allowed disabled:opacity-50 text-gray-500'
+                      !canToggleUser(row)
+                        ? 'cursor-not-allowed opacity-50 text-gray-500'
                         : row.isActive
                           ? 'text-red-400 hover:text-red-300'
                           : 'text-green-400 hover:text-green-300'
@@ -597,11 +633,10 @@
               icon="i-heroicons-building-office"
               class="w-full"
               selectClass="custom-select"
-              :disabled="isUserOutsideDepartmentAdminScope"
             >
               <!-- Custom selected value display -->
               <template #label>
-                <span v-if="!userForm.departments.length" class="text-gray-400">
+                <span v-if="!selectedDepartmentsLabel.length" class="text-gray-400">
                   Select departments
                 </span>
 
@@ -614,16 +649,7 @@
               v-if="isDepartmentAdmin && availableDepartmentsForForm.length > 0"
               class="text-xs text-gray-400 mt-2"
             >
-              <template v-if="isEditMode && isUserOutsideDepartmentAdminScope">
-                You can only edit users in your department(s)
-              </template>
-              <template v-else>
-                {{
-                  isEditMode
-                    ? 'Limited to your department(s)'
-                    : 'You can only assign from your department(s)'
-                }}
-              </template>
+              You can only assign departments from your department(s)
             </p>
           </UFormGroup>
 
@@ -662,6 +688,7 @@
             <UButton
               type="submit"
               :loading="isEditMode ? updatingUser : addingUser"
+              :disabled="isSaveDisabled"
               :label="
                 isEditMode
                   ? updatingUser
@@ -672,6 +699,7 @@
                     : 'Add User'
               "
               class="flex-1 px-3 py-3 justify-center"
+              :class="isSaveDisabled ? 'opacity-50 cursor-not-allowed' : ''"
             />
           </div>
         </UForm>
@@ -825,9 +853,10 @@
               <UButton
                 @click="downloadCsv"
                 icon="i-heroicons:cloud-arrow-down-16-solid"
+                :loading="profileStore.bulkDownloadLoading"
                 class="download-csv-template-btn text-white bg-custom1-400 hover:bg-custom1-500 focus:outline-none"
               >
-                Download CSV Template
+                Download Excel Template
               </UButton>
               <UButton
                 color="gray"
@@ -852,17 +881,20 @@
             @click="triggerFileInput"
           >
             <p class="text-gray-500">Drag and drop a file here or Click to select a file</p>
-            <p class="text-sm text-gray-400 mt-2">Supported file types: CSV files only</p>
+            <p class="text-sm text-gray-400 mt-2">
+              Supported file types: Excel or CSV (.xlsx, .xls)
+            </p>
             <p class="text-sm text-gray-400 mt-2">
               Note: The WhatsApp number should start with the country code, followed by a valid
-              number without any spaces.
+              number without any spaces. Departments column supports multiple values
+              (comma-separated).
             </p>
             <input
               type="file"
               ref="fileInput"
               class="hidden"
               @change="handleFileInput"
-              accept=".csv"
+              accept=".csv,.xlsx,.xls"
             />
           </div>
 
@@ -895,7 +927,11 @@
         <!-- Modal Footer -->
         <template #footer>
           <div class="flex justify-end space-x-4">
-            <UButton @click="closePreviewForm" class="bg-gray-300 hover:bg-gray-400 rounded">
+            <UButton
+              @click="closePreviewForm"
+              :disabled="usersStore.userLoading"
+              class="bg-gray-300 hover:bg-gray-400 rounded"
+            >
               Cancel
             </UButton>
             <UButton
@@ -903,6 +939,7 @@
               :disabled="errors.length > 0 || !selectedFile || validating"
               @click="handleUpload"
               class="bg-custom1-400 text-white hover:bg-custom1-500 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              :loading="usersStore.userLoading"
             >
               Upload
             </UButton>
@@ -1010,6 +1047,7 @@ import { useRoute } from 'vue-router'
 import PlanUpgradeAlert from '@/components/ui/PlanUpgradeAlert.vue'
 import Papa from 'papaparse'
 import 'github-markdown-css/github-markdown.css'
+import { useErrorStore } from '~/stores/error'
 
 // Types
 interface ApiUser {
@@ -1078,6 +1116,7 @@ definePageMeta({
 
 // Store
 const usersStore = useUsersStore()
+const errorStore = useErrorStore()
 const baseInputClass =
   'block w-full px-3 py-3 border border-dark-700 rounded-lg bg-dark-900 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors'
 const baseInputWithIcon =
@@ -1090,6 +1129,17 @@ const integrationsStore = useIntegrationsStore()
 const planDetails = computed(() => profileStore.getUserProfile?.plan_details || {})
 const usersLimit = computed(() => (planDetails.value as any)?.users || 0)
 const selectedDepartment = ref('')
+const isComponentMounted = ref(true)
+const showUnassignedOnly = ref(false)
+
+onBeforeUnmount(() => {
+  isComponentMounted.value = false
+
+  if (pollInterval.value) {
+    clearInterval(pollInterval.value)
+    pollInterval.value = null
+  }
+})
 
 const departmentFilterOptions = computed(() => [
   { label: 'All Departments', value: '' },
@@ -1180,6 +1230,37 @@ const canEditUser = (user: MappedUser): boolean => {
 
   // User is unassigned - Department Admin can edit
   return true
+}
+
+const canToggleUser = (user: MappedUser): boolean => {
+  // Cannot toggle self
+  if (user.id === authUser.value?.user_id) return false
+
+  // Cannot toggle primary contact
+  if (user.primaryContact) return false
+
+  // Super Admin / Admin can toggle anyone except super admin
+  if (authUser.value?.role_id === 0 || authUser.value?.role_id === 1) {
+    return user.role_id !== 0
+  }
+
+  // Department Admin rules
+  if (authUser.value?.role_id === 3) {
+    // Cannot toggle admin / super admin / department admin
+    if (user.role_id === 0 || user.role_id === 1 || user.role_id === 3) {
+      return false
+    }
+
+    // Must share at least one department
+    if (user.rawDepartmentIds?.length) {
+      return user.rawDepartmentIds.some((deptId) => currentUserDepartments.value.includes(deptId))
+    }
+
+    // Unassigned user → allow
+    return true
+  }
+
+  return false
 }
 
 // 🔑 Get the departments of the user currently being edited
@@ -1307,6 +1388,7 @@ const showPrimaryContactConfirm = ref(false)
 const pendingPrimaryContactChange = ref(false)
 const primaryContactConfirmMessage = ref('')
 const isPrimaryContactConfirming = ref(false)
+const isUnassignedMode = computed(() => showUnassignedOnly.value)
 
 // Toggle confirm modal state
 const showToggleConfirmModal = ref(false)
@@ -1369,7 +1451,13 @@ const filteredUsers = computed(() => {
     const matchesDepartment =
       !selectedDepartment.value || user.rawDepartmentIds?.includes(String(selectedDepartment.value))
 
-    return matchesSearch && matchesRole && matchesStatus && matchesDepartment
+    const isUnassigned = !user.rawDepartmentIds || user.rawDepartmentIds.length === 0
+
+    const isAllowedRole = user.role_id === 2 || user.role_id === 3
+
+    const matchesUnassigned = !showUnassignedOnly.value || (isUnassigned && isAllowedRole)
+
+    return matchesSearch && matchesRole && matchesStatus && matchesDepartment && matchesUnassigned
   })
 })
 
@@ -1451,9 +1539,6 @@ const perPageOptions = [
 const computedPageCount = computed(() =>
   perPage.value === 'all' ? Math.max(sortedRows.value.length, 1) : (perPage.value as number),
 )
-watch(perPage, () => {
-  page.value = 1
-})
 
 const paginatedUsers = computed(() => {
   if (perPage.value === 'all') return sortedRows.value
@@ -1501,6 +1586,13 @@ const roleOptionsForForm = computed(() => {
 
   return baseOptions
 })
+watch(perPage, () => {
+  page.value = 1
+})
+
+watch(showUnassignedOnly, () => {
+  page.value = 1
+})
 
 watch([selectedRole, selectedStatus, searchQuery, selectedDepartment], () => {
   page.value = 1
@@ -1508,6 +1600,13 @@ watch([selectedRole, selectedStatus, searchQuery, selectedDepartment], () => {
 
 watch([sort], () => {
   page.value = 1
+})
+
+watch(showUnassignedOnly, (val) => {
+  if (val) {
+    selectedRole.value = ''
+    selectedDepartment.value = ''
+  }
 })
 
 const userSchema = z
@@ -1574,6 +1673,15 @@ const stats = computed<UserStats>(() => {
   }).length
 
   return { totalUsers, activeUsers, adminUsers, newThisMonth }
+})
+
+// 🔑 Compute if save button should be disabled based on department validation
+const isSaveDisabled = computed(() => {
+  const roleId = Number(userForm.role_id)
+  // Disable if role is 2 (USER) or 3 (DEPARTMENT ADMIN) and no departments selected
+  return (
+    (roleId === 2 || roleId === 3) && (!userForm.departments || userForm.departments.length === 0)
+  )
 })
 
 const getInitials = (name: string): string => {
@@ -1647,6 +1755,8 @@ const mapApiUserToMappedUser = (user: ApiUser, userDepartments?: string[]): Mapp
 
 // API functions
 const loadUsers = async (showLoading = true) => {
+  if (!isComponentMounted.value) return
+
   // Only show the global loading spinner on the first (explicit) load
   if (showLoading) {
     loading.value = true
@@ -1670,7 +1780,9 @@ const loadUsers = async (showLoading = true) => {
         return {
           ...mapApiUserToMappedUser(user),
           rawDepartmentIds: deptIds.map(String), // 🔑 important
-          departments: deptIds.map((id: string) => departmentMapForDisplay.value[String(id)]).filter(Boolean),
+          departments: deptIds
+            .map((id: string) => departmentMapForDisplay.value[String(id)])
+            .filter(Boolean),
         }
       })
 
@@ -1752,6 +1864,17 @@ const handlePrimaryContactUpdate = async () => {
 
 const saveUser = async () => {
   if (!validatePhoneField()) {
+    return
+  }
+
+  // 🔑 Validate departments are selected for USER (2) and DEPARTMENT ADMIN (3) roles
+  const roleId = Number(userForm.role_id)
+  if (
+    (roleId === 2 || roleId === 3) &&
+    (!userForm.departments || userForm.departments.length === 0)
+  ) {
+    const errorStore = useErrorStore()
+    errorStore.showError('At least one department must be assigned to the user')
     return
   }
 
@@ -1906,9 +2029,9 @@ const confirmDelete = async () => {
 
 // User actions
 const editUser = (user: MappedUser) => {
-  // 🔑 Prevent Department Admin from editing users outside their department
+  // 🔑 Prevent Department Admin from editing other Department Admins or Org Admins
   if (!canEditUser(user)) {
-    showError('You can only edit users in your departments')
+    errorStore.showError('You can only edit users in your departments')
     return
   }
   openEditUserModal(user)
@@ -1937,15 +2060,20 @@ const toggleActive = async (user: MappedUser) => {
       }
       // NOTE: success notification is handled by the store. Do not show duplicate toasts here.
     } else {
-      showError(result?.message || 'Failed to update user status')
+      errorStore.showError(result?.message || 'Failed to update user status')
     }
   } catch (err: any) {
     console.error('Toggle active error', err)
-    showError('Failed to update user status')
+    errorStore.showError('Failed to update user status')
   }
 }
 
 const showToggleConfirm = (user: MappedUser) => {
+  if (!canToggleUser(user)) {
+    errorStore.showError('You do not have permission to modify this user')
+    return
+  }
+
   selectedUser.value = user
   showToggleConfirmModal.value = true
 }
@@ -1992,24 +2120,34 @@ const downloadCsv = async () => {
       throw new Error('Received empty or invalid Blob.')
     }
 
-    // Ensure the Blob is of type CSV
-    if (blob.type !== 'text/csv') {
+    // Support both Excel and CSV formats
+    const validTypes = [
+      'text/csv',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ]
+    if (!validTypes.includes(blob.type)) {
       throw new Error('Unexpected Blob type: ' + blob.type)
     }
+
+    // Determine filename based on blob type
+    const filename = blob.type.includes('spreadsheet')
+      ? 'users_template.xlsx'
+      : 'users_template.csv'
 
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', 'users_template.csv')
+    link.setAttribute('download', filename)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
 
     window.URL.revokeObjectURL(url)
 
-    showSuccess('CSV template downloaded successfully.')
+    const fileType = filename.endsWith('.xlsx') ? 'Excel' : 'CSV'
+    showSuccess(`${fileType} template downloaded successfully.`)
   } catch (error) {
-    showError(`Failed to download CSV template: ${error.message}`)
+    errorStore.showError(`Failed to download template: ${error.message}`)
   }
 }
 
@@ -2077,7 +2215,7 @@ const selectAllUsers = () => {
 
 const openBulkAssignmentModal = (mode: 'assign' | 'unassign') => {
   if (selectedUsers.value.size === 0) {
-    showError('Please select at least one user')
+    errorStore.showError('Please select at least one user')
     return
   }
   bulkActionMode.value = mode
@@ -2087,7 +2225,7 @@ const openBulkAssignmentModal = (mode: 'assign' | 'unassign') => {
 
 const executeBulkAssignment = async () => {
   if (selectedBulkDepartments.value.length === 0) {
-    showError(`Please select at least one department to ${bulkActionMode.value}`)
+    errorStore.showError(`Please select at least one department to ${bulkActionMode.value}`)
     return
   }
 
@@ -2164,15 +2302,19 @@ const handleFileDrop = (event: DragEvent) => {
 
 const validateFile = (file?: File) => {
   if (!file) {
-    showError('No file selected.')
+    errorStore.showError('No file selected.')
     return
   }
 
   const ext = file.name.split('.').pop()?.toLowerCase()
   const type = file.type.toLowerCase()
 
-  if (!(ext === 'csv' || type.includes('csv'))) {
-    showInlineError('Invalid file type. Only CSV is allowed.')
+  const validExts = ['csv', 'xlsx', 'xls']
+  const isValidExt = validExts.includes(ext || '')
+  const isValidType = type.includes('csv') || type.includes('sheet') || type.includes('excel')
+
+  if (!(isValidExt || isValidType)) {
+    showInlineError('Invalid file type. Only CSV and Excel files are allowed.')
     return
   }
 
@@ -2180,7 +2322,7 @@ const validateFile = (file?: File) => {
   openPreview(file)
 }
 
-// Show inline error summary and toast
+// Show inline error summary and error modal
 const showInlineError = (msg: string) => {
   errors.value = [{ errorMessage: msg }]
   // Ensure modal is visible so user sees the inline summary
@@ -2194,47 +2336,54 @@ const showInlineError = (msg: string) => {
     viewContent.value = ''
   }
 
-  // Use available notification helper(s)
-  try {
-    if (typeof showError === 'function') showError(msg)
-  } catch (e) {}
+  // Show error modal
+  errorStore.showError(msg)
 }
 
 // Helper to show multiple error toasts sequentially
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms))
 const hideInline = ref(false)
-const showErrorsSequentially = async (messages: string[], perMs = 3500) => {
+const showErrorsSequentially = async (messages: string[]) => {
   if (!messages || !messages.length) return
   // Show modal context
   showForm2.value = true
-  // Hide inline banner while showing sequential toasts
-  hideInline.value = true
 
-  for (let i = 0; i < messages.length; i++) {
-    try {
-      showError(messages[i], { duration: perMs })
-    } catch (e) {}
-    // wait before showing next
-    // eslint-disable-next-line no-await-in-loop
-    await sleep(perMs + 200)
-  }
+  // Concatenate all messages and show in modal
+  const concatenated = messages.join('\n')
+  errorStore.showError(concatenated)
 }
 
 const openPreview = async (file: File) => {
   // Reset errors array
   errors.value = []
   try {
-    const parsedData: any[] = await new Promise((resolve, reject) => {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (result) => resolve(result.data),
-        error: (err) => reject(err.message),
+    let parsedData: any[] = []
+    const ext = file.name.split('.').pop()?.toLowerCase()
+
+    // Parse Excel or CSV file
+    if (ext === 'xlsx' || ext === 'xls') {
+      // Parse Excel file - use dynamic import to avoid SSR issues
+      const XLSX = await import('xlsx')
+      const arrayBuffer = await file.arrayBuffer()
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+      parsedData = XLSX.utils.sheet_to_json(worksheet)
+    } else {
+      // Parse CSV file
+      parsedData = await new Promise((resolve, reject) => {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (result) => resolve(result.data),
+          error: (err) => reject(err.message),
+        })
       })
-    })
+    }
 
     if (!parsedData || parsedData.length === 0) {
-      throw new Error('The uploaded CSV file is empty. Please upload a file with user data.')
+      throw new Error(
+        `The uploaded ${ext === 'csv' ? 'CSV' : 'Excel'} file is empty. Please upload a file with user data.`,
+      )
     }
 
     // Render the data into a preview and display it
@@ -2294,13 +2443,9 @@ const openPreview = async (file: File) => {
 
       // Join rows with two newlines between them
       const concatenated = rowBlocks.join('\n\n')
-      // duration based on number of lines, capped
-      const duration = Math.min(20000, rowBlocks.length * 2500)
 
-      // Show single toast with concatenated message
-      try {
-        showError(concatenated, { duration })
-      } catch (e) {}
+      // Show error modal with validation errors
+      errorStore.showError(concatenated)
 
       const errorRows = validationResponse.errors.map(
         (error: { rowNumber: number }) => error.rowNumber - 1,

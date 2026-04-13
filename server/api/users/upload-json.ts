@@ -75,12 +75,25 @@ export default defineEventHandler(async (event) => {
       throw new CustomError('Expected an array of users', 400)
     }
 
+    // Fetch all departments for the organization for validation
+    const deptResult = await query(
+      `SELECT dept_id, name FROM organization_departments WHERE org_id = $1 AND status = 'active' ORDER BY name`,
+      [effectiveOrgId],
+    )
+    const departmentsMap = new Map<string, string>() // name -> dept_id
+    const departmentsByIdMap = new Map<string, string>() // dept_id -> dept_id (for validation)
+
+    deptResult.rows.forEach((dept: any) => {
+      departmentsMap.set(dept.name.toLowerCase(), dept.dept_id)
+      departmentsByIdMap.set(dept.dept_id, dept.dept_id)
+    })
+
     const emailSet = new Set<string>()
     const contactNumberSet = new Set<string>()
     const failedUsers: User[] = []
     const validUsers: any[] = []
 
-    const expectedKeys = ['Name', 'Email', 'Whatsapp Number', 'Role']
+    const expectedKeys = ['Name', 'Email', 'Whatsapp Number', 'Role', 'Departments']
     const headers = Object.keys(body[0])
 
     const unexpectedHeaders = headers.filter((header) => !expectedKeys.includes(header))
@@ -114,9 +127,32 @@ export default defineEventHandler(async (event) => {
         })
       } else {
         // Valid row data
-        const { Name, Email, 'Whatsapp Number': contactNumber, Role } = result.data
+        const { Name, Email, 'Whatsapp Number': contactNumber, Role, Departments: departmentsList } = result.data
 
         const normalizedEmail = Email ? String(Email).toLowerCase() : null
+
+        // Validate departments
+        const resolvedDepartmentIds: string[] = []
+        if (departmentsList && departmentsList.length > 0) {
+          for (const deptInput of departmentsList) {
+            // Try to match by name (case-insensitive)
+            const byName = departmentsMap.get(deptInput.toLowerCase())
+            if (byName) {
+              resolvedDepartmentIds.push(byName)
+              continue
+            }
+            // Try to match by dept_id
+            if (departmentsByIdMap.has(deptInput)) {
+              resolvedDepartmentIds.push(deptInput)
+              continue
+            }
+            // Department not found
+            rowErrors.push({
+              field: 'Departments',
+              message: `Department "${deptInput}" not found. Please use a valid department name or ID.`,
+            })
+          }
+        }
 
         // Check duplicate emails within file
         if (normalizedEmail) {
@@ -174,7 +210,7 @@ export default defineEventHandler(async (event) => {
 
         // If still no errors, mark as valid (preview)
         if (rowErrors.length === 0) {
-          validUsers.push({ Name, Email: normalizedEmail, contactNumber, Role, rowNumber, rowIndex })
+          validUsers.push({ Name, Email: normalizedEmail, contactNumber, Role, Departments: resolvedDepartmentIds, rowNumber, rowIndex })
         }
       }
 

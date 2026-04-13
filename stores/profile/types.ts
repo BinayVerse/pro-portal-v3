@@ -60,4 +60,5 @@ export interface UserProfileState {
   profileStatus: string // 'complete' or 'incomplete'
   profileMessage: string | null
   loading: boolean
+  bulkDownloadLoading: boolean
 }

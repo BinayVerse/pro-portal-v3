@@ -4,11 +4,7 @@
       <!-- Logo and header -->
       <div class="text-center">
         <NuxtLink to="/" class="inline-flex items-center space-x-3 mb-6 justify-center">
-          <img
-            src="~/assets/media/logo.svg"
-            alt="Provento Logo"
-            class="w-10 h-10"
-          />
+          <img src="~/assets/media/logo.svg" alt="Provento Logo" class="w-10 h-10" />
           <span class="text-white text-2xl font-semibold">provento.ai</span>
         </NuxtLink>
         <h2 class="text-3xl font-bold text-white">Create your account</h2>
@@ -21,7 +17,10 @@
         class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 space-y-2"
       >
         <div class="flex items-start space-x-3">
-          <UIcon name="i-heroicons-information-circle" class="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+          <UIcon
+            name="i-heroicons-information-circle"
+            class="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0"
+          />
           <div class="text-sm text-blue-300">
             <p class="font-medium mb-2">AWS Session Expiry Notice</p>
             <p>Your AWS session is valid for 2 hours.</p>
@@ -370,7 +369,9 @@
 
       <!-- Login link -->
       <div class="space-y-2">
-        <NuxtLink to="/login" class="btn-outline w-full block text-center"> Sign In Instead </NuxtLink>
+        <NuxtLink to="/login" class="btn-outline w-full block text-center">
+          Sign In Instead
+        </NuxtLink>
       </div>
       <ConfirmPopup
         :isOpen="showWelcomeModal"
@@ -399,6 +400,7 @@ import {
   getTaxIdErrorMessage,
   getCountryTaxInfo,
 } from '~/utils/countries'
+import { useErrorStore } from '~/stores/error'
 
 definePageMeta({
   layout: 'minimal',
@@ -406,6 +408,7 @@ definePageMeta({
 })
 
 const authStore = useAuthStore()
+const errorStore = useErrorStore()
 const { showNotification } = useNotification()
 const showWelcomeModal = ref(false)
 
@@ -590,14 +593,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   // Validate terms agreement first
   if (!agreeToTerms.value) {
     authStore.setError('Please agree to the terms of service')
-    showNotification('Please agree to the terms of service', 'error')
+    errorStore.showError('Please agree to the terms of service')
     return
   }
 
   // Validate phone number
   if (!validatePhoneField()) {
     authStore.setError('Please enter a valid phone number')
-    showNotification('Please enter a valid phone number', 'error')
+    errorStore.showError('Please enter a valid phone number')
     return
   }
 

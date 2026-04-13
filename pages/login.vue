@@ -4,11 +4,7 @@
       <!-- Logo and header -->
       <div class="text-center">
         <NuxtLink to="/" class="inline-flex items-center space-x-3 mb-6">
-          <img
-            src="~/assets/media/logo.svg"
-            alt="Provento Logo"
-            class="w-10 h-10"
-          />
+          <img src="~/assets/media/logo.svg" alt="Provento Logo" class="w-10 h-10" />
           <span class="text-white text-2xl font-semibold">provento.ai</span>
         </NuxtLink>
         <h2 class="text-3xl font-bold text-white">Sign in to your account</h2>
@@ -115,8 +111,12 @@
 
       <!-- Register link -->
       <div class="space-y-3">
-        <NuxtLink to="/signup" class="btn-primary w-full block text-center"> Create New Account </NuxtLink>
-        <NuxtLink to="/book-meeting" class="btn-outline w-full block text-center"> Book a Meeting </NuxtLink>
+        <NuxtLink to="/signup" class="btn-primary w-full block text-center">
+          Create New Account
+        </NuxtLink>
+        <NuxtLink to="/book-meeting" class="btn-outline w-full block text-center">
+          Book a Meeting
+        </NuxtLink>
       </div>
     </div>
   </div>
@@ -125,6 +125,7 @@
 <script setup lang="ts">
 useHead({ title: 'Sign In - provento.ai' })
 import { useAuthStore } from '~/stores/auth/index'
+import { useRoute } from 'vue-router'
 
 definePageMeta({
   layout: 'minimal',
@@ -132,6 +133,8 @@ definePageMeta({
 })
 
 const authStore = useAuthStore()
+const route = useRoute()
+const redirect = (route.query.redirect as string) || ''
 const { showNotification } = useNotification()
 
 const loginForm = ref({
@@ -160,19 +163,44 @@ watch(
 
 const handleLogin = async () => {
   try {
-    await authStore.signIn({
+    const res = await authStore.signIn({
       email: loginForm.value.email,
       password: loginForm.value.password,
     })
 
-    // Show success notification
-    showNotification('Welcome back! Login successful.', 'success')
+    // 🔐 CASE 1: setup
+    if (res?.requires_2fa_setup) {
+      navigateTo({
+        path: '/secure-account',
+        query: {
+          token: res.temp_token,
+          redirect,
+        },
+      })
+      return
+    }
 
-    // Handle redirect through store
-    await authStore.handlePostLoginRedirect()
+    // 🔐 CASE 2: otp
+    if (res?.requires_otp) {
+      navigateTo({
+        path: '/verify-otp',
+        query: {
+          token: res.temp_token,
+          redirect,
+        },
+      })
+      return
+    }
+
+    // ✅ CASE 3: (fallback - if you ever allow login without 2FA)
+    if (res?.token) {
+      showNotification('Welcome back! Login successful.', 'success')
+      await authStore.handlePostLoginRedirect()
+      return
+    }
+
+    throw new Error('Invalid login flow')
   } catch (error: any) {
-    // Show error notification
-    // showNotification(error?.message || 'Login failed. Please try again.', 'error')
     console.error('Login failed:', error?.message)
   }
 }

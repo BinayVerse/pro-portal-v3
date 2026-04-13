@@ -19,6 +19,7 @@ export default defineNuxtConfig({
       chargebeePublishableKey: process.env.NUXT_PUBLIC_CHARGEBEE_PUBLISHABLE_KEY,
       apiBase: process.env.API_BASE_URL || '/api',
       awsMarketplaceLink: process.env.NUXT_PUBLIC_AWS_MARKETPLACE_LINK || '',
+      encryptionSecret: process.env.NUXT_PUBLIC_ENCRYPTION_SECRET || '',
       // Umami Analytics
       umamiHost: process.env.NUXT_PUBLIC_UMAMI_HOST || '',
       umamiId: process.env.NUXT_PUBLIC_UMAMI_ID || '',
@@ -30,6 +31,7 @@ export default defineNuxtConfig({
     dbPort: process.env.NUXT_DB_PORT,
     sesFromEmailId: process.env.NUXT_SES_FROM_EMAIL_ID,
     salesTeamEmails: process.env.NUXT_SALES_TEAM_EMAILS,
+    providerRequestMail: process.env.NUXT_PROVIDER_REQUEST_MAIL,
     googleCaptchaSecretKey: process.env.NUXT_GOOGLE_CAPTCHA_SECRET_KEY,
     jwtToken: process.env.NUXT_JWT_TOKEN,
     googleClientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET,
@@ -41,6 +43,7 @@ export default defineNuxtConfig({
     awsBucketName: process.env.NUXT_AWS_BUCKET_NAME,
     featuresAwsBucketName: process.env.NUXT_FEATURES_AWS_BUCKET_NAME,
     awsFolderName: process.env.NUXT_AWS_FOLDER_NAME,
+    e2eTestSecret: process.env.NUXT_E2E_TEST_SECRET,
     // Chargebee
     chargebeeSite: process.env.NUXT_CHARGEBEE_SITE,
     chargebeeApiKey: process.env.NUXT_CHARGEBEE_API_KEY,

@@ -8,8 +8,9 @@ import type {
   OrganizationResponse,
 } from './types'
 
-import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
+import { handleSuccess, extractErrors } from '../../utils/apiHandler'
 import { handleAuthError as handleAuthErrorShared } from '~/composables/useAuthError'
+import { useErrorStore } from '~/stores/error'
 
 export const useUsersStore = defineStore('usersStore', {
   state: (): OrganizationState => ({
@@ -95,7 +96,8 @@ export const useUsersStore = defineStore('usersStore', {
         console.error('Fetch roles error:', err)
 
         if (!(await this.handleAuthError(err))) {
-          this.userError = handleError(err, 'Failed to fetch roles')
+          const message = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Failed to fetch roles'
+          this.userError = message
         }
       } finally {
         this.loading = false
@@ -113,7 +115,8 @@ export const useUsersStore = defineStore('usersStore', {
       } catch (err: any) {
         console.error('Fetch users error:', err)
         if (!(await this.handleAuthError(err))) {
-          this.userError = handleError(err, 'Failed to fetch users')
+          const message = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Failed to fetch users'
+          this.userError = message
         }
       } finally {
         this.userLoading = false
@@ -136,8 +139,9 @@ export const useUsersStore = defineStore('usersStore', {
         if (response?.status === false) {
           const message = response.message || 'Error creating user'
           this.userError = message
-          // Show the API message directly
-          handleError({ response: { _data: { message } } }, message)
+          // Show the API message via error modal
+          const errorStore = useErrorStore()
+          errorStore.showError(message)
           return { success: false, message, errors: response.errors || [] }
         }
 
@@ -149,8 +153,10 @@ export const useUsersStore = defineStore('usersStore', {
           return { success: false, message: 'Unauthorized', errors: [] }
         }
 
-        const message = handleError(err, 'Error creating user')
+        const message = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Error creating user'
         this.userError = message
+        const errorStore = useErrorStore()
+        errorStore.showError(message)
         return {
           success: false,
           message,
@@ -178,7 +184,8 @@ export const useUsersStore = defineStore('usersStore', {
         if (response?.status === false) {
           const message = response.message || 'Error editing user'
           this.userError = message
-          handleError({ response: { _data: { message } } }, message)
+          const errorStore = useErrorStore()
+          errorStore.showError(message)
           return { success: false, message, errors: response.errors || [] }
         }
 
@@ -190,8 +197,10 @@ export const useUsersStore = defineStore('usersStore', {
           return { success: false, message: 'Unauthorized', errors: [] }
         }
 
-        const message = handleError(err, 'Error editing user')
+        const message = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Error editing user'
         this.userError = message
+        const errorStore = useErrorStore()
+        errorStore.showError(message)
         return {
           success: false,
           message,
@@ -211,7 +220,10 @@ export const useUsersStore = defineStore('usersStore', {
         handleSuccess('User deleted successfully!')
       } catch (err: any) {
         if (!(await this.handleAuthError(err))) {
-          this.userError = handleError(err, 'Error deleting user')
+          const message = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Error deleting user'
+          this.userError = message
+          const errorStore = useErrorStore()
+          errorStore.showError(message)
         }
       }
     },
@@ -241,8 +253,10 @@ export const useUsersStore = defineStore('usersStore', {
         if (await this.handleAuthError(err)) {
           return { success: false, message: 'Unauthorized' }
         }
-        const message = handleError(err, 'Error updating user status')
+        const message = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Error updating user status'
         this.userError = message
+        const errorStore = useErrorStore()
+        errorStore.showError(message)
         return { success: false, message }
       }
     },
@@ -279,7 +293,9 @@ export const useUsersStore = defineStore('usersStore', {
         return { status: data.status, message: data.message, errors: data.errors || [] }
       } catch (err: any) {
         if (!(await this.handleAuthError(err))) {
-          const message = handleError(err, 'Error uploading bulk users')
+          const message = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Error uploading bulk users'
+          const errorStore = useErrorStore()
+          errorStore.showError(message)
           return { status: false, message, errors: extractErrors(err) }
         }
         return { status: false, message: 'Unauthorized', errors: [] }
@@ -331,11 +347,13 @@ export const useUsersStore = defineStore('usersStore', {
           }
         }
 
-        if (this.handleAuthError(err)) {
+        if (await this.handleAuthError(err)) {
           return { status: false, message: 'Unauthorized', errors: [] }
         }
 
-        const message = handleError(err, 'Error validating JSON')
+        const message = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Error validating JSON'
+        const errorStore = useErrorStore()
+        errorStore.showError(message)
         return { status: false, message, errors: [] }
       } finally {
         this.userLoading = false
@@ -367,7 +385,8 @@ export const useUsersStore = defineStore('usersStore', {
       } catch (err: any) {
         console.error('Failed to load departments:', err)
         if (!(await this.handleAuthError(err))) {
-          this.departmentsError = handleError(err, 'Failed to load departments')
+          const message = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Failed to load departments'
+          this.departmentsError = message
         }
         this.departments = []
       } finally {
@@ -401,7 +420,8 @@ export const useUsersStore = defineStore('usersStore', {
       } catch (err: any) {
         console.error('Failed to load all departments:', err)
         if (!(await this.handleAuthError(err))) {
-          this.allDepartmentsError = handleError(err, 'Failed to load all departments')
+          const message = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Failed to load all departments'
+          this.allDepartmentsError = message
         }
         this.allDepartments = []
       } finally {
@@ -485,7 +505,7 @@ export const useUsersStore = defineStore('usersStore', {
         }
       } catch (err: any) {
         if (!(await this.handleAuthError(err))) {
-          const errorMsg = handleError(err, 'Failed to assign departments')
+          const errorMsg = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Failed to assign departments'
           throw new Error(errorMsg)
         }
       }
@@ -521,7 +541,7 @@ export const useUsersStore = defineStore('usersStore', {
         }
       } catch (err: any) {
         if (!(await this.handleAuthError(err))) {
-          const errorMsg = handleError(err, 'Failed to unassign departments')
+          const errorMsg = err?.response?._data?.message || err?.response?.data?.message || err?.message || 'Failed to unassign departments'
           throw new Error(errorMsg)
         }
       }

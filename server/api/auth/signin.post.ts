@@ -4,6 +4,7 @@ import { SigninValidation } from '../../utils/validations';
 import { query } from '../../utils/db';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { generateTempToken } from '../../utils/auth';
 
 const config = useRuntimeConfig();
 
@@ -67,24 +68,32 @@ export default defineEventHandler(async (event) => {
       throw new CustomError('The password you entered is incorrect. Please try again or reset your password.', 403);
     }
 
-    const token = jwt.sign(
-      {
-        user_id: user.user_id,
-        email: user.email,
-        org_id: user.org_id,
-      },
-      secret,
-      { expiresIn: '1h' }
-    );
+    // 🔐 STEP: Check 2FA
 
-    setResponseStatus(event, 201);
+    // Case 1: First login (2FA not enabled)
+    if (!user.two_factor_enabled) {
+      setResponseStatus(event, 200);
+      return {
+        statusCode: 200,
+        status: 'success',
+        requires_2fa_setup: true,
+        temp_token: generateTempToken(user.user_id),
+        user: {
+          email: user.email
+        }
+      };
+    }
 
+    setResponseStatus(event, 200);
+    // Case 2: 2FA already enabled
     return {
-      statusCode: 201,
+      statusCode: 200,
       status: 'success',
-      token,
-      user,
-      redirect: '/admin/dashboard',
+      requires_otp: true,
+      temp_token: generateTempToken(user.user_id),
+      user: {
+        email: user.email
+      }
     };
 
   } catch (error: unknown) {

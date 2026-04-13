@@ -3,6 +3,7 @@ import type { IntegrationsOverview, IntegrationActivity, ApiResponse, BusinessWh
 import { useNotification } from '~/composables/useNotification'
 import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
 import { handleAuthError as handleAuthErrorShared } from '~/composables/useAuthError'
+import { useErrorStore } from '~/stores/error'
 
 export const useIntegrationsStore = defineStore('integrations', {
   state: () => ({
@@ -33,49 +34,49 @@ export const useIntegrationsStore = defineStore('integrations', {
     getOverview: (state): IntegrationsOverview | null => state.overview,
     isLoading: (state): boolean => state.loading,
     getError: (state): string | null => state.error,
-    
+
     // User counts
     getTotalUsers: (state): number => state.overview?.userCounts.total || 0,
     getWhatsappUsers: (state): number => state.overview?.userCounts.whatsapp || 0,
     getSlackUsers: (state): number => state.overview?.userCounts.slack || 0,
     getTeamsUsers: (state): number => state.overview?.userCounts.teams || 0,
-    
+
     // Integration status
     getActiveIntegrationsCount: (state): number => {
       if (!state.overview) return 0
       const statuses = state.overview.integrationStatus
       return Object.values(statuses).filter(status => status === 'connected').length
     },
-    
+
     getIntegrationStatus: (state) => (platform: 'whatsapp' | 'slack' | 'teams'): string => {
       return state.overview?.integrationStatus[platform] || 'disconnected'
     },
-    
+
     // Token usage
     getTokenUsageToday: (state) => ({
       messages: state.overview?.tokenUsage.today.messages || 0,
       tokens: state.overview?.tokenUsage.today.tokens || 0,
       cost: state.overview?.tokenUsage.today.cost || 0,
     }),
-    
+
     getTokenUsageAllTime: (state) => ({
       messages: state.overview?.tokenUsage.allTime.messages || 0,
       tokens: state.overview?.tokenUsage.allTime.tokens || 0,
       cost: state.overview?.tokenUsage.allTime.cost || 0,
     }),
-    
+
     // Integration details
     getWhatsappDetails: (state) => state.overview?.integrationDetails.whatsapp || { phoneNumber: null, status: false },
     getSlackDetails: (state) => state.overview?.integrationDetails.slack || { teamName: null, status: 'inactive' },
     getTeamsDetails: (state) => state.overview?.integrationDetails.teams || { status: 'inactive', serviceUrl: null },
-    
+
     // Recent activity
     getRecentActivity: (state): IntegrationActivity[] => state.recentActivity,
-    
+
     // Formatted data for UI
     getIntegrationsForUI: (state) => {
       if (!state.overview) return []
-      
+
       return [
         {
           name: 'Slack',
@@ -119,7 +120,7 @@ export const useIntegrationsStore = defineStore('integrations', {
         },
       ]
     },
-    
+
     // Check if data needs refresh (older than 5 minutes)
     needsRefresh: (state): boolean => {
       if (!state.lastFetched) return true
@@ -390,14 +391,14 @@ export const useIntegrationsStore = defineStore('integrations', {
       if (this.whatsappAutoRefreshIntervalId) {
         try {
           clearInterval(this.whatsappAutoRefreshIntervalId)
-        } catch (e) {}
+        } catch (e) { }
         this.whatsappAutoRefreshIntervalId = null
       }
 
       const id = window.setInterval(() => {
         if (!this.loading) {
           // Silent fetch to update whatsappDetails
-          this.fetchWhatsAppDetails().catch(() => {})
+          this.fetchWhatsAppDetails().catch(() => { })
         }
       }, intervalMs)
 
@@ -493,6 +494,7 @@ export const useIntegrationsStore = defineStore('integrations', {
     },
 
     async disconnectSlackApp(orgId?: string | null) {
+      const errorStore = useErrorStore()
       try {
         this.loading = true;
 
@@ -502,7 +504,7 @@ export const useIntegrationsStore = defineStore('integrations', {
             const route = useRoute()
             const q = route?.query?.org || route?.query?.org_id
             if (q && String(q).trim()) orgId = String(q)
-          } catch (e) {}
+          } catch (e) { }
         }
 
         const url = orgId ? `/api/integrations/slack/disconnect?org=${encodeURIComponent(String(orgId))}` : '/api/integrations/slack/disconnect'
@@ -525,8 +527,7 @@ export const useIntegrationsStore = defineStore('integrations', {
 
           // Show error notification
           if (process.client) {
-            const { showError } = useNotification();
-            showError(this.error);
+            errorStore.showError(this.error);
           }
         }
       } finally {
@@ -575,6 +576,7 @@ export const useIntegrationsStore = defineStore('integrations', {
     },
 
     async disconnectTeamsApp(orgId?: string | null) {
+      const errorStore = useErrorStore()
       try {
         this.loading = true;
 
@@ -584,7 +586,7 @@ export const useIntegrationsStore = defineStore('integrations', {
             const route = useRoute()
             const q = route?.query?.org || route?.query?.org_id
             if (q && String(q).trim()) orgId = String(q)
-          } catch (e) {}
+          } catch (e) { }
         }
 
         const url = orgId ? `/api/integrations/teams/disconnect?org=${encodeURIComponent(String(orgId))}` : '/api/integrations/teams/disconnect'
@@ -607,8 +609,7 @@ export const useIntegrationsStore = defineStore('integrations', {
 
           // Show error notification
           if (process.client) {
-            const { showError } = useNotification();
-            showError(this.error);
+            errorStore.showError(this.error);
           }
         }
       } finally {
@@ -617,6 +618,7 @@ export const useIntegrationsStore = defineStore('integrations', {
     },
 
     async downloadManifest() {
+      const errorStore = useErrorStore()
       try {
         this.manifestDownloading = true;
 
@@ -648,8 +650,7 @@ export const useIntegrationsStore = defineStore('integrations', {
 
           // Show error notification
           if (process.client) {
-            const { showError } = useNotification();
-            showError(this.error);
+            errorStore.showError(this.error);
           }
         }
       } finally {
@@ -659,6 +660,7 @@ export const useIntegrationsStore = defineStore('integrations', {
 
     // WhatsApp integration methods
     async createWhatsAppAccount(input: BusinessWhatsAppDetails, orgId?: string | null) {
+      const errorStore = useErrorStore()
       try {
         this.loading = true;
         this.error = null;
@@ -687,7 +689,7 @@ export const useIntegrationsStore = defineStore('integrations', {
         // Fetch QR code for this org
         try {
           await this.fetchQrCode(effectiveOrg)
-        } catch (e) {}
+        } catch (e) { }
 
         // Also refresh overview so other pages (e.g. Users) react to new integration status
         try {
@@ -702,8 +704,7 @@ export const useIntegrationsStore = defineStore('integrations', {
           this.error = handleError(error, 'Error adding Business WhatsApp Number');
 
           if (process.client) {
-            const { showError } = useNotification();
-            showError(this.error);
+            errorStore.showError(this.error);
           }
         }
         throw error;
@@ -713,6 +714,7 @@ export const useIntegrationsStore = defineStore('integrations', {
     },
 
     async updateWhatsAppAccount(input: BusinessWhatsAppDetails, orgId?: string | null) {
+      const errorStore = useErrorStore()
       try {
         this.loading = true;
         this.error = null;
@@ -741,12 +743,12 @@ export const useIntegrationsStore = defineStore('integrations', {
         // Fetch QR code for this org
         try {
           await this.fetchQrCode(effectiveOrg)
-        } catch (e) {}
+        } catch (e) { }
 
         // Refresh overview so other pages reflect updated status
         try {
           await this.fetchOverview(effectiveOrg, true, false)
-        } catch (e) {}
+        } catch (e) { }
 
         return data;
       } catch (error: any) {
@@ -754,8 +756,7 @@ export const useIntegrationsStore = defineStore('integrations', {
           this.error = handleError(error, 'Error updating Business WhatsApp Number');
 
           if (process.client) {
-            const { showError } = useNotification();
-            showError(this.error);
+            errorStore.showError(this.error);
           }
         }
         throw error;
@@ -776,7 +777,7 @@ export const useIntegrationsStore = defineStore('integrations', {
             const route = useRoute()
             const q = route?.query?.org || route?.query?.org_id
             if (q && String(q).trim()) orgId = String(q)
-          } catch (e) {}
+          } catch (e) { }
         }
 
         const url = orgId ? `/api/integrations/whatsapp/details?org=${encodeURIComponent(String(orgId))}` : '/api/integrations/whatsapp/details'
@@ -843,6 +844,7 @@ export const useIntegrationsStore = defineStore('integrations', {
     },
 
     async disconnectWhatsApp(orgId?: string | null) {
+      const errorStore = useErrorStore()
       try {
         this.loading = true;
         this.error = null;
@@ -867,7 +869,7 @@ export const useIntegrationsStore = defineStore('integrations', {
         // Stop polling since integration is disconnected
         try {
           this.stopWhatsAppPolling()
-        } catch (e) {}
+        } catch (e) { }
 
         const routeOrg = process.client ? (useRoute()?.query?.org || useRoute()?.query?.org_id) : null
         const effectiveOrg = this.normalizeOrgParam(orgId ?? routeOrg)
@@ -875,15 +877,15 @@ export const useIntegrationsStore = defineStore('integrations', {
         // Refresh WhatsApp details and QR for the org
         try {
           await this.fetchWhatsAppDetails(effectiveOrg)
-        } catch (e) {}
+        } catch (e) { }
         try {
           await this.fetchQrCode(effectiveOrg)
-        } catch (e) {}
+        } catch (e) { }
 
         // Refresh overview so other pages reflect disconnected status
         try {
           await this.fetchOverview(effectiveOrg, true, false)
-        } catch (e) {}
+        } catch (e) { }
 
         return data;
       } catch (error: any) {
@@ -891,8 +893,7 @@ export const useIntegrationsStore = defineStore('integrations', {
           this.error = handleError(error, 'Error disconnecting WhatsApp integration');
 
           if (process.client) {
-            const { showError } = useNotification();
-            showError(this.error);
+            errorStore.showError(this.error);
           }
         }
         throw error;
@@ -912,7 +913,7 @@ export const useIntegrationsStore = defineStore('integrations', {
             const route = useRoute()
             const q = route?.query?.org || route?.query?.org_id
             if (q && String(q).trim()) orgId = String(q)
-          } catch (e) {}
+          } catch (e) { }
         }
 
         const url = orgId ? `/api/integrations/whatsapp/qr-code?org=${encodeURIComponent(String(orgId))}` : '/api/integrations/whatsapp/qr-code'
@@ -943,6 +944,7 @@ export const useIntegrationsStore = defineStore('integrations', {
     },
 
     async downloadQrCode(orgId?: string | null) {
+      const errorStore = useErrorStore()
       // Handles downloading the QR code (signed URL or proxy) and triggers browser download
       try {
         this.qrDownloading = true;
@@ -987,7 +989,7 @@ export const useIntegrationsStore = defineStore('integrations', {
             const route = useRoute()
             const q = route?.query?.org || route?.query?.org_id
             if (q && String(q).trim()) orgId = String(q)
-          } catch (e) {}
+          } catch (e) { }
         }
 
         // Proxy fallback
@@ -1035,8 +1037,7 @@ export const useIntegrationsStore = defineStore('integrations', {
             this.error = handleError(proxyErr, 'Error downloading QR code');
 
             if (process.client) {
-              const { showError } = useNotification();
-              showError(this.error);
+              errorStore.showError(this.error);
             }
           }
           throw proxyErr;

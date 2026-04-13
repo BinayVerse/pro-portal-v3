@@ -7,6 +7,8 @@ import type {
   IntegrationAgent,
   CreateIntegrationPayload,
   UpdateIntegrationPayload,
+  BatchCreateIntegrationsPayload,
+  BatchSyncIntegrationsPayload,
 } from '~/stores/organization-integrations/types'
 
 export const useOrganizationIntegrations = () => {
@@ -56,11 +58,13 @@ export const useOrganizationIntegrations = () => {
     fetchIntegrations: (filters?: any) => store.fetchIntegrations(filters),
     fetchIntegrationById: (id: string) => store.fetchIntegrationById(id),
     createIntegration: (payload: CreateIntegrationPayload) => store.createIntegration(payload),
+    createIntegrationsBatch: (payload: BatchCreateIntegrationsPayload) => store.createIntegrationsBatch(payload),
     updateIntegration: (id: string, payload: UpdateIntegrationPayload) =>
       store.updateIntegration(id, payload),
     updateIntegrationStatus: (id: string, status: 'active' | 'inactive' | 'expired' | 'failed') =>
       store.updateIntegrationStatus(id, status),
     deleteIntegration: (id: string) => store.deleteIntegration(id),
+    syncIntegrationModules: (payload: BatchSyncIntegrationsPayload) => store.syncIntegrationModules(payload),
     clearMessages: () => store.clearMessages(),
 
     // Client-side filtering getters

@@ -100,37 +100,66 @@ export const GoogleSignupValidation = z.object({
   primary_contact: z.union([z.boolean(), z.string().optional()]).optional()
 })
 
-export const uploadBulkUserValidation = z.object({
-  Name: z.string().trim().min(1, { message: `"Name" is required` }),
+export const uploadBulkUserValidation = z
+  .object({
+    Name: z.string().trim().min(1, { message: `"Name" is required` }),
 
-  Email: z.string().trim().email({ message: `"Email" is not valid` }),
+    Email: z.string().trim().email({ message: `"Email" is not valid` }),
 
-  'Whatsapp Number': z
-    .string()
-    .trim()
-    .min(1, { message: `"Whatsapp Number" is required.` })
-    .refine((value) => value.startsWith('+'), {
-      message: `The WhatsApp number must start with a '+' followed by the country code (e.g., +1 for USA, +91 for India).`,
-    })
-    .refine(
-      (value) => {
-        const phoneNumber = parsePhoneNumberFromString(value)
-        return phoneNumber?.isValid() ?? false
-      },
-      {
-        message: `The WhatsApp number is not valid. Please include a valid country code and number.`,
-      },
-    ),
+    'Whatsapp Number': z
+      .string()
+      .trim()
+      .min(1, { message: `"Whatsapp Number" is required.` })
+      .refine((value) => value.startsWith('+'), {
+        message: `The WhatsApp number must start with a '+' followed by the country code (e.g., +1 for USA, +91 for India).`,
+      })
+      .refine(
+        (value) => {
+          const phoneNumber = parsePhoneNumberFromString(value)
+          return phoneNumber?.isValid() ?? false
+        },
+        {
+          message: `The WhatsApp number is not valid. Please include a valid country code and number.`,
+        },
+      ),
 
-  Role: z
-    .string()
-    .trim()
-    .min(1, { message: `"Role" is required` })
-    .transform((val) => val.toLowerCase())
-    .refine((val) => ['user', 'admin'].includes(val), {
-      message: `"Role" must be either 'User' or 'Admin'`,
-    }),
-})
+    Role: z
+      .string()
+      .trim()
+      .min(1, { message: `"Role" is required` })
+      .transform((val) => val.toLowerCase())
+      .refine((val) => ['user', 'department admin', 'admin'].includes(val), {
+        message: `"Role" must be one of the following: 'User', 'Department Admin', or 'Admin'`,
+      }),
+
+    Departments: z
+      .string()
+      .trim()
+      .optional()
+      .transform((val) => {
+        if (!val || val === '') return []
+        return val.split(',').map((d) => d.trim()).filter(Boolean)
+      }),
+  })
+  .superRefine((data, ctx) => {
+    const role = data.Role
+    const departments = data.Departments || []
+
+    // ✅ If NOT Admin → departments required
+    if (role !== 'admin' && departments.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['Departments'],
+        message: `"Departments" is required for ${role}`,
+      })
+    }
+
+    // ✅ If Admin → ignore departments (optional: clean it)
+    if (role === 'Admin' && departments.length > 0) {
+      // Optional: you can warn or ignore
+      // ctx.addIssue({...}) // only if you want to block
+    }
+  })
 
 // WhatsApp Business Account validation schema
 export const businessWhatsAppAccount = z.object({

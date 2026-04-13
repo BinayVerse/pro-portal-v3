@@ -141,7 +141,11 @@ export const useDepartmentsStore = defineStore('departmentsStore', {
         /* -----------------------------------------
          * Activate / Deactivate department
          * ---------------------------------------*/
-        async toggleDepartmentStatus(deptId: string, status: 'active' | 'inactive') {
+        async toggleDepartmentStatus(
+            deptId: string,
+            status: 'active' | 'inactive',
+            silent: boolean = false,
+        ) {
             this.departmentLoading = true
             this.departmentError = null
 
@@ -164,6 +168,10 @@ export const useDepartmentsStore = defineStore('departmentsStore', {
                 await this.fetchDepartments()
             } catch (err: any) {
                 if (await this.handleAuthError(err)) return
+                if (silent) {
+                    // Re-throw error so caller can handle it
+                    throw err
+                }
                 this.departmentError = handleError(err, 'Failed to update department status')
             } finally {
                 this.departmentLoading = false

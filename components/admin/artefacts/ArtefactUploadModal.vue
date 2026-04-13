@@ -162,6 +162,21 @@
                 </p>
               </UFormGroup>
 
+              <!-- Description -->
+              <UFormGroup label="Description" name="description" required>
+                <UTextarea
+                  v-model="state.description"
+                  placeholder="Short description (max 100 characters)"
+                  :maxlength="100"
+                  :rows="3"
+                  size="lg"
+                  :disabled="isAnyOperationInProgress"
+                />
+                <p class="text-xs text-gray-400 mt-1">
+                  {{ state.description?.length || 0 }}/100 characters
+                </p>
+              </UFormGroup>
+
               <!-- Drag and Drop File Upload -->
               <UFormGroup label="File" name="file" required>
                 <div
@@ -219,21 +234,6 @@
                     />
                   </div>
                 </div>
-              </UFormGroup>
-
-              <!-- Description -->
-              <UFormGroup label="Description (Optional)" name="description">
-                <UTextarea
-                  v-model="state.description"
-                  placeholder="Short description (max 100 characters)"
-                  :maxlength="100"
-                  :rows="3"
-                  size="lg"
-                  :disabled="isAnyOperationInProgress"
-                />
-                <p class="text-xs text-gray-400 mt-1">
-                  {{ state.description?.length || 0 }}/100 characters
-                </p>
               </UFormGroup>
 
               <div class="flex justify-end space-x-3 pt-6 border-t border-dark-600 mt-6">
@@ -362,6 +362,21 @@
                 <p v-if="isDepartmentAdmin" class="text-xs text-amber-400 mt-2">
                   ⚠️ Department Admins must assign documents to at least one department. You cannot
                   upload Common documents.
+                </p>
+              </UFormGroup>
+
+              <!-- Description -->
+              <UFormGroup label="Description" name="description" required>
+                <UTextarea
+                  v-model="googleDriveState.description"
+                  placeholder="Short description (max 100 characters)"
+                  :maxlength="100"
+                  :rows="3"
+                  size="lg"
+                  :disabled="isAnyOperationInProgress"
+                />
+                <p class="text-xs text-gray-400 mt-1">
+                  {{ googleDriveState.description?.length || 0 }}/100 characters
                 </p>
               </UFormGroup>
 
@@ -610,7 +625,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '#ui/types'
-import { nextTick, onMounted, onUnmounted, withDefaults, ref, computed, reactive, watch } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, computed, reactive, watch } from 'vue'
 import { useArtefactsStore } from '~/stores/artefacts'
 import { useNotification } from '~/composables/useNotification'
 import { useOrganizationStore } from '~/stores/organization'
@@ -622,6 +637,7 @@ import FileReplacementModal from '~/components/ui/FileReplacementModal.vue'
 import SizeLimitExceededModal from '~/components/ui/SizeLimitExceededModal.vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
+import { useErrorStore } from '~/stores/error'
 
 interface GoogleDriveFile {
   id: string
@@ -652,12 +668,13 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Initialize artefacts store
 const artefactsStore = useArtefactsStore()
+const errorStore = useErrorStore()
 
 // Initialize organization store
 const orgStore = useOrganizationStore()
 
 // Initialize notification composable
-const { showError, showWarning, showSuccess } = useNotification()
+const { showWarning, showSuccess } = useNotification()
 
 // Initialize Google Drive OAuth composable
 const googleDrive = useGoogleDrive()
@@ -676,7 +693,10 @@ const emit = defineEmits<{
 const schema = z.object({
   file: z.any().refine((file) => file !== null, 'File is required'),
   category: z.string().min(1, 'Category is required'),
-  description: z.string().max(100, 'Description must be 100 characters or less').optional(),
+  description: z
+    .string()
+    .min(1, 'Description is required')
+    .max(100, 'Description must be 100 characters or less'),
   departments: z.array(z.string()).optional().default([]),
 })
 
@@ -706,6 +726,7 @@ const googleDriveState = reactive({
   category: '',
   url: '',
   departments: [] as string[],
+  description: '',
 })
 
 // Google Drive computed properties from store
@@ -947,7 +968,7 @@ const setFile = (file: File) => {
       'image/jpg',
     ]
     if (!allowedTypes.includes(file.type) && !file.name.endsWith('.md')) {
-      showError(
+      errorStore.showError(
         'Unsupported file type. Please upload PDF, Word, TXT, CSV, Markdown, or Image files.',
       )
       return
@@ -955,7 +976,7 @@ const setFile = (file: File) => {
 
     state.file = file
   } catch (error) {
-    showError('Failed to process the selected file. Please try again.')
+    errorStore.showError('Failed to process the selected file. Please try again.')
   }
 }
 
@@ -968,7 +989,7 @@ const removeFile = () => {
     isDragOver.value = false
     dragCounter.value = 0
   } catch (error) {
-    showError('Failed to remove file. Please try again.')
+    errorStore.showError('Failed to remove file. Please try again.')
   }
 }
 
@@ -1076,7 +1097,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
       isDepartmentAdmin.value &&
       (!event.data.departments || event.data.departments.length === 0)
     ) {
-      showError('Department Admins must assign documents to at least one department.')
+      errorStore.showError('Department Admins must assign documents to at least one department.')
       isUploading.value = false
       return
     }
@@ -1115,7 +1136,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
     // Proceed with upload if file doesn't exist
     await performUpload(formData, modalOrgId.value)
   } catch (error) {
-    showError('Upload failed. Please try again.')
+    errorStore.showError('Upload failed. Please try again.')
     isUploading.value = false
   }
 }
@@ -1127,7 +1148,7 @@ const performUpload = async (formData: FormData, orgId?: string | null) => {
     const result = await artefactsStore.uploadArtefact(formData, orgId)
 
     if (!result.success) {
-      showError(result.message || 'Upload failed. Please try again.')
+      errorStore.showError(result.message || 'Upload failed. Please try again.')
       return
     }
 
@@ -1148,7 +1169,7 @@ const performUpload = async (formData: FormData, orgId?: string | null) => {
     showSuccess(result.message || 'File uploaded successfully!')
     emit('close')
   } catch (error) {
-    showError('Upload failed. Please try again.')
+    errorStore.showError('Upload failed. Please try again.')
   } finally {
     // Always reset loading state
     isUploading.value = false
@@ -1185,7 +1206,7 @@ const fetchGoogleDriveFiles = async () => {
 
   // Validate URL format
   if (!validateGoogleDriveUrl(googleDriveState.url)) {
-    showError('Invalid Google Drive URL. Please use a valid folder URL.')
+    errorStore.showError('Invalid Google Drive URL. Please use a valid folder URL.')
     return
   }
 
@@ -1196,7 +1217,7 @@ const fetchGoogleDriveFiles = async () => {
     const result = await artefactsStore.fetchGoogleDriveFiles(googleDriveState.url)
 
     if (!result.success) {
-      showError(result.message || 'Failed to fetch files from Google Drive')
+      errorStore.showError(result.message || 'Failed to fetch files from Google Drive')
       selectedGoogleDriveFiles.value = []
     } else if (result.files.length === 0) {
       showWarning('No supported files found in the Google Drive folder')
@@ -1207,7 +1228,10 @@ const fetchGoogleDriveFiles = async () => {
       )
     }
   } catch (error) {
-    showError('Failed to fetch files from Google Drive. Please check the URL and try again.')
+    console.log('Error fetching Google Drive files:', error)
+    errorStore.showError(
+      'Failed to fetch files from Google Drive. Please check the URL and try again.',
+    )
     // Clear any partial data on error
     selectedGoogleDriveFiles.value = []
     artefactsStore.clearGoogleDriveFiles()
@@ -1217,6 +1241,11 @@ const fetchGoogleDriveFiles = async () => {
 const uploadFromGoogleDrive = async () => {
   if (!googleDriveState.category) {
     showWarning('Please select a category')
+    return
+  }
+
+  if (!googleDriveState.description) {
+    showWarning('Please provide a description')
     return
   }
 
@@ -1230,7 +1259,7 @@ const uploadFromGoogleDrive = async () => {
     isDepartmentAdmin.value &&
     (!googleDriveState.departments || googleDriveState.departments.length === 0)
   ) {
-    showError('Department Admins must assign documents to at least one department.')
+    errorStore.showError('Department Admins must assign documents to at least one department.')
     return
   }
 
@@ -1262,6 +1291,7 @@ const uploadFromGoogleDrive = async () => {
     const uploadPayload = {
       files: selectedGoogleDriveFiles.value,
       category: googleDriveState.category,
+      description: googleDriveState.description,
       departments:
         googleDriveState.departments && googleDriveState.departments.length > 0
           ? googleDriveState.departments
@@ -1275,7 +1305,7 @@ const uploadFromGoogleDrive = async () => {
     )
 
     if (!result.success) {
-      showError(result.message || 'Upload failed. Please try again.')
+      errorStore.showError(result.message || 'Upload failed. Please try again.')
       return
     }
 
@@ -1298,6 +1328,7 @@ const uploadFromGoogleDrive = async () => {
     // Reset Google Drive state
     googleDriveState.category = ''
     googleDriveState.url = ''
+    googleDriveState.description = ''
     googleDriveState.departments = []
     selectedGoogleDriveFiles.value = []
     artefactsStore.clearGoogleDriveFiles()
@@ -1305,7 +1336,7 @@ const uploadFromGoogleDrive = async () => {
     showSuccess(result.message || 'Files uploaded successfully!')
     emit('close')
   } catch (error) {
-    showError('Upload failed. Please try again.')
+    errorStore.showError('Upload failed. Please try again.')
     // Don't clear form data on error so user can retry
   }
 }
@@ -1317,12 +1348,17 @@ const handleGoogleOAuthSignIn = async () => {
     return
   }
 
+  if (!googleDriveState.description) {
+    showWarning('Please provide a description')
+    return
+  }
+
   // 🔑 Validate Department Admin is not uploading as Common document
   if (
     isDepartmentAdmin.value &&
     (!googleDriveState.departments || googleDriveState.departments.length === 0)
   ) {
-    showError('Department Admins must assign documents to at least one department.')
+    errorStore.showError('Department Admins must assign documents to at least one department.')
     return
   }
 
@@ -1378,6 +1414,7 @@ const handleGoogleOAuthSignIn = async () => {
         const uploadPayload = {
           files: convertedFiles,
           category: googleDriveState.category,
+          description: googleDriveState.description,
           departments:
             googleDriveState.departments && googleDriveState.departments.length > 0
               ? googleDriveState.departments
@@ -1410,6 +1447,7 @@ const handleGoogleOAuthSignIn = async () => {
           // Reset state
           googleDriveState.category = ''
           googleDriveState.url = ''
+          googleDriveState.description = ''
           googleDriveState.departments = []
           selectedGoogleDriveFiles.value = []
           artefactsStore.clearGoogleDriveFiles()
@@ -1420,10 +1458,10 @@ const handleGoogleOAuthSignIn = async () => {
           )
           emit('close')
         } else {
-          showError(result.message || 'Upload failed')
+          errorStore.showError(result.message || 'Upload failed')
         }
       } catch (uploadError) {
-        showError('Failed to upload files. Please try again.')
+        errorStore.showError('Failed to upload files. Please try again.')
       } finally {
         isGoogleOAuthInProgress.value = false
       }
@@ -1432,7 +1470,7 @@ const handleGoogleOAuthSignIn = async () => {
     // Start OAuth flow with custom callback
     await googleDrive.signInWithGoogle(handleSelectedFiles)
   } catch (error) {
-    showError('Failed to connect to Google Drive. Please try again.')
+    errorStore.showError('Failed to connect to Google Drive. Please try again.')
   } finally {
     // Ensure cleanup is called and loading state is reset
     googleDrive.cleanup()
@@ -1445,7 +1483,7 @@ const selectAllGoogleDriveFiles = () => {
   try {
     selectedGoogleDriveFiles.value = [...googleDriveFiles.value]
   } catch (error) {
-    showError('Failed to select all files. Please try again.')
+    errorStore.showError('Failed to select all files. Please try again.')
   }
 }
 
@@ -1453,7 +1491,7 @@ const clearGoogleDriveSelection = () => {
   try {
     selectedGoogleDriveFiles.value = []
   } catch (error) {
-    showError('Failed to clear selection. Please try again.')
+    errorStore.showError('Failed to clear selection. Please try again.')
   }
 }
 
@@ -1493,7 +1531,7 @@ const addCategory = (category: string) => {
       googleDriveState.category = trimmedCategory
     }
   } catch (error) {
-    showError('Failed to add category. Please try again.')
+    errorStore.showError('Failed to add category. Please try again.')
   }
 }
 
@@ -1501,7 +1539,7 @@ const deleteCategory = (category: string) => {
   try {
     emit('categoryDeleted', category)
   } catch (error) {
-    showError('Failed to delete category. Please try again.')
+    errorStore.showError('Failed to delete category. Please try again.')
   }
 }
 
@@ -1535,6 +1573,7 @@ const resetAllFields = () => {
     state.departments = []
     googleDriveState.category = ''
     googleDriveState.url = ''
+    googleDriveState.description = ''
     googleDriveState.departments = []
     selectedGoogleDriveFiles.value = []
 
@@ -1590,6 +1629,7 @@ watch(uploadType, () => {
     state.departments = []
     googleDriveState.category = ''
     googleDriveState.url = ''
+    googleDriveState.description = ''
     googleDriveState.departments = []
     selectedGoogleDriveFiles.value = []
 

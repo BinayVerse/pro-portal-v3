@@ -46,3 +46,37 @@ export function getOrgFromToken(event: H3Event): { orgId: string; userId?: strin
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized: Invalid token' })
   }
 }
+
+
+// 🔐 2FA TEMP TOKEN (separate from main JWT)
+
+export function generateTempToken(userId: string) {
+  const config = useRuntimeConfig()
+
+  return jwt.sign(
+    {
+      user_id: userId,
+      type: '2fa_temp'
+    },
+    config.jwtToken as string, // you can reuse OR create separate secret
+    {
+      expiresIn: '10m'
+    }
+  )
+}
+
+export function verifyTempToken(token: string): { user_id: string } {
+  const config = useRuntimeConfig()
+
+  try {
+    const decoded = jwt.verify(token, config.jwtToken as string) as any
+
+    if (decoded.type !== '2fa_temp') {
+      throw new Error('Invalid token type')
+    }
+
+    return { user_id: decoded.user_id }
+  } catch (err) {
+    throw new CustomError('Oops! That link has expired. Please try again.', 401)
+  }
+}

@@ -71,7 +71,6 @@
 </template>
 
 <script setup lang="ts">
-import { withDefaults } from 'vue'
 interface Props {
   searchQuery: string
   selectedCategory: string

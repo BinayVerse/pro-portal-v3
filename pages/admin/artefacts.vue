@@ -152,12 +152,14 @@ import ArtefactSummaryModal from '~/components/admin/artefacts/ArtefactSummaryMo
 import ArtefactViewModal from '~/components/admin/artefacts/ArtefactViewModal.vue'
 import ConfirmPopup from '~/components/ui/ConfirmPopup.vue'
 import PlanUpgradeAlert from '~/components/ui/PlanUpgradeAlert.vue'
+import { useErrorStore } from '~/stores/error'
 
 // Import stores
 import { useAuthStore } from '~/stores/auth'
 import { useArtefactsStore } from '~/stores/artefacts'
 import { useProfileStore } from '~/stores/profile'
 const profileStore = useProfileStore()
+const errorStore = useErrorStore()
 
 const planDetails = computed(() => profileStore.getUserProfile?.plan_details || null)
 
@@ -366,7 +368,7 @@ const viewArtefact = (artefact: any) => {
 const reprocessArtefact = async (artefact: any) => {
   // Check if artifact can be reprocessed
   if (!artefact.id) {
-    showError('Cannot reprocess artifact - invalid artifact data')
+    errorStore.showError('Cannot reprocess artifact - invalid artifact data')
     return
   }
 
@@ -449,10 +451,10 @@ const confirmReprocessArtefact = async () => {
       await artefactsStore.fetchArtefacts(orgId.value)
       await fetchArtifactDepartments()
     } else {
-      showError(result.message)
+      errorStore.showError(result.message)
     }
   } catch (error: any) {
-    showError(error.message || 'Failed to reprocess artifact')
+    errorStore.showError(error.message || 'Failed to reprocess artifact')
   } finally {
     isReprocessingArtefact.value = false
     showConfirmReprocessArtefact.value = false
@@ -471,12 +473,12 @@ const cancelReprocessArtefact = () => {
 const summarizeArtefact = async (artefact: any) => {
   // Check if artifact can be summarized
   if (!artefact.id) {
-    showError('Cannot summarize artifact - invalid artifact data')
+    errorStore.showError('Cannot summarize artifact - invalid artifact data')
     return
   }
 
   if (artefact.status !== 'processed') {
-    showError('Document must be processed before summarization')
+    errorStore.showError('Document must be processed before summarization')
     return
   }
 
@@ -521,10 +523,10 @@ const confirmSummarizeArtefact = async () => {
       await artefactsStore.fetchArtefacts(orgId.value)
       await fetchArtifactDepartments()
     } else {
-      showError(result.message)
+      errorStore.showError(result.message)
     }
   } catch (error: any) {
-    showError(error.message || 'Failed to summarize document')
+    errorStore.showError(error.message || 'Failed to summarize document')
   } finally {
     isSummarizingArtefact.value = false
     showConfirmSummarizeArtefact.value = false
@@ -546,12 +548,12 @@ const viewSummary = (artefact: any) => {
 
 const downloadArtefact = async (artefact: any) => {
   if (!artefact || !artefact.id) {
-    showError('Cannot download artifact - invalid artifact data')
+    errorStore.showError('Cannot download artifact - invalid artifact data')
     return
   }
 
   try {
-    showInfo('Preparing download...')
+    errorStore.showInfo('Preparing download...')
 
     // Use the existing viewArtefact method to get the file URL
     const result = await artefactsStore.viewArtefact(artefact.id, orgId.value)
@@ -568,11 +570,11 @@ const downloadArtefact = async (artefact: any) => {
 
       showSuccess('Download started successfully')
     } else {
-      showError(result.message || 'File URL not available for download')
+      errorStore.showError(result.message || 'File URL not available for download')
     }
   } catch (error: any) {
     console.error('Download error:', error)
-    showError(error?.message || 'Failed to download artefact')
+    errorStore.showError(error?.message || 'Failed to download artefact')
   }
 }
 
@@ -605,11 +607,11 @@ const addCategory = async (category: string) => {
       await fetchArtifactDepartments()
     } catch (error) {
       // Show error message to user
-      showError('Failed to add category. Please try again.')
+      errorStore.showError('Failed to add category. Please try again.')
     }
   } else {
     // Fallback to local management if no orgId
-    showWarning('Category added locally only. Changes will not be saved.')
+    errorStore.showWarning('Category added locally only. Changes will not be saved.')
   }
 }
 
@@ -641,7 +643,7 @@ const confirmDeleteCategory = async () => {
       showWarning('Category deleted locally only. Changes will not be saved.')
     }
   } catch (error) {
-    showError('Failed to delete category. Please try again.')
+    errorStore.showError('Failed to delete category. Please try again.')
   } finally {
     isDeletingCategory.value = false
     showConfirmPopup.value = false
@@ -675,10 +677,10 @@ const initializeCategories = async () => {
   } catch (error: any) {
     // Handle specific error types
     if (await handleAuthError(error)) {
-      showError('Session expired. Please sign in again.')
+      errorStore.showError('Session expired. Please sign in again.')
       return
     } else {
-      showError('Failed to load categories. Please refresh the page.')
+      errorStore.showError('Failed to load categories. Please refresh the page.')
     }
   }
 }

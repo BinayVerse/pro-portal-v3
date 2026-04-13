@@ -21,6 +21,7 @@ export const useProfileStore = defineStore('userStore', {
     profileStatus: '',
     profileMessage: '',
     loading: true,
+    bulkDownloadLoading: false,
   }),
 
   getters: {
@@ -187,12 +188,14 @@ export const useProfileStore = defineStore('userStore', {
     },
 
     async downloadTemplate() {
+      this.bulkDownloadLoading = true
       try {
         const blob = await useSafeBlobFetch('/api/users/csv-template', {
           method: 'GET',
         })
 
-        if (blob.type !== 'text/csv') {
+        const validTypes = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        if (!validTypes.includes(blob.type)) {
           throw new Error(`Unexpected Blob type: ${blob.type}`)
         }
 
@@ -200,6 +203,8 @@ export const useProfileStore = defineStore('userStore', {
       } catch (error: any) {
         console.error('Download failed:', error)
         throw new Error(error.message || 'Failed to download template.')
+      } finally {
+        this.bulkDownloadLoading = false
       }
     },
   },

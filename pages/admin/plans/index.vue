@@ -240,7 +240,7 @@
 </template>
 
 <script setup lang="ts">
-useHead({ title: 'My Plan - provento.ai' })
+useHead({ title: 'My Plan - Admin Dashboard - provento.ai' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 

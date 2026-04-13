@@ -76,6 +76,7 @@ import { useArtefactsStore } from '~/stores/artefacts'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import mammoth from 'mammoth'
+import { useErrorStore } from '~/stores/error'
 
 interface Props {
   isOpen: boolean
@@ -101,6 +102,7 @@ const fileType = ref<string | null>(null)
 import { useAuthStore } from '~/stores/auth'
 import { useRoute } from 'vue-router'
 const artefactsStore = useArtefactsStore()
+const errorStore = useErrorStore()
 const authStore = useAuthStore()
 const route = useRoute()
 const authUser = computed(() => authStore.getAuthUser)
@@ -158,7 +160,7 @@ const loadDocument = async () => {
     }
   } catch (err: any) {
     error.value = err.message || 'Failed to load document'
-    showError(error.value)
+    errorStore.showError(error.value)
   } finally {
     isLoading.value = false
   }

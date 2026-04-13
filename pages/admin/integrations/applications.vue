@@ -26,19 +26,27 @@
       v-if="!loadingIntegrations"
       class="flex gap-2 border-b border-dark-700 overflow-x-auto pb-3 -mx-4 px-4 sm:mx-0 sm:px-0"
     >
-      <button
+      <AppTooltip
         v-for="tab in tabs"
         :key="tab.value"
-        @click="selectedTab = tab.value"
-        :class="[
-          'px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors',
-          selectedTab === tab.value
-            ? 'text-primary-400 border-b-2 border-primary-400'
-            : 'text-gray-400 hover:text-gray-300 border-b-2 border-transparent',
-        ]"
+        :text="!tab.isActive && tab.value !== 'all' ? 'Coming Soon' : ''"
       >
-        {{ tab.label }}
-      </button>
+        <button
+          @click="selectedTab = tab.value"
+          :disabled="!tab.isActive && tab.value !== 'all'"
+          :class="[
+            'px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2',
+            !tab.isActive && tab.value !== 'all'
+              ? 'opacity-50 cursor-not-allowed'
+              : 'cursor-pointer',
+            selectedTab === tab.value
+              ? 'text-primary-400 border-b-2 border-primary-400'
+              : 'text-gray-400 hover:text-gray-300 border-b-2 border-transparent',
+          ]"
+        >
+          <span>{{ tab.label }}</span>
+        </button>
+      </AppTooltip>
     </div>
 
     <!-- Tabs Loading Skeleton -->
@@ -107,15 +115,16 @@
                 <span v-if="group.connections?.length" class="hidden sm:inline">•</span>
 
                 <div class="flex flex-wrap items-center">
-                  <template v-for="(conn, index) in group.connections" :key="conn.id">
-                    <!-- Module Badge -->
+                  <template
+                    v-for="(conn, index) in getSortedConnections(group.connections)"
+                    :key="conn.id"
+                  >
                     <span class="sm:inline text-gray-500">
                       {{ conn.module_name }}
                     </span>
 
-                    <!-- Separator -->
                     <span
-                      v-if="index !== group.connections.length - 1"
+                      v-if="index !== getSortedConnections(group.connections).length - 1"
                       class="hidden sm:inline mx-2"
                     >
                       •
@@ -309,6 +318,13 @@
                   {{ group.connections[0]?.login_url }}
                 </span>
               </div>
+
+              <div v-if="group.connections[0]?.base_url" class="flex justify-between items-start">
+                <span class="text-gray-500 font-medium">Base URL:</span>
+                <span class="font-mono text-gray-300 break-all text-right ml-4">
+                  {{ group.connections[0]?.base_url }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -379,15 +395,32 @@
               />
             </AppTooltip>
           </div>
-          <USelect
-            v-model="applicationForm.agent_id"
-            :options="agents.map((a) => ({ value: a.id, label: a.name }))"
-            placeholder="Select an agent"
-            value-attribute="value"
-            option-attribute="label"
-            :disabled="areFieldsLocked"
-            class="w-full"
-          />
+          <div class="relative">
+            <select
+              v-model="applicationForm.agent_id"
+              :disabled="areFieldsLocked"
+              class="w-full appearance-none bg-dark-900 border border-dark-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:opacity-30 disabled:text-gray-500 disabled:cursor-not-allowed"
+            >
+              <option disabled value="">Select an agent</option>
+
+              <option
+                v-for="agent in agentOptions"
+                :key="agent.value"
+                :value="agent.value"
+                :disabled="agent.disabled"
+                class="bg-dark-900 text-white"
+              >
+                {{ agent.label }}{{ agent.disabled ? ' (Coming Soon)' : '' }}
+              </option>
+            </select>
+
+            <!-- Dropdown Icon -->
+            <div
+              class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400"
+            >
+              <UIcon name="heroicons:chevron-down" class="w-4 h-4" />
+            </div>
+          </div>
         </div>
 
         <!-- Select Provider -->
@@ -414,36 +447,52 @@
 
           <div
             :class="[
-              'grid grid-cols-3 sm:grid-cols-4 gap-3 auto-rows-fr',
+              'grid grid-cols-3 gap-4 auto-rows-fr',
               !applicationForm.agent_id ? 'opacity-50 pointer-events-none' : '',
             ]"
           >
-            <div v-for="provider in filteredProviders" :key="provider.id" class="w-full">
-              <AppTooltip :text="provider.is_active ? '' : 'Coming Soon'" class="w-full block">
+            <div v-for="provider in filteredProviders" :key="provider.id">
+              <AppTooltip
+                :text="!provider.is_active ? provider.name + ' (Coming Soon) ' : provider.name"
+              >
                 <button
                   @click="toggleProvider(provider)"
                   :disabled="areFieldsLocked || !applicationForm.agent_id || !provider.is_active"
                   :class="[
-                    'w-full min-w-0 h-24 p-3 rounded-lg border transition-all flex flex-col items-center justify-center gap-2 text-center',
+                    'w-full h-24 rounded-lg border transition-all flex items-center justify-center',
                     areFieldsLocked || !applicationForm.agent_id
                       ? 'opacity-50 cursor-not-allowed'
                       : '',
-                    !provider.is_active ? 'opacity-50 cursor-not-allowed grayscale' : '',
+                    !provider.is_active ? 'opacity-30 cursor-not-allowed' : '',
                     applicationForm.provider_id === provider.id && provider.is_active
-                      ? 'border-primary-500 bg-primary-500/20 text-primary-400'
+                      ? 'border-primary-500 bg-primary-500/20'
                       : provider.is_active
-                        ? 'border-dark-700 bg-dark-900 hover:border-dark-600 text-gray-400'
-                        : 'border-dark-700 bg-dark-900 text-gray-500',
+                        ? 'border-dark-700 bg-dark-900 hover:border-dark-600'
+                        : 'border-dark-700 bg-black',
                   ]"
                 >
-                  <UIcon :name="getProviderIcon(provider.name)" class="w-6 h-6 text-white" />
-                  <span class="text-xs leading-tight">
-                    {{ provider.name }}
-                  </span>
+                  <img
+                    v-if="provider.logo_url"
+                    :src="provider.logo_url"
+                    alt="provider logo"
+                    class="w-16 h-16 object-contain"
+                  />
+
+                  <UIcon v-else :name="getProviderIcon(provider.name)" class="w-6 h-6 text-white" />
                 </button>
               </AppTooltip>
             </div>
           </div>
+        </div>
+        <!-- Request Provider CTA -->
+        <div class="mt-3 text-left">
+          <button
+            type="button"
+            class="text-sm text-primary-400 hover:text-primary-300 underline"
+            @click="openRequestProviderModal"
+          >
+            Don’t see your provider?
+          </button>
         </div>
 
         <!-- Select Module (Multi-select) -->
@@ -467,21 +516,35 @@
                 class="w-4 h-4 text-gray-400 flex-shrink-0"
               />
             </AppTooltip>
+
+            <AppTooltip
+              v-if="applicationForm.agent_id && !applicationForm.provider_id"
+              text="Please select a Provider first"
+            >
+              <UIcon
+                name="heroicons:information-circle"
+                class="w-4 h-4 text-gray-400 flex-shrink-0"
+              />
+            </AppTooltip>
           </div>
           <div
             :class="[
               'grid grid-cols-2 sm:grid-cols-3 gap-2',
-              !applicationForm.agent_id ? 'opacity-50 pointer-events-none' : '',
+              !applicationForm.agent_id || !applicationForm.provider_id
+                ? 'opacity-50 pointer-events-none'
+                : '',
             ]"
           >
             <button
               v-for="module in filteredModules"
               :key="module.id"
               @click="toggleModule(module)"
-              :disabled="!applicationForm.agent_id"
+              :disabled="!applicationForm.agent_id || !applicationForm.provider_id"
               :class="[
                 'p-3 rounded-lg border transition-all text-sm font-medium flex flex-col items-center justify-center gap-2',
-                !applicationForm.agent_id ? 'opacity-50 cursor-not-allowed' : '',
+                !applicationForm.agent_id || !applicationForm.provider_id
+                  ? 'opacity-50 cursor-not-allowed'
+                  : '',
                 applicationForm.module_ids.includes(module.id)
                   ? 'border-primary-500 bg-primary-500/20 text-primary-400'
                   : 'border-dark-700 bg-dark-900 text-gray-400 hover:border-dark-600',
@@ -495,9 +558,13 @@
 
         <!-- API Credentials -->
         <div class="space-y-4 p-4 bg-dark-900 rounded-lg border border-dark-700">
-          <h3 class="text-sm font-semibold text-white">
-            API Credentials <span class="text-red-500">*</span>
-          </h3>
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-white whitespace-nowrap">
+              API Credentials <span class="text-red-500">*</span>
+            </h3>
+
+            <ProviderCredentialHelp :provider="applicationForm.provider" />
+          </div>
 
           <div>
             <label class="block text-xs text-gray-400 mb-1"
@@ -584,6 +651,18 @@
               autocomplete="off"
             />
           </div>
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1"
+              >Base URL <span class="text-red-500">*</span></label
+            >
+            <input
+              v-model="applicationForm.base_url"
+              placeholder="https://example.com"
+              class="input-field w-full"
+              autocomplete="off"
+            />
+          </div>
         </div>
 
         <!-- Modal Actions -->
@@ -603,6 +682,85 @@
         </div>
       </div>
     </UModal>
+    <UModal v-model="showRequestProviderModal" size="md" prevent-close>
+      <div class="p-6 space-y-4">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-white">Request New Application</h2>
+          <button
+            @click="closeRequestProviderModal"
+            class="text-gray-400 hover:text-white transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Application Name -->
+        <div>
+          <label class="text-sm text-gray-400">
+            Application Name <span class="text-red-500">*</span>
+          </label>
+          <input
+            v-model="requestProviderForm.provider_name"
+            placeholder="e.g. BambooHR"
+            class="input-field w-full"
+          />
+        </div>
+
+        <!-- Website -->
+        <div>
+          <label class="text-sm text-gray-400">
+            Application Website URL <span class="text-red-500">*</span>
+          </label>
+          <input
+            v-model="requestProviderForm.website_url"
+            placeholder="https://example.com"
+            class="input-field w-full"
+          />
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label class="text-sm text-gray-400">Additional Notes</label>
+          <textarea
+            v-model="requestProviderForm.notes"
+            placeholder="Any specific requirement..."
+            class="input-field w-full"
+          />
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="text-sm text-gray-400">Contact Email</label>
+          <input
+            v-model="requestProviderForm.contact_email"
+            disabled
+            class="input-field w-full opacity-70"
+          />
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-2 pt-4 border-t border-dark-700">
+          <UButton variant="outline" color="gray" @click="closeRequestProviderModal">
+            Cancel
+          </UButton>
+
+          <UButton
+            @click="submitProviderRequest"
+            :loading="integrationsStore.loadingProviderRequest"
+            :disabled="!requestProviderForm.provider_name || !requestProviderForm.website_url"
+          >
+            Submit Request
+          </UButton>
+        </div>
+      </div>
+    </UModal>
   </div>
 </template>
 
@@ -611,7 +769,9 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useOrganizationIntegrations } from '~/composables/useOrganizationIntegrations'
 import { useNotification } from '~/composables/useNotification'
 import ConfirmPopup from '~/components/ui/ConfirmPopup.vue'
+import ProviderCredentialHelp from '~/components/integrations/ProviderCredentialHelp.vue'
 import { useOrganizationIntegrationsStore } from '~/stores/organization-integrations'
+import { useErrorStore } from '~/stores/error'
 
 definePageMeta({
   layout: 'admin',
@@ -619,10 +779,13 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Applications - Admin',
+  title: 'Applications - Admin Dashboard - provento.ai',
 })
 
-const { showSuccess, showError, showInfo } = useNotification()
+const { showSuccess, showInfo } = useNotification()
+const errorStore = useErrorStore()
+const authStore = useAuthStore()
+const integrationsStore = useOrganizationIntegrationsStore()
 
 // Use the organization integrations composable
 const {
@@ -636,9 +799,11 @@ const {
   fetchIntegrations,
   fetchMasterData,
   createIntegration,
+  createIntegrationsBatch,
   updateIntegration,
   updateIntegrationStatus,
   deleteIntegration,
+  syncIntegrationModules,
   clearMessages,
   getModulesForAgent,
   getProvidersForAgent,
@@ -660,6 +825,7 @@ const originalEditSnapshot = ref<any>(null)
 const showDeleteConfirmModal = ref(false)
 const groupToDelete = ref<any>(null)
 const isDeletingGroup = ref(false)
+const showRequestProviderModal = ref(false)
 
 // Form data
 const applicationForm = ref({
@@ -676,7 +842,25 @@ const applicationForm = ref({
   api_key: '',
   access_token: '',
   login_url: '',
+  base_url: '',
 })
+
+const agentOptions = computed(() =>
+  agents.value.map((a) => ({
+    label: a.name,
+    value: a.id,
+    disabled: !a.is_active,
+  })),
+)
+
+const getDefaultRequestProviderForm = () => ({
+  provider_name: '',
+  website_url: '',
+  notes: '',
+  contact_email: authStore.user?.email || '',
+})
+
+const requestProviderForm = ref(getDefaultRequestProviderForm())
 
 // Transform grouped integrations for UI display
 const applicationsList = computed(() => {
@@ -706,13 +890,17 @@ const applicationsList = computed(() => {
   }))
 })
 
+const getSortedConnections = (connections: any[]) => {
+  return [...connections].sort((a, b) => a.module_name.localeCompare(b.module_name))
+}
+
 // Dynamic tabs based on available agents (already sorted with HRMS first in store)
 const tabs = computed(() => {
-  const baseTabs = [{ label: 'All', value: 'all' }]
+  const baseTabs = [{ label: 'All', value: 'all', isActive: true }]
 
   // Agents are already sorted in the store with HRMS first
   agents.value.forEach((agent) => {
-    baseTabs.push({ label: agent.name, value: agent.id })
+    baseTabs.push({ label: agent.name, value: agent.id, isActive: agent.is_active })
   })
   return baseTabs
 })
@@ -797,6 +985,7 @@ const editGroup = async (group: any) => {
     api_key: decrypted.api_key || '',
     access_token: decrypted.access_token || '',
     login_url: decrypted.login_url || '',
+    base_url: decrypted.base_url || '',
   }
 
   // 🔥 Save original snapshot
@@ -807,6 +996,7 @@ const editGroup = async (group: any) => {
     api_key: decrypted.api_key || '',
     access_token: decrypted.access_token || '',
     login_url: decrypted.login_url || '',
+    base_url: decrypted.base_url || '',
   }
 
   showApplicationModal.value = true
@@ -825,7 +1015,8 @@ const hasChanges = () => {
     applicationForm.value.client_secret === originalEditSnapshot.value.client_secret &&
     applicationForm.value.api_key === originalEditSnapshot.value.api_key &&
     applicationForm.value.access_token === originalEditSnapshot.value.access_token &&
-    applicationForm.value.login_url === originalEditSnapshot.value.login_url
+    applicationForm.value.login_url === originalEditSnapshot.value.login_url &&
+    applicationForm.value.base_url === originalEditSnapshot.value.base_url
 
   return !(sameModules && sameCredentials)
 }
@@ -966,6 +1157,7 @@ const openAddApplicationModal = () => {
     api_key: '',
     access_token: '',
     login_url: '',
+    base_url: '',
   }
   showApplicationModal.value = true
 }
@@ -1004,20 +1196,20 @@ const saveApplication = async () => {
       applicationForm.value.module_ids.length === 0 ||
       !applicationForm.value.provider_id
     ) {
-      showError('Please select Agent, at least one Module, and Provider')
+      errorStore.showError('Please select Agent, at least one Module, and Provider')
       return
     }
 
     // Check for duplicate provider
     if (isProviderAlreadyAdded()) {
-      showError(
+      errorStore.showError(
         'This provider is already added for this agent. You can edit the existing integration instead.',
       )
       return
     }
 
     if (!applicationForm.value.client_id) {
-      showError('Please fill in all required credential fields')
+      errorStore.showError('Please fill in all required credential fields')
       return
     }
 
@@ -1025,97 +1217,58 @@ const saveApplication = async () => {
     const selectedProvider = providers.value.find((p) => p.id === applicationForm.value.provider_id)
     const hrmsSystem = selectedProvider?.name || applicationForm.value.provider_id
 
-    // Create a payload for each selected module
-    const payloads = applicationForm.value.module_ids.map((moduleId) => ({
+    // Common credentials and data for batch operations
+    const batchPayload = {
       provider_id: applicationForm.value.provider_id,
       agent_id: applicationForm.value.agent_id,
-      module_id: moduleId,
       client_id: applicationForm.value.client_id,
       client_secret: applicationForm.value.client_secret,
       api_key: applicationForm.value.api_key,
       access_token: applicationForm.value.access_token,
       login_url: applicationForm.value.login_url,
+      base_url: applicationForm.value.base_url,
       status: 'active' as const,
       hrms_system: hrmsSystem,
       is_hrms: true,
-    }))
+    }
 
-    // Create or update all integrations
     if (editingAppId.value) {
+      // EDIT MODE: Sync modules (handles add/update/delete in one call)
       if (!hasChanges()) {
         showInfo('Nothing to update')
         return
       }
-      const group = filteredApplications.value.find((g) => g.id === editingAppId.value)
 
+      const group = filteredApplications.value.find((g) => g.id === editingAppId.value)
       if (!group) return
 
-      const existingConnections = group.connections
-      const existingModuleIds = existingConnections.map((c: any) => c.module_id)
-      const selectedModuleIds = applicationForm.value.module_ids
+      const existingModuleIds = group.connections.map((c: any) => c.module_id)
 
-      // 🔴 Modules removed
-      const removedModules = existingModuleIds.filter(
-        (id: string) => !selectedModuleIds.includes(id),
-      )
+      // Use batch sync to handle all changes in one API call
+      const result = await syncIntegrationModules({
+        ...batchPayload,
+        module_ids: applicationForm.value.module_ids,
+        existing_module_ids: existingModuleIds,
+      })
 
-      // 🟢 Modules added
-      const addedModules = selectedModuleIds.filter((id: string) => !existingModuleIds.includes(id))
-
-      // 1️⃣ Delete removed modules
-      for (const moduleId of removedModules) {
-        const connectionToDelete = existingConnections.find((c: any) => c.module_id === moduleId)
-        if (connectionToDelete) {
-          await deleteIntegration(connectionToDelete.id)
-        }
-      }
-
-      // 2️⃣ Update existing modules (credentials update)
-      for (const connection of existingConnections) {
-        if (!removedModules.includes(connection.module_id)) {
-          await updateIntegration(connection.id, {
-            client_id: applicationForm.value.client_id,
-            client_secret: applicationForm.value.client_secret,
-            api_key: applicationForm.value.api_key,
-            access_token: applicationForm.value.access_token,
-            login_url: applicationForm.value.login_url,
-          })
-        }
-      }
-
-      // 3️⃣ Create newly added modules
-      for (const moduleId of addedModules) {
-        await createIntegration({
-          provider_id: applicationForm.value.provider_id,
-          agent_id: applicationForm.value.agent_id,
-          module_id: moduleId,
-          client_id: applicationForm.value.client_id,
-          client_secret: applicationForm.value.client_secret,
-          api_key: applicationForm.value.api_key,
-          access_token: applicationForm.value.access_token,
-          login_url: applicationForm.value.login_url,
-          status: 'active',
-          hrms_system: hrmsSystem,
-          is_hrms: true,
-        })
-      }
-    } else {
-      // Create new integrations for all modules in parallel
-      clearMessages()
-      const createResults = await Promise.all(payloads.map((payload) => createIntegration(payload)))
-
-      // Check if any failed
-      const failedCreation = createResults.find((result) => !result.success)
-      if (failedCreation) {
-        showError('Failed to create one or more integrations')
+      if (!result.success && !result.partial) {
+        // Error will be shown through store watcher
         return
       }
+    } else {
+      // CREATE MODE: Batch create all modules in one API call
+      const result = await createIntegrationsBatch({
+        ...batchPayload,
+        modules: applicationForm.value.module_ids,
+      })
 
-      // Show single success message
-      showSuccess(`Integration created successfully with ${payloads.length} module(s)`)
+      if (!result.success && !result.partial) {
+        // Error will be shown through store watcher
+        return
+      }
     }
 
-    // Close modal after successful creation of all integrations
+    // Close modal after successful operation
     closeApplicationModal()
   } finally {
     isSavingApplication.value = false
@@ -1133,17 +1286,25 @@ const confirmDeleteGroup = async () => {
   isDeletingGroup.value = true
   try {
     const connections = groupToDelete.value.connections
+    const store = useOrganizationIntegrationsStore()
 
-    // Delete all connections in the group
-    const deletePromises = connections.map((connection) => deleteIntegration(connection.id))
+    // Get all integration IDs from connections
+    const integrationIds = connections.map((connection: any) => connection.id)
 
-    await Promise.all(deletePromises)
+    // Use batch delete API for single call
+    const result = await store.batchDeleteIntegrations(integrationIds)
+
+    if (!result.success && !result.partial) {
+      // Error will be shown through store watcher
+      return
+    }
 
     // Success/error messages will be displayed through store watchers
     showDeleteConfirmModal.value = false
     groupToDelete.value = null
   } catch (err) {
-    showError('Unexpected error occurred during deletion')
+    // Unexpected errors from catch block
+    errorStore.showError('Unexpected error occurred during deletion')
   } finally {
     isDeletingGroup.value = false
   }
@@ -1157,7 +1318,7 @@ const updateStatus = async (appId: string, status: string) => {
     )
     // Message will be displayed through store watchers
   } catch (err) {
-    showError('Failed to update status')
+    errorStore.showError('Failed to update status')
   }
 }
 
@@ -1165,17 +1326,24 @@ const updateGroupStatus = async (group: any, status: string) => {
   try {
     const connections = group.connections
     const statusLower = status.toLowerCase() as 'active' | 'inactive' | 'expired' | 'failed'
+    const store = useOrganizationIntegrationsStore()
 
-    // Update all connections in the group
-    const updatePromises = connections.map((connection) =>
-      updateIntegrationStatus(connection.id, statusLower),
-    )
+    // Get all integration IDs from connections
+    const integrationIds = connections.map((connection: any) => connection.id)
 
-    await Promise.all(updatePromises)
+    // Use batch status update API for single call
+    const result = await store.batchUpdateIntegrationStatus(integrationIds, statusLower)
+
+    if (!result.success && !result.partial) {
+      // Error will be shown through store watcher
+      return
+    }
+
     // Message will be displayed through store watchers
     activeAppStatusMenu.value = null
   } catch (err) {
-    showError('Failed to update group status')
+    // Unexpected errors from catch block
+    errorStore.showError('Failed to update group status')
   }
 }
 
@@ -1220,8 +1388,40 @@ const handleScrollOrResize = () => {
   }
 }
 
+const openRequestProviderModal = () => {
+  requestProviderForm.value = getDefaultRequestProviderForm()
+  showApplicationModal.value = false
+  showRequestProviderModal.value = true
+}
+
+const closeRequestProviderModal = () => {
+  showRequestProviderModal.value = false
+  requestProviderForm.value = getDefaultRequestProviderForm()
+}
+
+const submitProviderRequest = async () => {
+  if (!requestProviderForm.value.provider_name || !requestProviderForm.value.website_url) {
+    errorStore.showError('Please fill all required fields')
+    return
+  }
+
+  const result = await integrationsStore.submitProviderRequest(requestProviderForm.value)
+
+  if (!result.success) return
+
+  closeRequestProviderModal()
+}
+
+const handleEscapeKey = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && showRequestProviderModal.value) {
+    closeRequestProviderModal()
+  }
+}
+
 onMounted(async () => {
+  requestProviderForm.value.contact_email = authStore.user?.email || ''
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('keydown', handleEscapeKey)
   window.addEventListener('scroll', handleScrollOrResize)
   window.addEventListener('resize', handleScrollOrResize)
 
@@ -1231,25 +1431,15 @@ onMounted(async () => {
     await fetchIntegrations() // Fetch integrations for the organization
   } catch (err) {
     console.error('Failed to load integrations:', err)
-    showError('Failed to load integrations')
+    errorStore.showError('Failed to load integrations')
   }
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleEscapeKey)
   window.removeEventListener('scroll', handleScrollOrResize)
   window.removeEventListener('resize', handleScrollOrResize)
-})
-
-// Watch for error changes and show notification
-watch(error, (newError) => {
-  if (newError) {
-    showError(newError)
-    // Clear error message after displaying
-    nextTick(() => {
-      setTimeout(() => clearMessages(), 100)
-    })
-  }
 })
 
 // Watch for success messages and show notification

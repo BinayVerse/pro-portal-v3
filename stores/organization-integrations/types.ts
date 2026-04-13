@@ -6,6 +6,7 @@ export interface IntegrationProvider {
   is_active: boolean
   created_at: string
   updated_at: string
+  logo_url?: string
 }
 
 export interface IntegrationModule {
@@ -19,6 +20,7 @@ export interface IntegrationAgent {
   id: string
   name: string
   code: string
+  is_active: boolean
   created_at: string
 }
 
@@ -124,9 +126,70 @@ export interface GroupedIntegration {
   connections: OrganizationIntegration[]
 }
 
+/**
+ * Batch create payload for multiple modules at once
+ * Note: Sensitive fields are encrypted before sending to server
+ */
+export interface BatchCreateIntegrationsPayload {
+  provider_id: string
+  agent_id: string
+  modules: string[] // Array of module IDs
+  client_id: string
+  /** @encrypted - Will be encrypted before sending to server */
+  client_secret?: string
+  /** @encrypted - Will be encrypted before sending to server */
+  api_key?: string
+  /** @encrypted - Will be encrypted before sending to server */
+  access_token?: string
+  /** @encrypted - Will be encrypted before sending to server */
+  refresh_token?: string
+  token_expiry?: string
+  base_url?: string
+  login_url?: string
+  metadata_json?: Record<string, any>
+  status?: 'active' | 'inactive' | 'expired' | 'failed'
+  hrms_system?: string
+  is_hrms?: boolean
+}
+
+/**
+ * Batch sync payload for updating module associations
+ * Handles add/update/delete of modules in one API call
+ */
+export interface BatchSyncIntegrationsPayload {
+  provider_id: string
+  agent_id: string
+  module_ids: string[] // New list of module IDs
+  existing_module_ids: string[] // Current list of module IDs
+  client_id: string
+  /** @encrypted - Will be encrypted before sending to server */
+  client_secret?: string
+  /** @encrypted - Will be encrypted before sending to server */
+  api_key?: string
+  /** @encrypted - Will be encrypted before sending to server */
+  access_token?: string
+  /** @encrypted - Will be encrypted before sending to server */
+  refresh_token?: string
+  token_expiry?: string
+  base_url?: string
+  login_url?: string
+  metadata_json?: Record<string, any>
+  status?: 'active' | 'inactive' | 'expired' | 'failed'
+  hrms_system?: string
+  is_hrms?: boolean
+}
+
 export interface ApiResponse<T> {
   statusCode: number
-  status: 'success' | 'error'
+  status: 'success' | 'error' | 'partial_success'
   data?: T
   message: string
+  errors?: Array<{ [key: string]: any }>
+}
+
+export interface ProviderRequestPayload {
+  provider_name: string
+  website_url: string
+  notes?: string
+  contact_email: string
 }

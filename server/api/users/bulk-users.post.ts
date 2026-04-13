@@ -101,19 +101,82 @@ export default defineEventHandler(async (event) => {
     const successfulUsers: any[] = []
     const failedUsers: any[] = []
 
+    // Fetch all departments for this org (for validation)
+    const allDepartmentsResult = await query(
+      `
+      SELECT dept_id, name
+      FROM organization_departments
+      WHERE org_id = $1 AND status = 'active'
+      ORDER BY name ASC
+      `,
+      [orgDetail.org_id],
+    )
+    const departmentMap = new Map((allDepartmentsResult?.rows || []).map((d: any) => [d.name.toLowerCase(), d.dept_id]))
+
     for (let rowIndex = 0; rowIndex < usersArray.length; rowIndex++) {
       const row = usersArray[rowIndex]
       const name = row.Name?.trim()
       const email = row.Email?.trim()
       const contactNumber = row['Whatsapp Number']?.trim()
-      const role = row.Role?.trim().toLowerCase()
-      const roleId = role === 'user' ? 2 : 1
-      // Ensure roleId is numeric
-      if (!Number.isFinite(Number(roleId))) {
-        failedUsers.push({ Row: rowIndex + 1, errors: [{ field: 'Role', message: 'Invalid role id' }] })
+      const roleInput = row.Role?.trim()
+      const departmentsInput = row.Departments?.trim() || ''
+
+      // Validate and resolve role name to role_id
+      let roleId: number | null = null
+      if (roleInput) {
+        const roleInputLower = roleInput.toLowerCase()
+        const roleMatch = await query(
+          `SELECT role_id FROM public.roles WHERE LOWER(role_name) = $1 AND role_id != 0`,
+          [roleInputLower],
+        )
+        if (roleMatch.rows.length > 0) {
+          roleId = roleMatch.rows[0].role_id
+        }
+      }
+
+      const rowErrors: any[] = []
+
+      // Validate Name
+      if (!name) {
+        rowErrors.push({ field: 'Name', message: 'Name is required' })
+      }
+
+      // Validate Email
+      if (!email) {
+        rowErrors.push({ field: 'Email', message: 'Email is required' })
+      }
+
+      // Validate Whatsapp Number
+      if (!contactNumber) {
+        rowErrors.push({ field: 'Whatsapp Number', message: 'Whatsapp Number is required' })
+      }
+
+      // Validate Role
+      if (!roleId) {
+        rowErrors.push({ field: 'Role', message: `Invalid role: ${roleInput || 'empty'}` })
+      }
+
+      // Parse and validate departments
+      const departmentIds: string[] = []
+      if (departmentsInput) {
+        const deptsArray = departmentsInput.split(',').map((d) => d.trim()).filter((d) => d)
+        for (const deptName of deptsArray) {
+          const deptId = departmentMap.get(deptName.toLowerCase())
+          if (deptId) {
+            departmentIds.push(deptId)
+          } else {
+            rowErrors.push({
+              field: 'Departments',
+              message: `Department "${deptName}" not found in organization`,
+            })
+          }
+        }
+      }
+
+      if (rowErrors.length > 0) {
+        failedUsers.push({ Row: rowIndex + 1, errors: rowErrors })
         continue
       }
-      const rowErrors: any[] = []
 
       try {
         if (roleId === 1) {
@@ -165,13 +228,28 @@ export default defineEventHandler(async (event) => {
           [name, email, contactNumber, roleId, hashedPassword, orgDetail.org_id, userId],
         )
 
+        const newUserId = result.rows[0].user_id
+
+        // ✅ Assign departments
+        if (departmentIds.length > 0) {
+          for (const deptId of departmentIds) {
+            await client.query(
+              `INSERT INTO user_departments (user_id, dept_id, org_id, created_by)
+              VALUES ($1, $2, $3, $4)
+              ON CONFLICT (user_id, dept_id) DO NOTHING`,
+              [String(newUserId), deptId, orgDetail.org_id, String(userId)],
+            )
+          }
+        }
+
         successfulUsers.push({
-          userId: result.rows[0].user_id,
+          userId: newUserId,
           email,
           name,
           contact_number: contactNumber,
           role_id: roleId,
           password,
+          departmentIds: departmentIds, // Include departments for assignment
         })
       } catch (err: any) {
         rowErrors.push({ field: 'Database', message: `Database error: ${err.message}` })
@@ -229,7 +307,7 @@ export default defineEventHandler(async (event) => {
           }
         }
       } catch (err: any) {
-        console.error(`Failed to send email to ${user.email}:`, err.message)
+        console.error(`Failed to process user ${user.email}:`, err.message)
       }
     }
 

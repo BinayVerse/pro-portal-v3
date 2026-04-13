@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import type { ArtefactGoogleDriveFile, DocumentCategory } from './types'
-import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
+import { handleSuccess, extractErrors } from '../../utils/apiHandler'
 import { handleAuthError as handleAuthErrorShared } from '~/composables/useAuthError'
+import { useErrorStore } from '~/stores/error'
 
 export const useArtefactsStore = defineStore('artefacts', {
   state: () => ({
@@ -98,6 +99,21 @@ export const useArtefactsStore = defineStore('artefacts', {
   },
 
   actions: {
+    privateHandleError(error: any, fallbackMessage: string): string {
+      const message =
+        error?.response?._data?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        fallbackMessage
+
+      this.artefactsError = message
+
+      const errorStore = useErrorStore()
+      errorStore.showError(message)
+
+      return message
+    },
+
     async fetchGoogleDriveFiles(folderUrl: string) {
       this.isLoadingGoogleDrive = true
       this.otherFilesCount = 0
@@ -121,12 +137,20 @@ export const useArtefactsStore = defineStore('artefacts', {
         }
       } catch (error: any) {
         this.googleDriveFiles = []
+
+        if (await this.handleAuthError(error)) {
+          return { success: false, files: [], message: 'Unauthorized' }
+        }
+
+        const message = this.privateHandleError(error, 'Failed to fetch Google Drive files')
+
         return {
           success: false,
           files: [],
-          message: handleError(error, 'Failed to fetch Google Drive files')
+          message
         }
-      } finally {
+      }
+      finally {
         this.isLoadingGoogleDrive = false
       }
     },
@@ -160,10 +184,12 @@ export const useArtefactsStore = defineStore('artefacts', {
           throw new Error('Session expired. Please sign in again.')
         }
 
+        const message = this.privateHandleError(error, 'Failed to upload Google Drive files')
+
         return {
           success: false,
           files: [],
-          message: handleError(error, 'Failed to upload Google Drive files', true)
+          message
         }
       } finally {
         this.isUploadingGoogleDrive = false
@@ -171,7 +197,7 @@ export const useArtefactsStore = defineStore('artefacts', {
     },
 
     // Upload Google Drive files with departments support
-    async uploadGoogleDriveFilesWithDepartments(payload: { files: ArtefactGoogleDriveFile[]; category: string; departments: string[] }, orgId?: string | null) {
+    async uploadGoogleDriveFilesWithDepartments(payload: { files: ArtefactGoogleDriveFile[]; category: string; description: string; departments: string[] }, orgId?: string | null) {
       this.isUploadingGoogleDrive = true
 
       try {
@@ -186,6 +212,7 @@ export const useArtefactsStore = defineStore('artefacts', {
           body: {
             selectedFileDetails: payload.files,
             category: payload.category,
+            description: payload.description, // 🔑 important - pass description
             departments: payload.departments, // 🔑 important - pass departments array
           },
         })
@@ -201,10 +228,12 @@ export const useArtefactsStore = defineStore('artefacts', {
           throw new Error('Session expired. Please sign in again.')
         }
 
+        const message = this.privateHandleError(error, 'Failed to upload Google Drive files')
+
         return {
           success: false,
           files: [],
-          message: handleError(error, 'Failed to upload Google Drive files', true)
+          message
         }
       } finally {
         this.isUploadingGoogleDrive = false
@@ -253,23 +282,33 @@ export const useArtefactsStore = defineStore('artefacts', {
           throw new Error('Session expired. Please sign in again.')
         }
 
+        const message = this.privateHandleError(error, 'Failed to upload artifact')
+
         return {
           success: false,
           data: null,
-          message: handleError(error, 'Failed to upload artifact', true)
+          message
         }
+
       }
     },
 
-    // Delegate to common handler
-    handleError(error: any, fallbackMessage: string, silent: boolean = false): string {
-      return handleError(error, fallbackMessage, silent)
-    },
-
     // Helper methods for categories
-    handleCategoryError(error: any, defaultMessage: string, silent: boolean = false): string {
-      return handleError(error, defaultMessage, silent)
-    },
+    handleCategoryError(error: any, defaultMessage: string): string {
+      const message =
+        error?.response?._data?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        defaultMessage
+
+      this.categoryError = message
+
+      const errorStore = useErrorStore()
+      errorStore.showError(message)
+
+      return message
+    }
+    ,
 
     handleCategorySuccess(message: string): void {
       this.categoryError = null
@@ -491,12 +530,14 @@ export const useArtefactsStore = defineStore('artefacts', {
           throw new Error('Session expired. Please log in again.')
         }
 
-        this.artefactsError = handleError(error, 'Failed to fetch artefacts')
+        const message = this.privateHandleError(error, 'Failed to fetch artefacts')
+
         return {
           success: false,
           data: null,
-          message: this.artefactsError
+          message
         }
+
       } finally {
         this.isLoadingArtefacts = false
       }
@@ -568,9 +609,11 @@ export const useArtefactsStore = defineStore('artefacts', {
           throw new Error('Session expired. Please log in again.')
         }
 
+        const message = this.privateHandleError(error, 'Failed to view document')
+
         return {
           success: false,
-          message: handleError(error, 'Failed to view document')
+          message
         }
       }
     },
@@ -610,9 +653,11 @@ export const useArtefactsStore = defineStore('artefacts', {
           throw new Error('Session expired. Please log in again.')
         }
 
+        const message = this.privateHandleError(error, 'Failed to summarize document')
+
         return {
           success: false,
-          message: handleError(error, 'Failed to summarize document')
+          message
         }
       }
     },
@@ -652,9 +697,11 @@ export const useArtefactsStore = defineStore('artefacts', {
           throw new Error('Session expired. Please sign in again.')
         }
 
+        const message = this.privateHandleError(error, 'Failed to reprocess artifact')
+
         return {
           success: false,
-          message: handleError(error, 'Failed to reprocess artifact')
+          message
         }
       }
     },
@@ -701,10 +748,13 @@ export const useArtefactsStore = defineStore('artefacts', {
           throw new Error('Session expired. Please sign in again.')
         }
 
+        const message = this.privateHandleError(error, 'Failed to delete artifact')
+
         return {
           success: false,
-          message: handleError(error, 'Failed to delete artifact')
+          message
         }
+
       }
     },
 
@@ -753,10 +803,13 @@ export const useArtefactsStore = defineStore('artefacts', {
           throw new Error('Session expired. Please sign in again.')
         }
 
+
+        const message = this.privateHandleError(error, 'Failed to check file existence')
+
         return {
           success: false,
           exists: false,
-          message: handleError(error, 'Failed to check file existence')
+          message
         }
       }
     },
@@ -809,11 +862,12 @@ export const useArtefactsStore = defineStore('artefacts', {
         if (await handleAuthErrorShared(error)) {
           throw new Error('Session expired. Please sign in again.')
         }
+        const message = this.privateHandleError(error, 'Failed to check files existence')
 
         return {
           success: false,
           results: [],
-          message: handleError(error, 'Failed to check files existence')
+          message
         }
       }
     },
@@ -915,6 +969,8 @@ export const useArtefactsStore = defineStore('artefacts', {
 
 
     async processSingleSummarization(docId: number) {
+      const errorStore = useErrorStore()
+      const { showSuccess } = useNotification()
       try {
         const result = await this.summarizeArtefact(docId)
 
@@ -931,7 +987,6 @@ export const useArtefactsStore = defineStore('artefacts', {
 
           // Show success notification
           if (process.client) {
-            const { showSuccess } = useNotification()
             const doc = this.artefacts.find(a => a.id === docId)
             const docName = doc?.name || `Document ${docId}`
             showSuccess(`${docName} summarized successfully`)
@@ -939,19 +994,17 @@ export const useArtefactsStore = defineStore('artefacts', {
         } else {
           // Show error notification
           if (process.client) {
-            const { showError } = useNotification()
             const doc = this.artefacts.find(a => a.id === docId)
             const docName = doc?.name || `Document ${docId}`
-            showError(`Failed to summarize ${docName}: ${result.message}`)
+            errorStore.showError(`Failed to summarize ${docName}: ${result.message}`)
           }
         }
       } catch (error: any) {
         // Show error notification
         if (process.client) {
-          const { showError } = useNotification()
           const doc = this.artefacts.find(a => a.id === docId)
           const docName = doc?.name || `Document ${docId}`
-          showError(`Error summarizing ${docName}: ${error.message || error}`)
+          errorStore.showError(`Error summarizing ${docName}: ${error.message || error}`)
         }
       } finally {
         // Ensure UI flag is cleared
@@ -1045,7 +1098,9 @@ export const useArtefactsStore = defineStore('artefacts', {
       } catch (err: any) {
         console.error('Failed to load departments:', err)
         if (!await this.handleAuthError(err)) {
-          this.departmentsError = this.handleError(err, 'Failed to load departments')
+          const message = this.privateHandleError(err, 'Failed to load departments')
+          this.departmentsError = message
+
         }
         this.departments = []
       } finally {

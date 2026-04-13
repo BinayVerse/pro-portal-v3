@@ -1,7 +1,8 @@
 import { useNotification } from '../composables/useNotification'
+import { useErrorStore } from '~/stores/error'
 
 export function handleError(error: any, defaultMessage: string, silent: boolean = false): string {
-  const { showError } = useNotification()
+  const errorStore = useErrorStore()
   const errorMessage =
     // prefer Nuxt $fetch unpacked body (_data) for non-2xx responses
     error?.response?._data?.message ||
@@ -16,7 +17,7 @@ export function handleError(error: any, defaultMessage: string, silent: boolean 
 
   if (!silent) {
     try {
-      showError(errorMessage)
+      errorStore.showError(errorMessage)
     } catch (e) {
       // Fallback to console if notification fails
       // eslint-disable-next-line no-console

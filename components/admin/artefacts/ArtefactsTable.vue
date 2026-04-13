@@ -51,9 +51,11 @@
                 {{ row.name }}
               </div>
             </AppTooltip>
-            <div class="text-xs sm:text-sm text-gray-400 truncate hidden sm:block">
-              {{ row.description }}
-            </div>
+            <AppTooltip :text="row.description">
+              <div class="text-xs sm:text-sm text-gray-400 truncate hidden sm:block">
+                {{ row.description }}
+              </div>
+            </AppTooltip>
           </div>
         </div>
       </template>
@@ -251,7 +253,7 @@
 </template>
 
 <script setup lang="ts">
-import { withDefaults, computed, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 interface Artefact {
   id: number
   name: string

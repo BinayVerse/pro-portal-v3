@@ -206,7 +206,9 @@
 
     <!-- Platform Integrations -->
     <div class="bg-dark-800 rounded-lg border border-dark-700">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b border-dark-700 gap-2 sm:gap-0">
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b border-dark-700 gap-2 sm:gap-0"
+      >
         <h2 class="text-base sm:text-lg font-semibold text-white">Platform Integrations</h2>
         <div class="text-xs sm:text-sm text-gray-400">Manage connections to external platforms</div>
       </div>
@@ -249,6 +251,7 @@
 useHead({ title: 'Dashboard - Admin Dashboard - provento.ai' })
 import { handleAuthError as handleAuthErrorShared } from '~/composables/useAuthError'
 import PlanUpgradeAlert from '@/components/ui/PlanUpgradeAlert.vue'
+import { useErrorStore } from '~/stores/error'
 
 definePageMeta({
   layout: 'admin',
@@ -261,6 +264,7 @@ import { useDashboardStore } from '~/stores/dashboard'
 import { useProfileStore } from '~/stores/profile'
 
 const profileStore = useProfileStore()
+const errorStore = useErrorStore()
 
 const planDetails = computed(() => profileStore.getUserProfile?.plan_details || {})
 
@@ -514,8 +518,7 @@ const fetchDashboardData = async (orgId?: string | null) => {
   } catch (error) {
     console.error('Failed to fetch dashboard data:', error)
     if (await handleAuthErrorShared(error)) return
-    const { showError } = useNotification()
-    showError('Failed to load dashboard data. Please try again.')
+    errorStore.showError('Failed to load dashboard data. Please try again.')
   } finally {
     loading.value = false
   }

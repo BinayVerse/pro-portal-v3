@@ -9,9 +9,14 @@ import type {
   IntegrationRelationships,
   ApiResponse,
   GroupedIntegration,
+  BatchCreateIntegrationsPayload,
+  BatchSyncIntegrationsPayload,
+  ProviderRequestPayload,
 } from './types'
 import { useNotification } from '~/composables/useNotification'
 import { encryptSensitiveFields, decryptSensitiveFields } from '~/composables/useEncryption'
+import { handleAuthError } from '~/composables/useAuthError'
+import { useErrorStore } from '~/stores/error'
 
 export const useOrganizationIntegrationsStore = defineStore('organizationIntegrations', {
   state: () => ({
@@ -33,6 +38,7 @@ export const useOrganizationIntegrationsStore = defineStore('organizationIntegra
 
     // UI state
     loading: true,
+    loadingProviderRequest: false,
     loadingProviders: true,
     loadingModules: true,
     loadingAgents: true,
@@ -169,6 +175,10 @@ export const useOrganizationIntegrationsStore = defineStore('organizationIntegra
 
     setError(error: string | null) {
       this.error = error
+      if (error) {
+        const errorStore = useErrorStore()
+        errorStore.showError(error)
+      }
     },
 
     setSuccessMessage(message: string | null) {
@@ -416,6 +426,78 @@ export const useOrganizationIntegrationsStore = defineStore('organizationIntegra
       }
     },
 
+    // Create multiple integrations in one API call (batch)
+    async createIntegrationsBatch(payload: BatchCreateIntegrationsPayload) {
+      this.loading = true
+      this.error = null
+      try {
+        // Encrypt sensitive fields before sending to server
+        const encryptedPayload = await encryptSensitiveFields(payload, [
+          'client_secret',
+          'api_key',
+          'access_token',
+          'refresh_token',
+        ])
+
+        const response = await $fetch<ApiResponse<{ ids: string[] }>>('/api/organization-integrations/batch', {
+          method: 'POST',
+          headers: this.getAuthHeaders(),
+          body: encryptedPayload,
+        })
+
+        if (response.status === 'success' || response.status === 'partial_success') {
+          this.setSuccessMessage(response.message || 'Integrations created successfully')
+          // Refresh the list
+          await this.fetchIntegrations()
+          return { success: response.status === 'success', data: response.data, partial: response.status === 'partial_success', errors: response.errors }
+        } else {
+          throw new Error(response.message || 'Failed to create integrations')
+        }
+      } catch (error: any) {
+        const message = error?.data?.message || error?.message || 'Failed to create integrations'
+        this.setError(message)
+        return { success: false, message, errors: error?.data?.errors }
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Sync integration modules (add/update/delete all in one call)
+    async syncIntegrationModules(payload: BatchSyncIntegrationsPayload) {
+      this.loading = true
+      this.error = null
+      try {
+        // Encrypt sensitive fields before sending to server
+        const encryptedPayload = await encryptSensitiveFields(payload, [
+          'client_secret',
+          'api_key',
+          'access_token',
+          'refresh_token',
+        ])
+
+        const response = await $fetch<ApiResponse<{ created: string[]; updated: string[]; deleted: string[] }>>('/api/organization-integrations/batch-sync', {
+          method: 'PUT',
+          headers: this.getAuthHeaders(),
+          body: encryptedPayload,
+        })
+
+        if (response.status === 'success' || response.status === 'partial_success') {
+          this.setSuccessMessage(response.message || 'Integrations synced successfully')
+          // Refresh the list
+          await this.fetchIntegrations()
+          return { success: response.status === 'success', data: response.data, partial: response.status === 'partial_success', errors: response.errors }
+        } else {
+          throw new Error(response.message || 'Failed to sync integrations')
+        }
+      } catch (error: any) {
+        const message = error?.data?.message || error?.message || 'Failed to sync integrations'
+        this.setError(message)
+        return { success: false, message, errors: error?.data?.errors }
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Update integration
     async updateIntegration(id: string, payload: UpdateIntegrationPayload) {
       this.loading = true
@@ -460,6 +542,34 @@ export const useOrganizationIntegrationsStore = defineStore('organizationIntegra
       return this.updateIntegration(id, { status })
     },
 
+    // Batch update status for multiple integrations
+    async batchUpdateIntegrationStatus(integration_ids: string[], status: 'active' | 'inactive' | 'expired' | 'failed') {
+      this.loading = true
+      this.error = null
+      try {
+        const response = await $fetch<ApiResponse<{ updated: string[]; errors: any[] }>>('/api/organization-integrations/batch-status', {
+          method: 'PUT',
+          headers: this.getAuthHeaders(),
+          body: { integration_ids, status },
+        })
+
+        if (response.status === 'success' || response.status === 'partial_success') {
+          this.setSuccessMessage(response.message || 'Integrations status updated successfully')
+          // Refresh the list
+          await this.fetchIntegrations()
+          return { success: response.status === 'success', data: response.data, partial: response.status === 'partial_success', errors: response.errors }
+        } else {
+          throw new Error(response.message || 'Failed to update integrations status')
+        }
+      } catch (error: any) {
+        const message = error?.data?.message || error?.message || 'Failed to update integrations status'
+        this.setError(message)
+        return { success: false, message, errors: error?.data?.errors }
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Delete integration
     async deleteIntegration(id: string) {
       this.loading = true
@@ -490,6 +600,38 @@ export const useOrganizationIntegrationsStore = defineStore('organizationIntegra
       }
     },
 
+    // Batch delete multiple integrations
+    async batchDeleteIntegrations(integration_ids: string[]) {
+      this.loading = true
+      this.error = null
+      try {
+        const response = await $fetch<ApiResponse<{ deleted: string[]; errors: any[] }>>('/api/organization-integrations/batch', {
+          method: 'DELETE',
+          headers: this.getAuthHeaders(),
+          body: { integration_ids },
+        })
+
+        if (response.status === 'success' || response.status === 'partial_success') {
+          this.setSuccessMessage(response.message || 'Integrations deleted successfully')
+          // Remove from local state
+          if (response.data?.deleted) {
+            this.integrations = this.integrations.filter(
+              (i) => !response.data?.deleted.includes(i.id)
+            )
+          }
+          return { success: response.status === 'success', data: response.data, partial: response.status === 'partial_success', errors: response.errors }
+        } else {
+          throw new Error(response.message || 'Failed to delete integrations')
+        }
+      } catch (error: any) {
+        const message = error?.data?.message || error?.message || 'Failed to delete integrations'
+        this.setError(message)
+        return { success: false, message, errors: error?.data?.errors }
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Decrypt integration data for display (e.g., in edit form)
     // This decrypts only when needed, not on API fetch
     async decryptIntegrationForDisplay(
@@ -512,6 +654,37 @@ export const useOrganizationIntegrationsStore = defineStore('organizationIntegra
     clearMessages() {
       this.error = null
       this.successMessage = null
+    },
+
+    async submitProviderRequest(payload: ProviderRequestPayload) {
+      this.loadingProviderRequest = true
+      this.error = null
+
+      try {
+        const response = await $fetch<ApiResponse<void>>('/api/organization-integrations/provider-requests', {
+          method: 'POST',
+          headers: this.getAuthHeaders(),
+          body: payload,
+        })
+
+        if (response.status === 'success') {
+          this.setSuccessMessage(
+            response.message ||
+            'Your integration request has been submitted. Our team will contact you soon.',
+          )
+
+          return { success: true }
+        } else {
+          throw new Error(response.message || 'Failed to submit provider request')
+        }
+      } catch (error: any) {
+        const message =
+          error?.data?.message || error?.message || 'Failed to submit provider request'
+        this.setError(message)
+        return { success: false, message }
+      } finally {
+        this.loadingProviderRequest = false
+      }
     },
   },
 })

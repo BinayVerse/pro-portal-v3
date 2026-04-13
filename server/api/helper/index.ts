@@ -48,6 +48,270 @@ const EMAIL_FOOTER = `
   </div>
 `;
 
+// 🔹 Section Block (title + description)
+const sectionBlock = (title: string, desc: string) => `
+  <table width="100%" style="margin-bottom:20px;border-collapse:collapse;">
+    <tr>
+      <td style="font-size:16px;font-weight:600;padding-bottom:4px;">
+        ${title}
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size:15px;line-height:1.5;color:#374151;">
+        ${desc}
+      </td>
+    </tr>
+  </table>
+`;
+
+// 🔹 Simple paragraph
+const textBlock = (text: string) => `
+  <p style="margin:0 0 16px;line-height:1.5;">
+    ${text}
+  </p>
+`;
+
+// 🔹 CTA link (inline style)
+const linkBlock = (text: string, url: string) => `
+  <a href="${url}" style="color:#15c;text-decoration:none;font-weight:500;">
+    ${text}
+  </a>
+`;
+
+// 🔹 Bullet list (email-safe)
+const listBlock = (items: string[]) => `
+  <table width="100%" style="margin:10px 0 20px;">
+    ${items
+    .map(
+      (item) => `
+        <tr>
+          <td style="font-size:15px;padding:4px 0;">
+            • ${item}
+          </td>
+        </tr>
+      `
+    )
+    .join('')}
+  </table>
+`;
+
+const CTA_BUTTON = (text: string, url: string) => `
+  <table width="100%" style="margin:24px 0;">
+    <tr>
+      <td align="center">
+        <a href="${url}"
+           style="background:#22d3ee;
+                  color:#000;
+                  padding:12px 22px;
+                  border-radius:8px;
+                  text-decoration:none;
+                  font-weight:600;
+                  display:inline-block;">
+          ${text}
+        </a>
+      </td>
+    </tr>
+  </table>
+`;
+
+const LINKEDIN_ICON = `
+  <a href="http://linkedin.com/company/provento-ai"
+     target="_blank"
+     style="display:inline-block;margin:0 6px;">
+     
+    <img 
+      src="https://provento-public-logo.s3.us-east-1.amazonaws.com/Linked-In-logo.png"
+      width="28"
+      height="28"
+      alt="LinkedIn"
+      style="display:block;border-radius:4px;"
+    />
+
+  </a>
+`
+
+const getEmailLayout = (content: string) => {
+  const LOGO_URL = `https://provento-public-logo.s3.us-east-1.amazonaws.com/provento-logo.png`
+  const LOGO_TEXT_URL = `https://provento-public-logo.s3.us-east-1.amazonaws.com/provento-logo-with-text.png`
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,sans-serif;">
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0;">
+        <tr>
+          <td align="center">
+
+            <table width="600" cellpadding="0" cellspacing="0" 
+              style="background:#ffffff;border-radius:10px;overflow:hidden;
+                    box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+              <!-- Header -->
+              <tr>
+                <td align="center" style="padding:20px;border-bottom:1px solid #e5e7eb;">
+                  <img 
+                    src="${LOGO_TEXT_URL}" 
+                    alt="provento.ai" 
+                    width="100"
+                    style="display:block;margin:auto;"
+                  />
+                </td>
+              </tr>
+
+              <!-- Content -->
+              <tr>
+                <td style="padding:24px;color:#333;font-size:15px;line-height:1.6;">
+                  ${content}
+                  <p style="font-size: 16px; line-height: 1.5; margin: 0; padding-top: 30px;">Cheers,</p>
+                  <p style="font-size: 16px; line-height: 1.5; margin: 0;"><strong>The provento.ai Team</strong></p>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td align="center" style="padding:30px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;">
+                  
+                  <!-- Logo -->
+                  <div style="margin-bottom:12px;">
+                    <img 
+                      src="${LOGO_URL}"
+                      height="32"
+                      alt="provento.ai"
+                      style="display:block;margin:auto;"
+                    />
+                  </div>
+
+                  <!-- Copyright -->
+                  <p style="margin:0 0 14px;color:#6b7280;font-size:12px;">
+                    © ${new Date().getFullYear()} provento.ai. All rights reserved.
+                  </p>
+
+                  <!-- Social Icons -->
+                  <div style="margin-bottom:16px;">
+                    ${LINKEDIN_ICON}
+                  </div>
+
+                  <!-- Help Text -->
+                  <p style="margin:0 0 12px;color:#6b7280;font-size:13px;line-height:1.5;">
+                    If you have any questions or concerns, please contact us at 
+                    <a href="mailto:${useRuntimeConfig().sesFromEmailId}"
+                      style="color:#0ea5e9;text-decoration:none;">
+                      support
+                    </a>.
+                  </p>
+
+                  <!-- Links -->
+                  <p style="margin:0;font-size:12px;">
+                    <a href="${useRuntimeConfig().public.appUrl}"
+                      style="color:#0ea5e9;text-decoration:none;margin:0 8px;">
+                      View in Browser
+                    </a>
+                    |
+                    <a href="${useRuntimeConfig().public.appUrl}/privacy-policy"
+                      style="color:#0ea5e9;text-decoration:none;margin:0 8px;">
+                      Privacy Policy
+                    </a>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `
+}
+
+
+function generateRandomString(length = 10): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+export function generateRandomPassword() {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const passwordLength = Math.floor(Math.random() * 3) + 6; // Generate a length between 6 and 8
+  let password = '';
+  for (let i = 0; i < passwordLength; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    password += characters[randomIndex];
+  }
+  return password;
+}
+
+// Persistent suppression helpers: store last notification time per org+channel
+export const shouldNotifyChannel = async (orgId: string | number, channel: string, windowHours: number = 24) => {
+  try {
+    const res = await query(`SELECT last_notified FROM channel_notifications WHERE org_id = $1 AND channel = $2`, [orgId, channel])
+    if (!res.rows.length) return true
+    const last = res.rows[0].last_notified
+    if (!last) return true
+    const diffMs = new Date().getTime() - new Date(last).getTime()
+    return diffMs > windowHours * 3600 * 1000
+  } catch (e) {
+    console.error('shouldNotifyChannel error', e)
+    return true
+  }
+}
+
+export const markChannelNotified = async (orgId: string | number, channel: string) => {
+  try {
+    await query(`INSERT INTO channel_notifications (org_id, channel, last_notified) VALUES ($1, $2, NOW()) ON CONFLICT (org_id, channel) DO UPDATE SET last_notified = NOW()`, [orgId, channel])
+  } catch (e) {
+    console.error('markChannelNotified error', e)
+  }
+}
+
+export const generateResetLink = async (
+  email: string,
+  appUrl: string,
+  userId: string
+): Promise<{ resetLink: string }> => {
+  try {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    // Build query conditionally based on whether userId is provided
+    let userCheck;
+    if (userId) {
+      userCheck = await query(
+        'SELECT user_id FROM users WHERE email = $1 AND user_id = $2',
+        [email, userId]
+      );
+    } else {
+      userCheck = await query(
+        'SELECT user_id FROM users WHERE email = $1',
+        [email]
+      );
+    }
+
+    if (!userCheck.rows.length) {
+      throw new Error(`No user found with email: ${email}`);
+    }
+
+    const result = await query(
+      'UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE email = $3 AND user_id = $4 RETURNING user_id;',
+      [token, expiry, email, userCheck.rows[0].user_id]
+    );
+
+    if (!result.rows.length) {
+      throw new Error('Failed to update reset token.');
+    }
+
+    const resetLink = `${appUrl}/update-password?token=${encodeURIComponent(token)}`;
+    return { resetLink };
+  } catch (err) {
+    console.error('Error generating reset link:', err);
+    throw err;
+  }
+};
+
 export const sendWelcomeMail = async (name: string, email: string, password: string, portalLink: string, resetLink?: string) => {
   try {
     const config = useRuntimeConfig();
@@ -64,63 +328,44 @@ export const sendWelcomeMail = async (name: string, email: string, password: str
       `
       : '';
 
-    const htmlBody = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to provento.ai</title>
-      </head>
-      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333;">
-        <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse; background-color: #ffffff; margin: 20px auto; border-radius: 10px; box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);">
-          ${EMAIL_HEADER('Welcome to provento.ai! 🎉')}
-          <tr>
-            <td style="padding: 20px;">
-              <p style="font-size: 16px; line-height: 1.5; margin: 0 0 10px;">Hi <strong>${name}</strong>,</p>
-              <p style="font-size: 16px; line-height: 1.5; margin: 0 0 20px;">
-                We're thrilled to have you on board. With provento.ai, you can chat with your artifacts like never before—extracting insights, finding answers, and streamlining workflows effortlessly.
-              </p>
-              <h3 style="font-size: 18px; margin: 20px 0 10px;">Here's how to get started:</h3>
-              <p style="line-height: 1.5; margin: 0 0 20px;">
-                <div style="font-size: 16px;">📁  Upload a Artifact:</div>
-                <div style="font-size: 15px;">Log in to your admin portal and drag and drop the artifacts you want your users to interact with.</div>
-              </p>
-              <p style="line-height: 1.5; margin: 0 0 20px;">
-                <div style="font-size: 16px;">👥  Onboard WhatsApp Users:</div>
-                <div style="font-size: 15px;">Invite users by entering their WhatsApp number and Email ID.
-                <br />
-                They’ll receive an email with a QR Code to start chatting with artifacts on WhatsApp.</div>
-              </p>
-              <p style="line-height: 1.5; margin: 0 0 20px;">
-                <div style="font-size: 16px;">💬  Start Chatting on Slack (New!):</div>
-                <div style="font-size: 15px;">Once you connect your Slack workspace:
-                <br />
-                All users in the workspace will automatically be able to chat with your uploaded artifacts.
-                <br />
-                They simply need to open the bot in Slack and start asking questions.</div>
-              </p>
-              <p style="line-height: 1.5; margin: 0 0 20px;">
-                <div style="font-size: 16px;">🏢  Chat on Microsoft Teams:</div>
-                <div style="font-size: 15px;">Once your Teams workspace is connected,
-                <br />
-                All users can instantly start chatting with your uploaded artifacts —
-                just open the bot in Teams and ask questions!</div>
-              </p>
-              <p style="font-size: 16px; line-height: 1.5; margin: 0 0 20px;">
-                Please access our app <a href="${portalLink}" style="color: #13dcff; text-decoration: none;">here</a> with your credentials.
-              </p>
-              ${resetPasswordSection}
-              <p style="font-size: 16px; line-height: 1.5; margin: 0 0 10px;">Let's transform the way you work with artifacts! 🚀</p>
-              <p style="font-size: 16px; line-height: 1.5; margin: 0;">Cheers,</p>
-              <p style="font-size: 16px; line-height: 1.5; margin: 0;"><strong>The provento.ai Team</strong></p>
-            </td>
-          </tr>
-          ${EMAIL_FOOTER}
-        </table>
-      </body>
-      </html>
-    `;
+    const htmlBody = getEmailLayout(`
+      ${textBlock(`Hi <strong>${name}</strong>,`)}
+
+      ${textBlock(`We're thrilled to have you on board. With provento.ai, you can chat with your artifacts like never before—extracting insights, finding answers, and streamlining workflows effortlessly.`)}
+
+      <h3 style="margin:20px 0 10px;">Here's how to get started:</h3>
+
+      ${sectionBlock(
+      '📁 Upload a Artifact:',
+      'Log in to your admin portal and drag and drop the artifacts you want your users to interact with.'
+    )}
+
+      ${sectionBlock(
+      '👥 Onboard WhatsApp Users:',
+      `Invite users by entering their WhatsApp number and Email ID.<br/>
+        They’ll receive an email with a QR Code to start chatting with artifacts on WhatsApp.`
+    )}
+
+      ${sectionBlock(
+      '💬 Start Chatting on Slack (New!):',
+      `Once you connect your Slack workspace:<br/>
+        All users in the workspace will automatically be able to chat with your uploaded artifacts.<br/>
+        They simply need to open the bot in Slack and start asking questions.`
+    )}
+
+      ${sectionBlock(
+      '🏢 Chat on Microsoft Teams:',
+      `Once your Teams workspace is connected,<br/>
+        All users can instantly start chatting with your uploaded artifacts —<br/>
+        just open the bot in Teams and ask questions!`
+    )}
+
+      ${textBlock(`Please access our app ${linkBlock('here', portalLink)} with your credentials.`)}
+
+      ${resetPasswordSection}
+
+      ${textBlock(`Let's transform the way you work with artifacts! 🚀`)}
+    `);
 
     const msg = {
       to: email,
@@ -173,60 +418,32 @@ export const sendDepartmentAdminWelcomeMail = async (
       `
       : `<p style="font-size: 15px;">Department details will be visible after login.</p>`
 
-    const htmlBody = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f9f9f9;">
-        <table align="center" width="600"
-               style="background:#ffffff;border-radius:10px;
-                      margin:20px auto;padding:20px;">
-          ${EMAIL_HEADER('Department Admin Role Assigned – Provento')}
-          <tr>
-            <td style="padding:10px 20px;">
-              <p style="font-size:16px;">Hello <strong>${name}</strong>,</p>
+    const htmlBody = getEmailLayout(`
+      ${textBlock(`Hello <strong>${name}</strong>,`)}
 
-              <p style="font-size:16px;">
-                We’re pleased to inform you that you have been assigned the
-                <strong>Department Admin</strong> role on <strong>Provento</strong>.
-              </p>
+      ${textBlock(`We’re pleased to inform you that you have been assigned the <strong>Department Admin</strong> role on <strong>Provento</strong>.`)}
 
-              <h3 style="margin-top:20px;">Your Role & Access</h3>
-              <p style="font-size:15px;">As a Department Admin, you now have access to:</p>
+      <h3 style="margin-top:20px;">Your Role & Access</h3>
 
-              <ul style="font-size:15px; line-height:1.6;">
-                <li>Manage artifacts (artifacts, policies, and knowledge sources) for your department</li>
-                <li>Assign and unassign users within your department</li>
-                <li>Oversee and maintain department-specific information and configurations</li>
-              </ul>
+      ${listBlock([
+      'Manage artifacts (artifacts, policies, and knowledge sources) for your department',
+      'Assign and unassign users within your department',
+      'Oversee and maintain department-specific information and configurations',
+    ])}
 
-              <h3 style="margin-top:20px;">Assigned Department</h3>
-              <p style="font-size:15px;">You have been assigned as the Department Admin for:</p>
-              ${departmentList}
+      <h3 style="margin-top:20px;">Assigned Department</h3>
 
-              <p style="font-size:16px; margin-top:20px;">
-                You can log in to the portal here:
-                <a href="${portalLink}" style="color:#13dcff;text-decoration:none;">
-                  ${portalLink}
-                </a>
-              </p>
+      ${departments.length
+        ? listBlock(departments)
+        : textBlock('Department details will be visible after login.')
+      }
 
-              ${resetPasswordSection}
+      ${textBlock(`You can log in to the portal ${linkBlock(portalLink, portalLink)}`)}
 
-              <p style="font-size:16px; margin-top:20px;">
-                Let's transform the way you work with artifacts! 🚀
-              </p>
+      ${resetPasswordSection}
 
-              <p style="margin-top:20px;">
-                Cheers,<br />
-                <strong>The provento.ai Team</strong>
-              </p>
-            </td>
-          </tr>
-          ${EMAIL_FOOTER}
-        </table>
-      </body>
-      </html>
-    `
+      ${textBlock(`Let's transform the way you work with artifacts! 🚀`)}
+    `);
 
     await sendEmail({
       to: email,
@@ -256,38 +473,15 @@ export const sendResetPasswordMail = async (name: string, email: string, resetLi
     const config = useRuntimeConfig();
 
 
-    const htmlBody = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Password Reset Request</title>
-    </head>
-    <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333;">
-      <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse; background-color: #ffffff; margin: 20px auto; border-radius: 10px; box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);">
-        ${EMAIL_HEADER('Password Reset Request')}
-        <tr>
-          <td style="padding: 20px;">
-            <p style="font-size: 16px; line-height: 1.5; margin: 0 0 10px;">Hi <strong>${name}</strong>,</p>
-            <p style="font-size: 16px; line-height: 1.5; margin: 0 0 20px;">
-              We received a request to reset your password. To proceed, please click the link below:
-            </p>
-            <p style="font-size: 16px; line-height: 1.5; margin: 0 0 20px;">
-              <a href="${resetLink}" style="color: #13dcff; text-decoration: none; font-weight: bold;">Reset Password</a>
-            </p>
-            <p style="font-size: 16px; line-height: 1.5; margin: 0 0 20px;">
-              If you did not request this, please ignore this email. Your password will not be changed.
-            </p>
-            <p style="font-size: 16px; line-height: 1.5; margin: 0;">Cheers,</p>
-            <p style="font-size: 16px; line-height: 1.5; margin: 0;"><strong>The provento.ai Team</strong></p>
-          </td>
-        </tr>
-        ${EMAIL_FOOTER}
-      </table>
-    </body>
-    </html>
-  `;
+    const htmlBody = getEmailLayout(`
+      ${textBlock(`Hi <strong>${name}</strong>,`)}
+
+      ${textBlock(`We received a request to reset your password. To proceed, please click below:`)}
+
+      ${CTA_BUTTON('Reset Password', resetLink)}
+
+      ${textBlock(`If you did not request this, please ignore this email. Your password will not be changed.`)}
+    `);
 
     const msg = {
       to: email,
@@ -308,38 +502,15 @@ export const sendPasswordUpdatedMail = async (name: string, email: string) => {
     const config = useRuntimeConfig();
 
 
-    const htmlBody = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Password Successfully Updated</title>
-    </head>
-    <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333;">
-      <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse; background-color: #ffffff; margin: 20px auto; border-radius: 10px; box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);">
-        ${EMAIL_HEADER('Your Password Has Been Updated')}
-        <tr>
-          <td style="padding: 20px;">
-            <p style="font-size: 16px; line-height: 1.5; margin: 0 0 10px;">Hi <strong>${name}</strong>,</p>
-            <p style="font-size: 16px; line-height: 1.5; margin: 0 0 20px;">
-              Your password has been successfully updated. If you did not initiate this change, please contact us immediately.
-            </p>
-            <p style="font-size: 16px; line-height: 1.5; margin: 0 0 20px;">
-              For your security, we recommend logging in to your account to confirm the changes and update any necessary settings.
-            </p>
-            <p style="font-size: 16px; line-height: 1.5; margin: 0 0 10px;">
-              If you have any concerns or need assistance, feel free to reach out to us at any time.
-            </p>
-            <p style="font-size: 16px; line-height: 1.5; margin: 0 0 10px;">Cheers,</p>
-            <p style="font-size: 16px; line-height: 1.5; margin: 0;"><strong>The provento.ai Team</strong></p>
-          </td>
-        </tr>
-        ${EMAIL_FOOTER}
-      </table>
-    </body>
-    </html>
-  `;
+    const htmlBody = getEmailLayout(`
+      ${textBlock(`Hi <strong>${name}</strong>,`)}
+
+      ${textBlock(`Your password has been successfully updated. If you did not initiate this change, please contact us immediately.`)}
+
+      ${textBlock(`For your security, we recommend logging in to your account to confirm the changes and update any necessary settings.`)}
+
+      ${textBlock(`If you have any concerns or need assistance, feel free to reach out to us at any time.`)}
+    `);
 
     const msg = {
       to: email,
@@ -354,15 +525,6 @@ export const sendPasswordUpdatedMail = async (name: string, email: string) => {
     throw new Error(`Failed to send password updated email: ${error.response?.body?.errors[0]?.message || error.message}`);
   }
 };
-
-function generateRandomString(length = 10): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
 
 export const sendUserAdditionMail = async (name: string, email: string, qrCode: string, orgIdParam?: string | number) => {
   try {
@@ -411,135 +573,77 @@ export const sendUserAdditionMail = async (name: string, email: string, qrCode: 
     const slack_enabled = channels.includes('slack')
     const teams_enabled = channels.includes('teams')
 
-    const whatsappBlock = whatsapp_enabled
-      ? `\n          <h4 style="margin-bottom:6px">WhatsApp Bot �� Scan the QR code below to start chatting.</h4>\n        `
-      : ''
+    const htmlBody = getEmailLayout(`
+      ${textBlock(`Hi <strong>${name}</strong>,`)}
 
-    const slackBlock = slack_enabled
-      ? `\n          <h4 style="margin-bottom:6px">Slack Bot – Add the provento.ai app to your Slack workspace (your admin has already set up the connection).</h4>\n        `
-      : ''
+      ${textBlock(`We are excited to introduce the Artifact Chatting Bot <strong>“provento.ai”</strong>! With this tool, managing and accessing organization artifacts and information has never been easier. You can now chat with your artifacts across multiple platforms.`)}
 
-    const teamsBlock = teams_enabled
-      ? `\n          <h4 style="margin-bottom:6px">Microsoft Teams Bot – Add the provento.ai app to your Teams account (your admin has already connected Teams).</h4>\n        `
-      : ''
+      <h3 style="margin:20px 0 10px;">Available for you right now:</h3>
 
-    const qrHtml = (whatsapp_enabled && orgQr) ? `\n      <div style="text-align:center;margin:16px 0">\n        <img src="${orgQr}" alt="WhatsApp QR Code" style="max-width:240px;border:1px solid #ccc;border-radius:8px"/>\n      </div>\n    ` : ''
+      ${whatsapp_enabled ? sectionBlock(
+      'WhatsApp Bot',
+      'Scan the QR code below to start chatting.'
+    ) : ''}
 
-    const whatsappSteps = whatsapp_enabled
-      ? `\n        <h5>For WhatsApp:</h5>\n        <ol>\n          <li>Open WhatsApp on your phone.</li>\n          <li>Go to Settings → tap the QR code icon next to your name.</li>\n          <li>Tap Scan Code and scan the QR code below.</li>\n          <li>WhatsApp will automatically open the bot conversation.</li>\n        </ol>\n      `
-      : ''
+      ${slack_enabled ? sectionBlock(
+      'Slack Bot',
+      'Add the provento.ai app to your Slack workspace (your admin has already set up the connection).'
+    ) : ''}
 
-    const slackSteps = slack_enabled
-      ? `\n        <h5>For Slack:</h5>\n        <ol>\n          <li>Open Slack.</li>\n          <li>Go to Apps → Search for provento.ai.</li>\n          <li>Click Add and start chatting with your artifacts.</li>\n        </ol>\n      `
-      : ''
+      ${teams_enabled ? sectionBlock(
+      'Microsoft Teams Bot',
+      'Add the provento.ai app to your Teams account (your admin has already connected Teams).'
+    ) : ''}
 
-    const teamsSteps = teams_enabled
-      ? `\n        <h5>For Microsoft Teams:</h5>\n        <ol>\n          <li>Open Teams.</li>\n          <li>Go to Apps → Search for provento.ai.</li>\n          <li>Add the app to your Teams account and start chatting.</li>\n        </ol>\n      `
-      : ''
+      ${(whatsapp_enabled && orgQr)
+        ? `
+            <table width="100%" style="margin:20px 0;text-align:center;">
+              <tr>
+                <td>
+                  <img src="${orgQr}" style="max-width:240px;border:1px solid #ccc;border-radius:8px"/>
+                </td>
+              </tr>
+            </table>
+          `
+        : ''
+      }
 
-    const htmlBody = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Invitation to Access provento.ai</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          margin: 0;
-          padding: 0;
-          background-color: #f9f9f9;
-          color: #333;
-        }
-        .container {
-          max-width: 600px;
-          margin: 20px auto;
-          background-color: #ffffff;
-          border-radius: 8px;
-          box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-          overflow: hidden;
-        }
-        .header {
-          background-color: #13dcff;
-          color: #ffffff;
-          padding: 20px;
-          text-align: center;
-        }
-        .header h1 {
-          margin: 0;
-          font-size: 24px;
-        }
-        .content {
-          padding: 20px;
-        }
-        .content p {
-          margin: 10px 0;
-          font-size: 16px;
-          line-height: 1.5;
-        }
-        .qr-code {
-          text-align: center;
-          margin: 20px 0;
-        }
-        .qr-code img {
-          max-width: 200px;
-          border: 1px solid #ccc;
-          border-radius: 8px;
-        }
-        .steps {
-          margin: 20px 0;
-          padding-left: 20px;
-        }
-        .steps li {
-          margin: 10px 0;
-        }
-        .footer {
-          background-color: #f1f1f1;
-          color: #777;
-          text-align: center;
-          padding: 10px 20px;
-          font-size: 14px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        ${EMAIL_HEADER('Invitation to Access provento.ai')}
-        <div class="content">
-          <p>Hi <strong>${name}</strong>,</p>
-          <p>We are excited to introduce the Artifact Chatting Bot <strong>“provento.ai”</strong>! With this tool, managing and accessing organization artifacts and information has never been easier. You can now chat with your artifacts across multiple platforms.</p>
+      <h3 style="margin:20px 0 10px;">Steps to Access</h3>
 
-          <h3>Available for you right now:</h3>
+      ${whatsapp_enabled ? sectionBlock(
+        'For WhatsApp:',
+        `1. Open WhatsApp on your phone.<br/>
+        2. Go to Settings → tap the QR code icon next to your name.<br/>
+        3. Tap Scan Code and scan the QR code.<br/>
+        4. WhatsApp will automatically open the bot conversation.`
+      ) : ''}
 
-          ${whatsappBlock}
-          ${slackBlock}
-          ${teamsBlock}
+      ${slack_enabled ? sectionBlock(
+        'For Slack:',
+        `1. Open Slack.<br/>
+        2. Go to Apps → Search for provento.ai.<br/>
+        3. Click Add and start chatting.`
+      ) : ''}
 
-          ${qrHtml}
+      ${teams_enabled ? sectionBlock(
+        'For Microsoft Teams:',
+        `1. Open Teams.<br/>
+        2. Go to Apps → Search for provento.ai.<br/>
+        3. Add the app and start chatting.`
+      ) : ''}
 
-          <h3>Steps to Access</h3>
+      ${textBlock(`Once you’ve followed the steps above, you’ll be connected to our bot and ready to explore all the features we’ve built just for you!`)}
 
-          ${whatsappSteps}
-          ${slackSteps}
-          ${teamsSteps}
+      <h3 style="margin:20px 0 10px;">Features of provento.ai:</h3>
 
-          <p>Once you’ve followed the steps above, you’ll be connected to our bot and ready to explore all the features we’ve built just for you!</p>
-          <h3>Features of provento.ai:</h3>
-          <ul class="steps">
-            <li>Chat with organization artifacts quickly by asking the bot.</li>
-            <li>Find quick answers to questions related to your organization artifacts.</li>
-            <li>This bot will simplify your organization interactions and make artifact chatting seamless.</li>
-          </ul>
-          <p>We’re excited to have you try it out and hope it makes your experience smoother!</p>
-          <p>Best regards,</p>
-          <p><strong>The provento.ai Team</strong></p>
-        </div>
-        ${EMAIL_FOOTER}
-      </div>
-    </body>
-    </html>
-    `;
+      ${listBlock([
+        'Chat with organization artifacts quickly by asking the bot.',
+        'Find quick answers to questions related to your organization artifacts.',
+        'This bot will simplify your organization interactions and make artifact chatting seamless.'
+      ])}
+
+      ${textBlock(`We’re excited to have you try it out and hope it makes your experience smoother!`)}
+    `);
 
     const msg = {
       to: email,
@@ -563,7 +667,6 @@ export const sendUserAdditionMail = async (name: string, email: string, qrCode: 
 export const sendChannelAvailableMail = async (name: string, email: string, channel: 'whatsapp' | 'slack' | 'teams', qrCode?: string, orgIdParam?: string | number) => {
   try {
     const config = useRuntimeConfig();
-
 
     // Determine available channels for the user's org (prefer orgIdParam if provided)
     let whatsapp_enabled = false
@@ -614,25 +717,6 @@ export const sendChannelAvailableMail = async (name: string, email: string, chan
       console.warn('Could not resolve QR url for channel available email:', err)
     }
 
-    // Build HTML according to requested template
-    const whatsappSection = whatsapp_enabled
-      ? `
-        <h4>WhatsApp Bot – Scan the QR code below to start chatting.</h4>
-      `
-      : ''
-
-    const slackSection = slack_enabled
-      ? `
-        <h4>Slack Bot – Add the provento.ai app to your Slack workspace (your admin has already set up the connection).</h4>
-      `
-      : ''
-
-    const teamsSection = teams_enabled
-      ? `
-        <h4>Microsoft Teams Bot – Add the provento.ai app to your Teams account (your admin has already connected Teams).</h4>
-      `
-      : ''
-
     const qrHtml = (whatsapp_enabled && orgQr) ? `<div style="text-align:center;margin:16px 0"><img src="${orgQr}" alt="WhatsApp QR Code" style="max-width:240px;border:1px solid #ccc;border-radius:8px"/></div>` : ''
 
     const whatsappSteps = whatsapp_enabled
@@ -673,44 +757,41 @@ export const sendChannelAvailableMail = async (name: string, email: string, chan
 
     const channelLabel = channel === 'whatsapp' ? 'WhatsApp' : channel === 'slack' ? 'Slack' : 'Microsoft Teams'
 
-    const htmlBody = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${channelLabel} is available — provento.ai</title>
-      </head>
-      <body style="margin:0;padding:0;font-family:Arial,sans-serif;color:#333;background:#f4f6f8;">
-        <div style="max-width:680px;margin:24px auto;background:#ffffff;padding:28px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.06);">
-          ${EMAIL_HEADER(channelLabel + ' is now available')}
-          <div style="text-align:center;margin-top:8px;margin-bottom:8px"><p style="color:#6b7280;margin:0">Hi <strong>${name}</strong>, good news — your organization can now use ${channelLabel} with provento.ai.</p></div>
+    const htmlBody = getEmailLayout(`
+      ${textBlock(`Hi <strong>${name}</strong>, good news — your organization can now use ${channelLabel} with provento.ai.`)}
 
-          <div style="margin-top:18px">
-            ${whatsapp_enabled ? `<div style="margin-bottom:14px;padding:12px;border-radius:8px;background:#f8fafc;border:1px solid #e6eef5"><strong>WhatsApp</strong><p style="margin:6px 0 0;color:#374151">Scan the QR code below with WhatsApp to start chatting with the bot instantly.</p></div>` : ''}
-            ${slack_enabled ? `<div style="margin-bottom:14px;padding:12px;border-radius:8px;background:#f8fafc;border:1px solid #e6eef5"><strong>Slack</strong><p style="margin:6px 0 0;color:#374151">Add the provento.ai app to your Slack workspace from the Apps section and start asking questions from your artifacts.</p></div>` : ''}
-            ${teams_enabled ? `<div style="margin-bottom:14px;padding:12px;border-radius:8px;background:#f8fafc;border:1px solid #e6eef5"><strong>Microsoft Teams</strong><p style="margin:6px 0 0;color:#374151">Install the provento.ai app in Teams to chat with your organization artifacts right from Teams.</p></div>` : ''}
-          </div>
+      ${whatsapp_enabled ? sectionBlock(
+      'WhatsApp',
+      'Scan the QR code below with WhatsApp to start chatting with the bot instantly.'
+    ) : ''}
 
-          <div style="margin-top:18px">
-            <h3 style="margin:0 0 10px 0;color:#0b7fa7">How to get started</h3>
-            ${whatsappSteps}
-            ${slackSteps}
-            ${teamsSteps}
-          </div>
+      ${slack_enabled ? sectionBlock(
+      'Slack',
+      'Add the provento.ai app to your Slack workspace from the Apps section and start asking questions.'
+    ) : ''}
 
-          <hr style="border:none;border-top:1px solid #eef2f7;margin:20px 0"/>
+      ${teams_enabled ? sectionBlock(
+      'Microsoft Teams',
+      'Install the provento.ai app in Teams to chat with your organization artifacts.'
+    ) : ''}
 
-          <p style="color:#6b7280;font-size:13px">If you need any help getting started, reply to this email or contact your admin.</p>
-          <p style="color:#6b7280;font-size:13px;margin-top:6px">Best regards,<br/>The provento.ai Team</p>
-        </div>
+      ${(whatsapp_enabled && orgQr)
+        ? `
+            <table width="100%" style="margin:20px 0;text-align:center;">
+              <tr><td><img src="${orgQr}" style="max-width:240px;border:1px solid #ccc;border-radius:8px"/></td></tr>
+            </table>
+          `
+        : ''
+      }
 
-        <div style="max-width:680px;margin:8px auto;text-align:center;color:#9aa4ae;font-size:12px">
-          <p style="margin:8px 0">© 2025 provento.ai. All rights reserved.</p>
-        </div>
-      </body>
-      </html>
-    `;
+      <h3 style="margin:20px 0 10px;">How to get started</h3>
+
+      ${whatsappSteps ? sectionBlock('For WhatsApp:', whatsappSteps) : ''}
+      ${slackSteps ? sectionBlock('For Slack:', slackSteps) : ''}
+      ${teamsSteps ? sectionBlock('For Microsoft Teams:', teamsSteps) : ''}
+
+      ${textBlock(`If you need any help getting started, reply to this email or contact your admin.`)}
+    `);
 
     const msg = {
       to: email,
@@ -726,30 +807,6 @@ export const sendChannelAvailableMail = async (name: string, email: string, chan
     // don't throw to avoid failing main transaction
   }
 };
-
-
-// Persistent suppression helpers: store last notification time per org+channel
-export const shouldNotifyChannel = async (orgId: string | number, channel: string, windowHours: number = 24) => {
-  try {
-    const res = await query(`SELECT last_notified FROM channel_notifications WHERE org_id = $1 AND channel = $2`, [orgId, channel])
-    if (!res.rows.length) return true
-    const last = res.rows[0].last_notified
-    if (!last) return true
-    const diffMs = new Date().getTime() - new Date(last).getTime()
-    return diffMs > windowHours * 3600 * 1000
-  } catch (e) {
-    console.error('shouldNotifyChannel error', e)
-    return true
-  }
-}
-
-export const markChannelNotified = async (orgId: string | number, channel: string) => {
-  try {
-    await query(`INSERT INTO channel_notifications (org_id, channel, last_notified) VALUES ($1, $2, NOW()) ON CONFLICT (org_id, channel) DO UPDATE SET last_notified = NOW()`, [orgId, channel])
-  } catch (e) {
-    console.error('markChannelNotified error', e)
-  }
-}
 
 export const sendOrganizationOnboardedMail = async ({
   orgName,
@@ -777,42 +834,54 @@ export const sendOrganizationOnboardedMail = async ({
       ? 'A new organization has been onboarded.'
       : `A new organization has been onboarded via ${domain || 'unknown'} environment.`;
 
-    const htmlBody = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <title>New Organization Onboarded</title>
-      </head>
-      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333;">
-        <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse; background-color: #ffffff; margin: 20px auto; border-radius: 10px;">
-          ${EMAIL_HEADER('New Organization Onboarded')}
-          <tr>
-            <td style="padding: 20px;">
-              <p style="font-size: 16px; line-height: 1.5;">${headerMessage}</p>
+    const htmlBody = getEmailLayout(`
+      ${textBlock(headerMessage)}
 
-              <h3 style="font-size: 18px; margin-top: 20px;">Organization Details:</h3>
-              <table width="100%" style="font-size: 15px; margin: 15px 0; border-collapse: collapse;">
-                <tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Organization:</strong></td><td style="padding: 5px 0;">${orgName}</td></tr>
-                ${adminName ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Admin Name:</strong></td><td style="padding: 5px 0;">${adminName}</td></tr>` : ''}
-                ${adminEmail ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Admin Email:</strong></td><td style="padding: 5px 0;">${adminEmail}</td></tr>` : ''}
-                ${adminPhone ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Admin Phone:</strong></td><td style="padding: 5px 0;">${adminPhone}</td></tr>` : ''}
-              </table>
+      <h3 style="margin:20px 0 10px;">Organization Details:</h3>
 
-              <p style="font-size: 16px; line-height: 1.5;">Please reach out to the admin to complete account setup and schedule any onboarding sessions if required.</p>
+      <table width="100%" style="font-size:14px;line-height:1.6;border-collapse:collapse;">
+        <tr>
+          <td style="padding:6px 10px 6px 0;vertical-align:top;">
+            <strong>Organization:</strong>
+          </td>
+          <td style="padding:6px 0;">
+            ${orgName}
+          </td>
+        </tr>
 
-              <p style="font-size: 16px; line-height: 1.5;">Thanks & Regards,<br><strong>provento.ai Team</strong></p>
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding: 10px 20px; background-color: #f1f1f1; border-radius: 0 0 10px 10px;">
-              <p style="font-size: 14px; color: #777; margin: 0;">© 2025 provento.ai. All rights reserved.</p>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
+        ${adminName
+        ? `
+            <tr>
+              <td style="padding:6px 10px 6px 0;"><strong>Admin Name:</strong></td>
+              <td style="padding:6px 0;">${adminName}</td>
+            </tr>
+          `
+        : ''
+      }
+
+        ${adminEmail
+        ? `
+            <tr>
+              <td style="padding:6px 10px 6px 0;"><strong>Admin Email:</strong></td>
+              <td style="padding:6px 0;">${adminEmail}</td>
+            </tr>
+          `
+        : ''
+      }
+
+        ${adminPhone
+        ? `
+            <tr>
+              <td style="padding:6px 10px 6px 0;"><strong>Admin Phone:</strong></td>
+              <td style="padding:6px 0;">${adminPhone}</td>
+            </tr>
+          `
+        : ''
+      }
+      </table>
+
+      ${textBlock(`Please reach out to the admin to complete account setup and schedule any onboarding sessions if required.`)}
+    `);
 
     const salesTeamEmails = (salesTeamList as string).split(',').map((e: string) => e.trim());
 
@@ -871,51 +940,26 @@ export const sendMeetingRequestMail = async ({
       ? 'We have received a new <strong>Demo Request</strong> via the website.'
       : `We have received a new <strong>Demo Request</strong> request via the <strong>${domain}</strong> website.`;
 
-    const htmlBody = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <title>Book Meeting Request</title>
-      </head>
-      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333;">
-        <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse; background-color: #ffffff; margin: 20px auto; border-radius: 10px; box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);">
-          ${EMAIL_HEADER('Demo Request')}
-          <tr>
-            <td style="padding: 20px;">
-              <p style="font-size: 16px; line-height: 1.5;">Dear Sales Team,</p>
-              <p style="font-size: 16px; line-height: 1.5;">
-                ${headerMessage}
-              </p>
+    const htmlBody = getEmailLayout(`
+      ${textBlock(`Dear Sales Team,`)}
 
-              <h3 style="font-size: 18px; margin-top: 20px;">Contact Details:</h3>
-              <table width="100%" style="font-size: 15px; margin: 15px 0; border-collapse: collapse;">
-                <tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Full Name:</strong></td><td style="padding: 5px 0;">${name} ${lastname}</td></tr>
-                <tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Email:</strong></td><td style="padding: 5px 0;">${email}</td></tr>
-                ${phone ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Phone Number:</strong></td><td style="padding: 5px 0;">${phone}</td></tr>` : ''}
-                ${company ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Company:</strong></td><td style="padding: 5px 0;">${company}</td></tr>` : ''}
-                ${jobTitle ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Job Title:</strong></td><td style="padding: 5px 0;">${jobTitle}</td></tr>` : ''}
-                ${companySize ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Company Size:</strong></td><td style="padding: 5px 0;">${getCompanySizeLabel(companySize)}</td></tr>` : ''}
-                ${requestFor ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Request For:</strong></td><td style="padding: 5px 0;">${getRequestForLabel(requestFor)}</td></tr>` : ''}
-                ${message ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Message:</strong></td><td style="padding: 5px 0;">${message}</td></tr>` : ''}
-              </table>
+      ${textBlock(headerMessage)}
 
-              <p style="font-size: 16px; line-height: 1.5;">
-                Please follow up with this user to schedule the demo session at your earliest convenience.
-              </p>
+      <h3 style="margin:20px 0 10px;">Contact Details:</h3>
 
-              <p style="font-size: 16px; line-height: 1.5;">Thanks & Regards,<br><strong>provento.ai Team</strong></p>
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding: 10px 20px; background-color: #f1f1f1; border-radius: 0 0 10px 10px;">
-              <p style="font-size: 14px; color: #777; margin: 0;">© 2025 provento.ai. All rights reserved.</p>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
+      <table style="font-size:14px;line-height:1.6;">
+        <tr><td><strong>Full Name:</strong></td><td>${name} ${lastname}</td></tr>
+        <tr><td><strong>Email:</strong></td><td>${email}</td></tr>
+        ${phone ? `<tr><td><strong>Phone Number:</strong></td><td>${phone}</td></tr>` : ''}
+        ${company ? `<tr><td><strong>Company:</strong></td><td>${company}</td></tr>` : ''}
+        ${jobTitle ? `<tr><td><strong>Job Title:</strong></td><td>${jobTitle}</td></tr>` : ''}
+        ${companySize ? `<tr><td><strong>Company Size:</strong></td><td>${getCompanySizeLabel(companySize)}</td></tr>` : ''}
+        ${requestFor ? `<tr><td><strong>Request For:</strong></td><td>${getRequestForLabel(requestFor)}</td></tr>` : ''}
+        ${message ? `<tr><td><strong>Message:</strong></td><td>${message}</td></tr>` : ''}
+      </table>
+
+      ${textBlock(`Please follow up with this user to schedule the demo session at your earliest convenience.`)}
+    `);
 
     const salesTeamEmails = (salesTeamList2 as string).split(',').map(email => email.trim());
 
@@ -932,49 +976,28 @@ export const sendMeetingRequestMail = async ({
 
     // Send confirmation email to the user who submitted the demo request
     try {
-      const userHtmlBody = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <title>Demo Booking Confirmation</title>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333;">
-          <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse; background-color: #ffffff; margin: 20px auto; border-radius: 10px;">
-            ${EMAIL_HEADER('Demo Booking Confirmation')}
-            <tr>
-              <td style="padding: 20px;">
-                <p style="font-size: 16px; line-height: 1.5;">Hi <strong>${name} ${lastname}</strong>,</p>
-                <p style="font-size: 16px; line-height: 1.5;">Thank you for requesting a demo with provento.ai. We have received your request and our sales team will reach out to you shortly to confirm the demo time and share meeting details.</p>
+      const userHtmlBody = getEmailLayout(`
+        ${textBlock(`Hi <strong>${name} ${lastname}</strong>,`)}
 
-                <h3 style="font-size: 18px; margin-top: 20px;">Your submitted details:</h3>
-                <table width="100%" style="font-size: 15px; margin: 15px 0; border-collapse: collapse;">
-                  <tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Full Name:</strong></td><td style="padding: 5px 0;">${name} ${lastname}</td></tr>
-                  <tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Email:</strong></td><td style="padding: 5px 0;">${email}</td></tr>
-                  ${phone ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Phone Number:</strong></td><td style="padding: 5px 0;">${phone}</td></tr>` : ''}
-                  ${company ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Company:</strong></td><td style="padding: 5px 0;">${company}</td></tr>` : ''}
-                  ${jobTitle ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Job Title:</strong></td><td style="padding: 5px 0;">${jobTitle}</td></tr>` : ''}
-                  ${companySize ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Company Size:</strong></td><td style="padding: 5px 0;">${getCompanySizeLabel(companySize)}</td></tr>` : ''}
-                  ${requestFor ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Request For:</strong></td><td style="padding: 5px 0;">${getRequestForLabel(requestFor)}</td></tr>` : ''}
-                  ${message ? `<tr><td style="padding: 5px 10px 5px 0; vertical-align: top;"><strong>Message:</strong></td><td style="padding: 5px 0;">${message}</td></tr>` : ''}
-                </table>
+        ${textBlock(`Thank you for requesting a demo with provento.ai. We have received your request and our sales team will reach out shortly.`)}
 
-                <p style="font-size: 16px; line-height: 1.5;">Once the demo is scheduled we'll send a calendar invite containing the confirmed date/time, timezone and the meeting link (Zoom/Google Meet). If you have a preferred time or timezone, please reply to this email after you receive a message from our sales team.</p>
+        <h3 style="margin:20px 0 10px;">Your submitted details:</h3>
 
-                <p style="font-size: 16px; line-height: 1.5;">If you need immediate assistance, contact us at <a href="mailto:contact@provento.ai">contact@provento.ai</a>.</p>
+        <table style="font-size:14px;line-height:1.6;">
+          <tr><td><strong>Full Name:</strong></td><td>${name} ${lastname}</td></tr>
+          <tr><td><strong>Email:</strong></td><td>${email}</td></tr>
+          ${phone ? `<tr><td><strong>Phone:</strong></td><td>${phone}</td></tr>` : ''}
+          ${company ? `<tr><td><strong>Company:</strong></td><td>${company}</td></tr>` : ''}
+          ${jobTitle ? `<tr><td><strong>Job Title:</strong></td><td>${jobTitle}</td></tr>` : ''}
+          ${companySize ? `<tr><td><strong>Company Size:</strong></td><td>${getCompanySizeLabel(companySize)}</td></tr>` : ''}
+          ${requestFor ? `<tr><td><strong>Request For:</strong></td><td>${getRequestForLabel(requestFor)}</td></tr>` : ''}
+          ${message ? `<tr><td><strong>Message:</strong></td><td>${message}</td></tr>` : ''}
+        </table>
 
-                <p style="font-size: 16px; line-height: 1.5;">Thanks & Regards,<br><strong>provento.ai Team</strong></p>
-              </td>
-            </tr>
-            <tr>
-              <td align="center" style="padding: 10px 20px; background-color: #f1f1f1; border-radius: 0 0 10px 10px;">
-                <p style="font-size: 14px; color: #777; margin: 0;">© 2025 provento.ai. All rights reserved.</p>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
-      `;
+        ${textBlock(`Once scheduled, we’ll send a calendar invite with meeting details.`)}
+
+        ${textBlock(`If you need immediate assistance, contact us at contact@provento.ai.`)}
+      `);
 
       const userMsg = {
         to: email,
@@ -996,57 +1019,71 @@ export const sendMeetingRequestMail = async ({
 };
 
 
-export function generateRandomPassword() {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const passwordLength = Math.floor(Math.random() * 3) + 6; // Generate a length between 6 and 8
-  let password = '';
-  for (let i = 0; i < passwordLength; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    password += characters[randomIndex];
-  }
-  return password;
-}
-
-export const generateResetLink = async (
-  email: string,
-  appUrl: string,
-  userId: string
-): Promise<{ resetLink: string }> => {
+export const sendProviderRequestMail = async ({
+  provider_name,
+  website_url,
+  notes,
+  contact_email,
+  requested_by,
+  organization_name,
+}: {
+  provider_name: string
+  website_url: string
+  notes?: string
+  contact_email: string
+  requested_by?: string
+  organization_name?: string
+}) => {
   try {
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const config = useRuntimeConfig()
 
-    // Build query conditionally based on whether userId is provided
-    let userCheck;
-    if (userId) {
-      userCheck = await query(
-        'SELECT user_id FROM users WHERE email = $1 AND user_id = $2',
-        [email, userId]
-      );
-    } else {
-      userCheck = await query(
-        'SELECT user_id FROM users WHERE email = $1',
-        [email]
-      );
-    }
+    // ✅ Modules formatting
+    // const modulesList =
+    //   modules && modules.length
+    //     ? `<ul style="padding-left:18px;">
+    //           ${modules.map((m) => `<li>${m}</li>`).join('')}
+    //         </ul>`
+    //     : `<p style="color:#777;">Not specified</p>`
 
-    if (!userCheck.rows.length) {
-      throw new Error(`No user found with email: ${email}`);
-    }
+    const htmlBody = getEmailLayout(`
+      ${textBlock(`A new application integration request has been submitted.`)}
 
-    const result = await query(
-      'UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE email = $3 AND user_id = $4 RETURNING user_id;',
-      [token, expiry, email, userCheck.rows[0].user_id]
-    );
+      <h3 style="margin:20px 0 10px;">Request Details</h3>
 
-    if (!result.rows.length) {
-      throw new Error('Failed to update reset token.');
-    }
+      <table style="font-size:14px;line-height:1.6;">
+        <tr><td><strong>Organization:</strong></td><td>${organization_name || '-'}</td></tr>
+        <tr><td><strong>Requested By:</strong></td><td>${requested_by || '-'}</td></tr>
+        <tr><td><strong>Contact Email:</strong></td><td>${contact_email}</td></tr>
+      </table>
 
-    const resetLink = `${appUrl}/update-password?token=${encodeURIComponent(token)}`;
-    return { resetLink };
-  } catch (err) {
-    console.error('Error generating reset link:', err);
-    throw err;
+      <h3 style="margin:20px 0 10px;">Application Details</h3>
+
+      <table style="font-size:14px;line-height:1.6;">
+        <tr><td><strong>Application Name:</strong></td><td>${provider_name}</td></tr>
+        <tr><td><strong>Website:</strong></td><td>${linkBlock(website_url, website_url)}</td></tr>
+      </table>
+
+      ${notes
+        ? `<h3 style="margin-top:20px;">Additional Notes</h3>${textBlock(notes)}`
+        : ''
+      }
+
+      ${textBlock(`Please review and evaluate this provider for integration support.`)}
+    `);
+
+    const providerRequestMail = ((config as any).providerRequestMail as string).split(',').map((e: string) => e.trim());
+
+    await sendEmail({
+      to: providerRequestMail,
+      from: (config as any).sesFromEmailId as string,
+      replyTo: contact_email,
+      subject: `New Provider Request - ${provider_name}${organization_name ? ` (${organization_name})` : ''
+        }`,
+      html: htmlBody,
+      text: `New provider request from ${organization_name || 'Unknown Org'} - ${provider_name}`,
+    })
+  } catch (err: any) {
+    console.error('Failed to send provider request email:', err)
+    throw err
   }
-};
+}

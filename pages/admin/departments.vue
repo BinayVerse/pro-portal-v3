@@ -204,14 +204,20 @@
               </AppTooltip>
 
               <!-- Disabled actions for ALL -->
-              <AppTooltip v-if="row.id === 'ALL'" text="The All department cannot be modified or disabled">
+              <AppTooltip
+                v-if="row.id === 'ALL'"
+                text="The All department cannot be modified or disabled"
+              >
                 <div class="flex items-center text-gray-500 cursor-not-allowed">
                   <UIcon name="i-heroicons-lock-closed" class="w-4 h-4" />
                 </div>
               </AppTooltip>
 
               <!-- Activate / Deactivate (normal departments only) -->
-              <AppTooltip v-else :text="row.status === 'active' ? 'Deactivate department' : 'Activate department'">
+              <AppTooltip
+                v-else
+                :text="row.status === 'active' ? 'Deactivate department' : 'Activate department'"
+              >
                 <button
                   @click="
                     row.status === 'active' ? showDeactivateConfirm(row) : showActivateConfirm(row)
@@ -223,7 +229,9 @@
                   }`"
                 >
                   <UIcon
-                    :name="row.status === 'active' ? 'heroicons:no-symbol' : 'heroicons:check-circle'"
+                    :name="
+                      row.status === 'active' ? 'heroicons:no-symbol' : 'heroicons:check-circle'
+                    "
                     class="w-4 h-4"
                   />
                 </button>
@@ -365,10 +373,10 @@
           <span class="font-semibold">{{ selectedDepartment?.name }}</span
           >?
         </p>
-        <p class="text-sm text-gray-400 mb-6">
+        <!-- <p class="text-sm text-gray-400 mb-6">
           Deactivated departments cannot receive new users or artifacts. Existing users and
           artifacts will remain in the system.
-        </p>
+        </p> -->
 
         <div class="flex space-x-3">
           <UButton
@@ -419,6 +427,7 @@
         </div>
       </UCard>
     </UModal>
+
   </div>
 </template>
 
@@ -427,6 +436,7 @@ import { ref, computed, reactive, watch } from 'vue'
 import { z } from 'zod'
 import { useRoute } from 'vue-router'
 import { useDepartmentsStore } from '~/stores/departments'
+import { useErrorStore } from '~/stores/error'
 
 useHead({
   title: 'Department Management - Admin Dashboard - provento.ai',
@@ -484,6 +494,7 @@ const selectedDepartment = ref<Department | null>(null)
 
 // Notification hook (from users.vue pattern)
 const { showSuccess, showError } = useNotification()
+const errorStore = useErrorStore()
 const departmentsStore = useDepartmentsStore()
 
 const departmentsList = computed(() => departmentsStore.getDepartments)
@@ -674,7 +685,7 @@ const saveDepartment = async () => {
 
 const showDeactivateConfirm = (dept: Department) => {
   if (dept.id === 'ALL') {
-    showError("The 'All' department cannot be deactivated")
+    errorStore.showError("The 'All' department cannot be deactivated")
     return
   }
   selectedDepartment.value = dept
@@ -691,7 +702,20 @@ const confirmDeactivate = async () => {
   if (!selectedDepartment.value) return
   try {
     togglingDepartment.value = true
-    await departmentsStore.toggleDepartmentStatus(selectedDepartment.value.id, 'inactive')
+    await departmentsStore.toggleDepartmentStatus(
+      selectedDepartment.value.id,
+      'inactive',
+      true // Pass silent=true to prevent global error notification
+    )
+    showDeactivateModal.value = false
+  } catch (err: any) {
+    // Show error using global error modal
+    const errorMessage =
+      err?.response?._data?.message ||
+      err?.response?.data?.message ||
+      err?.message ||
+      'Failed to deactivate department'
+    errorStore.showError(errorMessage)
     showDeactivateModal.value = false
   } finally {
     togglingDepartment.value = false

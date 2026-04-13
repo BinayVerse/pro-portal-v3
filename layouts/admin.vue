@@ -209,9 +209,13 @@
                       size="sm"
                       :label="'Overview'"
                       :tooltip="
-                        isDepartmentAdmin ? 'Access restricted for Department Admin' : 'Overview'
+                        isDepartmentAdmin
+                          ? 'Access restricted for Department Admin'
+                          : isProfileComplete
+                            ? 'Overview'
+                            : 'Complete your profile to access this section'
                       "
-                      :disabled="isDepartmentAdmin"
+                      :disabled="isDepartmentAdmin || !isProfileComplete"
                       class="justify-start w-full"
                       @click="closeMobileSidebar"
                     />
@@ -228,9 +232,11 @@
                       :tooltip="
                         isDepartmentAdmin
                           ? 'Access restricted for Department Admin'
-                          : 'Applications'
+                          : isProfileComplete
+                            ? 'Applications'
+                            : 'Complete your profile to access this section'
                       "
-                      :disabled="isDepartmentAdmin"
+                      :disabled="isDepartmentAdmin || !isProfileComplete"
                       class="justify-start w-full"
                       @click="closeMobileSidebar"
                     />
@@ -245,9 +251,13 @@
                       size="sm"
                       :label="'Slack'"
                       :tooltip="
-                        isDepartmentAdmin ? 'Access restricted for Department Admin' : 'Slack'
+                        isDepartmentAdmin
+                          ? 'Access restricted for Department Admin'
+                          : isProfileComplete
+                            ? 'Slack'
+                            : 'Complete your profile to access this section'
                       "
-                      :disabled="isDepartmentAdmin"
+                      :disabled="isDepartmentAdmin || !isProfileComplete"
                       class="justify-start w-full"
                       @click="closeMobileSidebar"
                     />
@@ -262,9 +272,13 @@
                       size="sm"
                       :label="'Teams'"
                       :tooltip="
-                        isDepartmentAdmin ? 'Access restricted for Department Admin' : 'Teams'
+                        isDepartmentAdmin
+                          ? 'Access restricted for Department Admin'
+                          : isProfileComplete
+                            ? 'Teams'
+                            : 'Complete your profile to access this section'
                       "
-                      :disabled="isDepartmentAdmin"
+                      :disabled="isDepartmentAdmin || !isProfileComplete"
                       class="justify-start w-full"
                       @click="closeMobileSidebar"
                     />
@@ -279,9 +293,13 @@
                       size="sm"
                       :label="'WhatsApp'"
                       :tooltip="
-                        isDepartmentAdmin ? 'Access restricted for Department Admin' : 'WhatsApp'
+                        isDepartmentAdmin
+                          ? 'Access restricted for Department Admin'
+                          : isProfileComplete
+                            ? 'WhatsApp'
+                            : 'Complete your profile to access this section'
                       "
-                      :disabled="isDepartmentAdmin"
+                      :disabled="isDepartmentAdmin || !isProfileComplete"
                       class="justify-start w-full"
                       @click="closeMobileSidebar"
                     />
@@ -296,9 +314,13 @@
                       size="sm"
                       :label="'iMessage'"
                       :tooltip="
-                        isDepartmentAdmin ? 'Access restricted for Department Admin' : 'iMessage'
+                        isDepartmentAdmin
+                          ? 'Access restricted for Department Admin'
+                          : isProfileComplete
+                            ? 'iMessage'
+                            : 'Complete your profile to access this section'
                       "
-                      :disabled="isDepartmentAdmin"
+                      :disabled="isDepartmentAdmin || !isProfileComplete"
                       class="justify-start w-full"
                       @click="closeMobileSidebar"
                     />
@@ -321,9 +343,13 @@
                   size="sm"
                   :label="'Overview'"
                   :tooltip="
-                    isDepartmentAdmin ? 'Access restricted for Department Admin' : 'Overview'
+                    isDepartmentAdmin
+                      ? 'Access restricted for Department Admin'
+                      : isProfileComplete
+                        ? 'Overview'
+                        : 'Complete your profile to access this section'
                   "
-                  :disabled="isDepartmentAdmin"
+                  :disabled="isDepartmentAdmin || !isProfileComplete"
                   @click="closeMobileSidebar"
                 />
                 <SidebarButton
@@ -337,9 +363,13 @@
                   size="sm"
                   :label="'Applications'"
                   :tooltip="
-                    isDepartmentAdmin ? 'Access restricted for Department Admin' : 'Applications'
+                    isDepartmentAdmin
+                      ? 'Access restricted for Department Admin'
+                      : isProfileComplete
+                        ? 'Applications'
+                        : 'Complete your profile to access this section'
                   "
-                  :disabled="isDepartmentAdmin"
+                  :disabled="isDepartmentAdmin || !isProfileComplete"
                   @click="closeMobileSidebar"
                 />
                 <SidebarButton
@@ -352,8 +382,14 @@
                   :collapsed="false"
                   size="sm"
                   :label="'Slack'"
-                  :tooltip="isDepartmentAdmin ? 'Access restricted for Department Admin' : 'Slack'"
-                  :disabled="isDepartmentAdmin"
+                  :tooltip="
+                    isDepartmentAdmin
+                      ? 'Access restricted for Department Admin'
+                      : isProfileComplete
+                        ? 'Slack'
+                        : 'Complete your profile to access this section'
+                  "
+                  :disabled="isDepartmentAdmin || !isProfileComplete"
                   @click="closeMobileSidebar"
                 />
                 <SidebarButton
@@ -366,8 +402,14 @@
                   :collapsed="false"
                   size="sm"
                   :label="'Teams'"
-                  :tooltip="isDepartmentAdmin ? 'Access restricted for Department Admin' : 'Teams'"
-                  :disabled="isDepartmentAdmin"
+                  :tooltip="
+                    isDepartmentAdmin
+                      ? 'Access restricted for Department Admin'
+                      : isProfileComplete
+                        ? 'Teams'
+                        : 'Complete your profile to access this section'
+                  "
+                  :disabled="isDepartmentAdmin || !isProfileComplete"
                   @click="closeMobileSidebar"
                 />
                 <SidebarButton
@@ -381,9 +423,13 @@
                   size="sm"
                   :label="'WhatsApp'"
                   :tooltip="
-                    isDepartmentAdmin ? 'Access restricted for Department Admin' : 'WhatsApp'
+                    isDepartmentAdmin
+                      ? 'Access restricted for Department Admin'
+                      : isProfileComplete
+                        ? 'WhatsApp'
+                        : 'Complete your profile to access this section'
                   "
-                  :disabled="isDepartmentAdmin"
+                  :disabled="isDepartmentAdmin || !isProfileComplete"
                   @click="closeMobileSidebar"
                 />
                 <SidebarButton
@@ -397,14 +443,30 @@
                   size="sm"
                   :label="'iMessage'"
                   :tooltip="
-                    isDepartmentAdmin ? 'Access restricted for Department Admin' : 'iMessage'
+                    isDepartmentAdmin
+                      ? 'Access restricted for Department Admin'
+                      : isProfileComplete
+                        ? 'iMessage'
+                        : 'Complete your profile to access this section'
                   "
-                  :disabled="isDepartmentAdmin"
+                  :disabled="isDepartmentAdmin || !isProfileComplete"
                   @click="closeMobileSidebar"
                 />
               </div>
             </div>
           </template>
+
+          <SidebarButton
+            :to="makeOrgLink('/admin/chat')"
+            :icon="'heroicons:chat-bubble-left-ellipsis'"
+            :active="$route.name === 'admin-chat' || pendingRoute === 'admin-chat'"
+            :collapsed="isMobile || isTablet ? false : isCollapsed"
+            :disabled="!isProfileComplete"
+            :label="'AI Chat'"
+            :tooltip="
+              isProfileComplete ? 'AI Chat' : 'Complete your profile to access this section'
+            "
+          />
         </div>
       </nav>
 
@@ -692,7 +754,6 @@
         <slot />
       </main>
 
-      <ChatWidget v-if="auth && auth.isAuthenticated && auth.user?.role_id !== 0" />
     </div>
 
     <!-- Subscription Required Modal -->

@@ -13,6 +13,36 @@
         <div
           class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 flex-shrink-0"
         >
+          <!-- AI Knowledge Gap Button -->
+          <button
+            @click="openKnowledgeGap"
+            :disabled="knowledgeGapLoading"
+            class="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-4 py-2 rounded-lg transition-all flex items-center justify-center sm:justify-start space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <UIcon
+              name="heroicons:chart-bar"
+              class="w-5 h-5"
+              :class="{ 'animate-pulse': knowledgeGapLoading }"
+            />
+            <span class="hidden sm:inline">AI Knowledge Gap</span>
+            <span class="sm:hidden">Gap</span>
+          </button>
+
+          <!-- AI Actionable Button with Badge -->
+          <button
+            @click="openAIInsights"
+            :disabled="aiInsightsLoading"
+            class="relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all flex items-center justify-center sm:justify-start space-x-2 disabled:opacity-50 disabled:cursor-not-allowed group"
+          >
+            <UIcon
+              name="heroicons:light-bulb"
+              class="w-5 h-5"
+              :class="{ 'animate-pulse': aiInsightsLoading }"
+            />
+            <span class="hidden sm:inline">AI Signals</span>
+            <span class="sm:hidden">AI</span>
+          </button>
+
           <select v-model="selectedTimeRange" class="input-field">
             <option v-for="option in timeRangeOptions" :key="option.value" :value="option.value">
               {{ option.rangeLabel }}
@@ -449,6 +479,29 @@
           />
         </UCard>
       </UModal>
+      <!-- AI Knowledge Gap Modal -->
+      <KnowledgeGapModal
+        v-model="knowledgeGapModalOpen"
+        :knowledge-gap-data="knowledgeGapData?.data"
+        :loading="knowledgeGapLoading"
+        :error="knowledgeGapError"
+        @close="knowledgeGapModalOpen = false"
+        @export="handleExportKnowledgeGap"
+        @retry="openKnowledgeGap"
+      />
+
+      <!-- AI Signals Modal -->
+      <AIInsightsModal
+        v-model="aiInsightsModalOpen"
+        :insights-data="aiInsightsData?.data"
+        :loading="aiInsightsLoading"
+        :sending-email="aiEmailSending"
+        :error="aiInsightsError"
+        @close="aiInsightsModalOpen = false"
+        @export="handleExportInsights"
+        @send-email="handleSendInsightsEmail"
+        @retry="openAIInsights"
+      />
     </div>
   </AdminLayout>
 </template>
@@ -465,6 +518,7 @@ import { useNotification } from '@/composables/useNotification'
 import { useAnalyticsStore } from '@/stores/analytics'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
+import { useErrorStore } from '@/stores/error'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
@@ -476,8 +530,9 @@ import PlanUpgradeAlert from '@/components/ui/PlanUpgradeAlert.vue'
 import DepartmentBarChart from '@/components/charts/DepartmentBarChart.vue'
 import DepartmentPieChart from '@/components/charts/DepartmentPieChart.vue'
 import { getColorsForLabels, orderLabels } from '@/utils/chartColors'
+import AIInsightsModal from '@/components/analytics/AIInsightsModal.vue'
+import KnowledgeGapModal from '@/components/analytics/KnowledgeGapModal.vue'
 import { useRoute } from 'vue-router'
-import { navigateTo } from '#app'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -493,12 +548,24 @@ const { showNotification } = useNotification()
 const analyticsStore = useAnalyticsStore()
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
+const errorStore = useErrorStore()
 
 const authUser = computed(() => authStore.getAuthUser)
 const route = useRoute()
 
 // SSR-safe flags
 const isMounted = ref(false)
+
+const aiInsightsModalOpen = ref(false)
+const aiInsightsLoading = ref(false)
+const aiInsightsError = ref<string | null>(null)
+const aiInsightsData = ref<any>(null)
+const aiEmailSending = ref(false)
+
+const knowledgeGapModalOpen = ref(false)
+const knowledgeGapLoading = ref(false)
+const knowledgeGapError = ref<string | null>(null)
+const knowledgeGapData = ref<any>(null)
 
 // Computed organization ID (use route query for superadmin)
 const organizationId = computed(() => {
@@ -1291,6 +1358,428 @@ onMounted(async () => {
 
   await fetchData()
 })
+
+// AI Signals methods
+
+const openAIInsights = async () => {
+  if (!organizationId.value) {
+    errorStore.showError('Organization ID not found')
+    return
+  }
+
+  aiInsightsModalOpen.value = true
+  aiInsightsLoading.value = true
+  aiInsightsError.value = null
+  aiInsightsData.value = null
+
+  const { startDate, endDate } = dateRange.value
+
+  try {
+    const response = await analyticsStore.fetchActionableInsights(
+      organizationId.value,
+      startDate,
+      endDate,
+    )
+
+    // Validate response structure
+    if (!response?.data || !response?.success) {
+      aiInsightsError.value = 'No insights data available for the selected period.'
+      return
+    }
+
+    aiInsightsData.value = response
+
+    // If API returns empty insights object
+    if (!response.data?.insights || Object.keys(response.data.insights).length === 0) {
+      aiInsightsError.value = 'No insights available for the selected period.'
+    }
+  } catch (error: any) {
+    console.error('AI Signals API failed:', error)
+
+    let message = 'Unable to connect to Insights service.'
+
+    // CORS error detection
+    if (error?.message?.includes('Failed to fetch') && error?.stack?.includes('TypeError')) {
+      message = 'Request blocked by server security policy (CORS). Please contact administrator.'
+    }
+
+    // Network offline
+    if (!navigator.onLine) {
+      message = 'You are offline. Please check your internet connection.'
+    }
+
+    aiInsightsError.value = message
+    errorStore.showError(message)
+  } finally {
+    aiInsightsLoading.value = false
+  }
+}
+
+// Update the export function to handle the new data structure
+const handleExportInsights = async () => {
+  const XLSX = await import('xlsx')
+  if (!aiInsightsData.value?.data) {
+    errorStore.showError('No insights data available to export')
+    return
+  }
+
+  try {
+    const wb = XLSX.utils.book_new()
+    const rows: any[] = []
+
+    const insightsRoot = aiInsightsData.value.data || {}
+    const summary = insightsRoot.analytics_summary || {}
+    const insightsContent = insightsRoot.insights || {}
+    const period = insightsRoot.period || {}
+
+    const safeNumber = (val: any) => Number(val ?? 0)
+    const safeString = (val: any) => val ?? 'N/A'
+
+    // ----------------------------
+    // Header Section
+    // ----------------------------
+    rows.push(['AI Signals & RECOMMENDATIONS'])
+    rows.push([`Generated: ${dayjs().format('YYYY-MM-DD HH:mm:ss')}`])
+
+    if (period.start_date && period.end_date) {
+      rows.push([`Period: ${formatDateRange(period.start_date, period.end_date)}`])
+    } else {
+      rows.push(['Period: N/A'])
+    }
+
+    rows.push([])
+
+    // ----------------------------
+    // Analytics Summary
+    // ----------------------------
+    rows.push(['ANALYTICS SUMMARY'])
+    rows.push(['Metric', 'Value'])
+
+    rows.push(['Total Queries', safeNumber(summary.total_queries)])
+    rows.push(['Active Users', safeNumber(summary.active_users)])
+    rows.push(['Unique Artifacts', safeNumber(summary.unique_artifacts)])
+    rows.push(['Total Tokens', safeNumber(summary.total_tokens)])
+
+    const totalCost = safeNumber(summary.total_cost)
+    // rows.push(['Total Cost ($)', totalCost.toFixed(6)])
+
+    rows.push([])
+
+    // ----------------------------
+    // Critical Alerts
+    // ----------------------------
+    if (Array.isArray(insightsContent.critical_alerts) && insightsContent.critical_alerts.length) {
+      rows.push(['CRITICAL ALERTS'])
+
+      insightsContent.critical_alerts.forEach((alert: any) => {
+        rows.push([`[${safeString(alert.severity).toUpperCase()}] ${safeString(alert.title)}`])
+        rows.push([safeString(alert.description)])
+        rows.push([`Action: ${safeString(alert.recommended_action)}`])
+        rows.push([])
+      })
+    }
+
+    // ----------------------------
+    // Content Policy Gaps
+    // ----------------------------
+    if (
+      Array.isArray(insightsContent.content_policy_gaps) &&
+      insightsContent.content_policy_gaps.length
+    ) {
+      rows.push(['CONTENT POLICY GAPS'])
+
+      insightsContent.content_policy_gaps.forEach((gap: any) => {
+        rows.push([safeString(gap.gap_title)])
+        rows.push([`Evidence: ${safeString(gap.evidence)}`])
+        rows.push([`Recommendation: ${safeString(gap.recommendation)}`])
+        rows.push([])
+      })
+    }
+
+    // ----------------------------
+    // Engagement Opportunities
+    // ----------------------------
+    if (
+      Array.isArray(insightsContent.engagement_opportunities) &&
+      insightsContent.engagement_opportunities.length
+    ) {
+      rows.push(['ENGAGEMENT OPPORTUNITIES'])
+
+      insightsContent.engagement_opportunities.forEach((opp: any) => {
+        rows.push([safeString(opp.opportunity)])
+        rows.push([`Target: ${safeString(opp.target_audience)}`])
+        rows.push([`Impact: ${safeString(opp.expected_impact)}`])
+        rows.push([])
+      })
+    }
+
+    // ----------------------------
+    // Recommended Actions
+    // ----------------------------
+    if (
+      Array.isArray(insightsContent.recommended_actions) &&
+      insightsContent.recommended_actions.length
+    ) {
+      rows.push(['RECOMMENDED ACTIONS (By Priority)'])
+      rows.push(['Priority', 'Area', 'Observation', 'Action', 'Owner'])
+
+      insightsContent.recommended_actions.forEach((action: any) => {
+        rows.push([
+          `P${safeNumber(action.priority)}`,
+          safeString(action.area),
+          safeString(action.observation),
+          safeString(action.recommended_action),
+          safeString(action.owner),
+        ])
+      })
+
+      rows.push([])
+    }
+
+    // ----------------------------
+    // Executive Narrative
+    // ----------------------------
+    if (insightsContent.chro_executive_narrative) {
+      rows.push(['SUMMARY'])
+      rows.push([safeString(insightsContent.chro_executive_narrative)])
+      rows.push([])
+    }
+
+    // If everything is empty
+    if (rows.length <= 5) {
+      rows.push(['No insights data available for this period.'])
+    }
+
+    // ----------------------------
+    // Create Sheet
+    // ----------------------------
+    const ws = XLSX.utils.aoa_to_sheet(rows)
+
+    ws['!cols'] = [{ wch: 15 }, { wch: 25 }, { wch: 40 }, { wch: 40 }, { wch: 25 }]
+
+    XLSX.utils.book_append_sheet(wb, ws, 'AI Signals')
+    XLSX.writeFile(wb, `ai_signals_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`)
+
+    showNotification('Insights exported successfully', 'success')
+  } catch (error) {
+    console.error('Error exporting insights:', error)
+    errorStore.showError('Failed to export insights')
+  }
+}
+
+// Helper function for date formatting
+const formatDateRange = (startDate: string, endDate: string) => {
+  return `${dayjs(startDate).format('MMM D, YYYY')} - ${dayjs(endDate).format('MMM D, YYYY')}`
+}
+
+const handleSendInsightsEmail = async () => {
+  if (!organizationId.value || !aiInsightsData.value) {
+    showNotification('Organization ID or insights data missing', 'error')
+    return
+  }
+
+  try {
+    aiEmailSending.value = true
+
+    const payload = {
+      orgId: organizationId.value,
+      org_id: organizationId.value,
+      insights: aiInsightsData.value,
+      period: {
+        start_date: dateRange.value.startDate,
+        end_date: dateRange.value.endDate,
+        timeZone: dateRange.value.timeZone,
+        org_id: organizationId.value,
+      },
+    }
+
+    await analyticsStore.sendInsightsEmail(organizationId.value, payload)
+
+    showNotification('Insights email sent successfully', 'success')
+  } catch (error) {
+    console.error(error)
+    showNotification('Failed to send insights email', 'error')
+  } finally {
+    aiEmailSending.value = false
+  }
+}
+
+// Knowledge Gap methods
+const openKnowledgeGap = async () => {
+  if (!organizationId.value) {
+    errorStore.showError('Organization ID not found')
+    return
+  }
+
+  knowledgeGapModalOpen.value = true
+  knowledgeGapLoading.value = true
+  knowledgeGapError.value = null
+  knowledgeGapData.value = null
+
+  const { startDate, endDate } = dateRange.value
+
+  try {
+    const response = await analyticsStore.fetchKnowledgeGap(
+      organizationId.value,
+      startDate,
+      endDate,
+    )
+
+    // Validate response structure
+    if (!response?.data || !response?.success) {
+      knowledgeGapError.value = 'No knowledge gap data available for the selected period.'
+      return
+    }
+
+    knowledgeGapData.value = response
+
+    // If API returns empty data
+    if (!response.data?.quality_summary) {
+      knowledgeGapError.value = 'No knowledge gap data available for the selected period.'
+    }
+  } catch (error: any) {
+    console.error('Knowledge Gap API failed:', error)
+
+    let message = 'Unable to connect to Knowledge Gap service.'
+
+    // CORS error detection
+    if (error?.message?.includes('Failed to fetch') && error?.stack?.includes('TypeError')) {
+      message = 'Request blocked by server security policy (CORS). Please contact administrator.'
+    }
+
+    // Network offline
+    if (!navigator.onLine) {
+      message = 'You are offline. Please check your internet connection.'
+    }
+
+    knowledgeGapError.value = message
+    errorStore.showError(message)
+  } finally {
+    knowledgeGapLoading.value = false
+  }
+}
+
+const handleExportKnowledgeGap = async () => {
+  const XLSX = await import('xlsx')
+  if (!knowledgeGapData.value?.data) {
+    errorStore.showError('No knowledge gap data available to export')
+    return
+  }
+
+  try {
+    const wb = XLSX.utils.book_new()
+    const rows: any[] = []
+
+    const data = knowledgeGapData.value.data || {}
+    const period = data.period || {}
+    const qualitySummary = data.quality_summary || {}
+    const topUnanswered = data.top_unanswered_questions || []
+    const coverageTrend = data.coverage_trend || { bucket: '', data: [] }
+    const byDepartment = data.by_department || []
+    const gapAnalysis = data.gap_analysis || {}
+
+    const safeNumber = (val: any) => Number(val ?? 0)
+    const safeString = (val: any) => val ?? 'N/A'
+
+    // Header
+    rows.push(['AI Knowledge Gap Report'])
+    rows.push([`Generated: ${dayjs().format('YYYY-MM-DD HH:mm:ss')}`])
+    if (period.start_date && period.end_date) {
+      rows.push([`Period: ${formatDateRange(period.start_date, period.end_date)}`])
+    }
+    rows.push([])
+
+    // Quality Summary
+    rows.push(['COVERAGE SUMMARY'])
+    rows.push(['Metric', 'Value'])
+    rows.push(['Total Queries', safeNumber(qualitySummary.total_queries)])
+    rows.push(['Answered', safeNumber(qualitySummary.answered)])
+    rows.push(['Unanswered', safeNumber(qualitySummary.unanswered)])
+    rows.push(['Coverage Rate (%)', safeNumber(qualitySummary.coverage_rate_pct)])
+    rows.push(['Gap Rate (%)', safeNumber(qualitySummary.gap_rate_pct)])
+    rows.push(['Trend', safeString(qualitySummary.trend_signal)])
+    rows.push([])
+
+    // Top Unanswered Questions
+    if (topUnanswered.length) {
+      rows.push(['TOP UNANSWERED QUESTIONS'])
+      rows.push(['Intent', 'Frequency', 'Unique Askers', 'Last Asked'])
+      topUnanswered.forEach((q: any) => {
+        rows.push([
+          safeString(q.intent),
+          safeNumber(q.combined_frequency),
+          safeNumber(q.unique_askers),
+          safeString(q.last_asked),
+        ])
+      })
+      rows.push([])
+    }
+
+    // Coverage Trend
+    if (coverageTrend.data?.length) {
+      rows.push([`COVERAGE TREND (${coverageTrend.bucket})`])
+      rows.push(['Period', 'Total Queries', 'Answered', 'Unanswered'])
+      coverageTrend.data.forEach((trend: any) => {
+        rows.push([
+          safeString(trend.period),
+          safeNumber(trend.total),
+          safeNumber(trend.answered),
+          safeNumber(trend.unanswered),
+        ])
+      })
+      rows.push([])
+    }
+
+    // By Department
+    if (byDepartment.length) {
+      rows.push(['COVERAGE BY DEPARTMENT'])
+      rows.push(['Department', 'Total Queries', 'Unanswered', 'Coverage Rate (%)'])
+      byDepartment.forEach((d: any) => {
+        rows.push([
+          safeString(d.department),
+          safeNumber(d.total_queries),
+          safeNumber(d.unanswered),
+          safeNumber(d.coverage_rate_pct),
+        ])
+      })
+      rows.push([])
+    }
+
+    // Gap Analysis
+    if (gapAnalysis.gap_clusters?.length) {
+      rows.push(['GAP ANALYSIS & RECOMMENDATIONS'])
+      gapAnalysis.gap_clusters.forEach((cluster: any) => {
+        rows.push([cluster.cluster_title])
+        rows.push([`Times Asked: ${safeNumber(cluster.total_times_asked)}`])
+        rows.push([`Employees Affected: ${safeNumber(cluster.unique_employees_affected)}`])
+        if (cluster.recommended_documents?.length) {
+          rows.push(['Recommended Documents:'])
+          cluster.recommended_documents.forEach((doc: any) => {
+            rows.push([`- ${safeString(doc.document_title)}`])
+            rows.push([`  ${safeString(doc.reason)}`])
+          })
+        }
+        rows.push([])
+      })
+    }
+
+    // Executive Summary
+    if (gapAnalysis.executive_summary) {
+      rows.push(['SUMMARY'])
+      rows.push([safeString(gapAnalysis.executive_summary)])
+      rows.push([])
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(rows)
+    XLSX.utils.book_append_sheet(wb, ws, 'Knowledge Gap')
+    XLSX.writeFile(wb, `knowledge_gap_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`)
+
+    showNotification('Knowledge gap report exported successfully', 'success')
+  } catch (error) {
+    console.error('Error exporting knowledge gap report:', error)
+    errorStore.showError('Failed to export knowledge gap report')
+  }
+}
 </script>
 
 <style scoped>

@@ -42,9 +42,10 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
 
     // Get current integration to verify ownership and get all current values
+    // This fetch is needed before checking for duplicates
     const currentRes = await query(
       `SELECT
-        provider_id, client_id, client_secret, api_key, access_token,
+        provider_id, module_id, client_id, client_secret, api_key, access_token,
         refresh_token, token_expiry, base_url, login_url, metadata_json,
         status
        FROM public.organization_integrations
@@ -62,19 +63,29 @@ export default defineEventHandler(async (event) => {
 
     // Merge current values with provided updates
     // This prevents null constraint violations when partially updating (e.g., status only)
+    const mergedLoginUrl = body.login_url ?? currentData.login_url
+    const mergedBaseUrl = body.base_url ?? currentData.base_url
+    const mergedApiKey = body.api_key ?? currentData.api_key
+
     const mergedData = {
       client_id: body.client_id ?? currentData.client_id,
       client_secret: body.client_secret ?? currentData.client_secret,
-      api_key: body.api_key ?? currentData.api_key,
+      api_key: mergedApiKey,
       access_token: body.access_token ?? currentData.access_token,
       refresh_token: body.refresh_token ?? currentData.refresh_token,
       token_expiry: body.token_expiry ?? currentData.token_expiry,
-      base_url: body.base_url ?? currentData.base_url,
-      login_url: body.login_url ?? currentData.login_url,
-      metadata_json: body.metadata_json ?? currentData.metadata_json,
+      base_url: mergedBaseUrl,
+      login_url: mergedLoginUrl,
+      metadata_json: {
+        login_url: mergedLoginUrl || null,
+        base_url: mergedBaseUrl || null,
+        api_key: mergedApiKey || null,
+        ...(body.metadata_json ?? currentData.metadata_json ?? {})
+      },
       status: body.status ?? currentData.status,
       hrms_system: body.hrms_system,
       is_hrms: body.is_hrms,
+      module_ids: [currentData.module_id]
     }
 
     // Update integration using helper function

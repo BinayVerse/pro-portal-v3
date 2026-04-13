@@ -120,7 +120,7 @@ const props = defineProps<{
   processedArtefacts: number
   totalCategories: number
   totalSize: string // e.g., "1.25 GB"
-  storageLimit?: number
+  storageLimit?: any
   artefactsLimit?: number
   loading?: boolean
 }>()

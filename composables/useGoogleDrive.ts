@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { useNotification } from '~/composables/useNotification'
+import { useErrorStore } from '~/stores/error'
 
 export interface GoogleDriveFile {
   id: string
@@ -30,13 +31,14 @@ export const commonExtensionType: CommonExtensionType = {
 
 export const useGoogleDrive = () => {
   const config = useRuntimeConfig()
+  const errorStore = useErrorStore()
   const { showError, showSuccess, showWarning } = useNotification()
-  
+
   const googleDriveAccessToken = ref<string>('')
   const isLoading = ref(false)
   const isGoogleApiLoaded = ref(false)
   const isGapiLoaded = ref(false)
-  
+
   let googlePicker: any = null
 
   // Check if required config exists
@@ -93,7 +95,7 @@ export const useGoogleDrive = () => {
 
   const signInWithGoogle = async (customCallback?: (files: GoogleDriveFile[]) => Promise<void>): Promise<void> => {
     if (!googleClientId.value) {
-      showError('Google Client ID is missing.')
+      errorStore.showError('Google Client ID is missing.')
       return
     }
 
@@ -115,7 +117,7 @@ export const useGoogleDrive = () => {
           callback: (response: any) => {
             if (response.error) {
               console.error('Authentication error:', response.error)
-              showError('Authentication failed. Please try again.')
+              errorStore.showError('Authentication failed. Please try again.')
               isLoading.value = false
               return
             }
@@ -126,7 +128,7 @@ export const useGoogleDrive = () => {
         .requestAccessToken()
     } catch (error) {
       console.error('Google sign-in error:', error)
-      showError('Failed to initialize Google sign-in. Please try again.')
+      errorStore.showError('Failed to initialize Google sign-in. Please try again.')
       isLoading.value = false
     }
   }
@@ -169,7 +171,7 @@ export const useGoogleDrive = () => {
       isLoading.value = false
     } catch (error) {
       console.error('Picker creation error:', error)
-      showError('Failed to create file picker. Please try again.')
+      errorStore.showError('Failed to create file picker. Please try again.')
       isLoading.value = false
     }
   }
@@ -246,7 +248,7 @@ export const useGoogleDrive = () => {
     isLoading: readonly(isLoading),
     isGoogleApiLoaded: readonly(isGoogleApiLoaded),
     isGapiLoaded: readonly(isGapiLoaded),
-    
+
     // Methods
     signInWithGoogle,
     createPicker,
@@ -254,7 +256,7 @@ export const useGoogleDrive = () => {
     checkFileExistence,
     getFileType,
     cleanup,
-    
+
     // Utils
     commonExtensionType,
   }

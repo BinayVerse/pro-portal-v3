@@ -3,12 +3,18 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 bg-blue-500 rounded-lg flex-shrink-0 flex items-center justify-center">
+        <div
+          class="w-10 h-10 bg-blue-500 rounded-lg flex-shrink-0 flex items-center justify-center"
+        >
           <UIcon name="mdi:microsoft-teams" class="w-6 h-6 text-white" />
         </div>
         <div class="min-w-0">
-          <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-white truncate">Microsoft Teams Integration</h1>
-          <p class="text-xs sm:text-sm text-gray-400 truncate">Connect your Teams workspace to provento</p>
+          <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-white truncate">
+            Microsoft Teams Integration
+          </h1>
+          <p class="text-xs sm:text-sm text-gray-400 truncate">
+            Connect your Teams workspace to provento
+          </p>
         </div>
       </div>
       <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-shrink-0">
@@ -55,16 +61,33 @@
           >
             Reconnect
           </UButton>
-          <UButton v-else disabled color="gray" icon="heroicons:arrow-path" title="Super admin cannot connect integrations">
+          <UButton
+            v-else
+            disabled
+            color="gray"
+            icon="heroicons:arrow-path"
+            title="Super admin cannot connect integrations"
+          >
             Reconnect
           </UButton>
         </template>
 
         <template v-else>
-          <UButton v-if="!isSuperAdmin" @click="launchTeamsOAuthRedirect" color="blue" icon="heroicons:plus">
+          <UButton
+            v-if="!isSuperAdmin"
+            @click="launchTeamsOAuthRedirect"
+            color="blue"
+            icon="heroicons:plus"
+          >
             Connect
           </UButton>
-          <UButton v-else disabled color="gray" icon="heroicons:plus" title="Super admin cannot connect integrations">
+          <UButton
+            v-else
+            disabled
+            color="gray"
+            icon="heroicons:plus"
+            title="Super admin cannot connect integrations"
+          >
             Connect
           </UButton>
         </template>
@@ -169,7 +192,6 @@
               <span>Not configured</span>
             </span>
           </div>
-
 
           <!-- Integration Status -->
           <div class="flex items-center justify-between py-3">
@@ -293,6 +315,7 @@
 </template>
 
 <script setup lang="ts">
+import { useErrorStore } from '~/stores/error'
 // Using admin layout
 definePageMeta({
   layout: 'admin',
@@ -303,6 +326,7 @@ const config = useRuntimeConfig()
 const route = useRoute()
 const router = useRouter()
 const integrationsStore = useIntegrationsStore()
+const errorStore = useErrorStore()
 const authStore = useAuthStore()
 const isSuperAdmin = computed(() => authStore.isSuperAdmin)
 
@@ -362,7 +386,7 @@ const launchTeamsOAuthRedirect = async () => {
 
   if (!token.value) {
     const { showError } = useNotification()
-    showError('User token missing.')
+    errorStore.showError('User token missing.')
     return
   }
 
@@ -373,7 +397,7 @@ const launchTeamsOAuthRedirect = async () => {
 
     if (!orgId) {
       const { showError } = useNotification()
-      showError('Organization ID missing in token.')
+      errorStore.showError('Organization ID missing in token.')
       return
     }
 
@@ -390,7 +414,7 @@ const launchTeamsOAuthRedirect = async () => {
   } catch (e) {
     console.error('JWT decode or OAuth redirect failed:', e)
     const { showError } = useNotification()
-    showError('Something went wrong. Please try again.')
+    errorStore.showError('Something went wrong. Please try again.')
   }
 }
 

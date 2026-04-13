@@ -27,25 +27,54 @@ const encryptionAlgorithm = {
 /**
  * Derive an encryption key from context
  * Uses a combination of auth token and organization context for consistency
+ *
+ * Priority for org_id:
+ * 1. Router params (orgId)
+ * 2. Auth token user data (org_id from authenticated user)
+ * 3. Fallback to 'default'
  */
 async function deriveEncryptionKey(): Promise<CryptoKey> {
-  // Get organization and user context from composables
-  const user = useAuthStore()
-  const orgId = useRouter().currentRoute.value.params.orgId as string || ''
+  let orgId: string | undefined
 
-  // Create a key material from auth token + org id
-  const keyMaterial = `${user.user?.id || 'default'}-${orgId || 'default'}`
+  try {
+    orgId = useRouter().currentRoute.value.params.orgId as string
+  } catch (e) {
+    // Router might not be available
+  }
+
+  if (!orgId) {
+    try {
+      const authStore = useAuthStore()
+      orgId = authStore.user?.org_id
+    } catch (e) {
+      // Auth store might not be available
+    }
+  }
+
+  // Fallback
+  if (!orgId) {
+    orgId = 'default'
+  }
+
+  const config = useRuntimeConfig()
+  const appEncryptionSecret = config.public.encryptionSecret
+
+  const keyMaterial = `${orgId}-${appEncryptionSecret}`
+
   const encoder = new TextEncoder()
   const keyData = encoder.encode(keyMaterial)
 
-  // Derive key using PBKDF2
-  const baseKey = await crypto.subtle.importKey('raw', keyData, 'PBKDF2', false, [
-    'deriveBits',
-    'deriveKey',
-  ])
+  const baseKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    'PBKDF2',
+    false,
+    ['deriveBits', 'deriveKey']
+  )
 
-  const salt = new Uint8Array(16) // Fixed salt for consistency within session
-  const derivedKey = await crypto.subtle.deriveKey(
+  const salt = new Uint8Array(16)
+
+  return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
       salt,
@@ -55,11 +84,10 @@ async function deriveEncryptionKey(): Promise<CryptoKey> {
     baseKey,
     { name: 'AES-GCM', length: 256 },
     false,
-    ['encrypt', 'decrypt'],
+    ['encrypt', 'decrypt']
   )
-
-  return derivedKey
 }
+
 
 /**
  * Encrypt a sensitive string value

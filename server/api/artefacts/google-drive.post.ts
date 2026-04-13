@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
     const tokenUserRole = userResult.rows[0].role_id
 
     const body = await readBody(event)
-    const { selectedFileDetails, category, org_id: bodyOrg, departments: departmentsFromBody } = body
+    const { selectedFileDetails, category, description, org_id: bodyOrg, departments: departmentsFromBody } = body
 
     // Parse departments from request body
     let departments: string[] = []
@@ -243,16 +243,16 @@ export default defineEventHandler(async (event) => {
       if (existing.rows.length > 0) {
         const result = await query(
           `UPDATE organization_documents
-           SET document_link = $1, file_category = $2, status = $3, summary = $4, is_summarized = $5, updated_at = NOW(), added_by = $6
-           WHERE id = $7 RETURNING id`,
-          [publicUrl, categoryId, 'processing', null, false, userId, existing.rows[0].id]
+           SET document_link = $1, file_category = $2, status = $3, summary = $4, is_summarized = $5, updated_at = NOW(), added_by = $6, description = $7
+           WHERE id = $8 RETURNING id`,
+          [publicUrl, categoryId, 'processing', null, false, userId, description || null, existing.rows[0].id]
         )
         documentId = result.rows[0].id
       } else {
         const result = await query(
           `INSERT INTO organization_documents
-           (org_id, doc_type, document_link, status, file_category, name, content_type, file_size, summary, is_summarized, added_by)
-           VALUES ($1, 'gdrive', $2, 'processing', $3, $4, $5, $6, null, false, $7) RETURNING id`,
+           (org_id, doc_type, document_link, status, file_category, name, content_type, file_size, summary, is_summarized, added_by, description)
+           VALUES ($1, 'gdrive', $2, 'processing', $3, $4, $5, $6, null, false, $7, $8) RETURNING id`,
           [
             org_id,
             publicUrl,
@@ -261,6 +261,7 @@ export default defineEventHandler(async (event) => {
             mimeType,
             size ? parseInt(size.replace(' KB', '')) * 1024 : null,
             userId,
+            description || null,
           ]
         )
         documentId = result.rows[0].id
@@ -332,7 +333,7 @@ export default defineEventHandler(async (event) => {
     return {
       statusCode: 201,
       status: 'success',
-      message: 'Files uploaded successfully to S3',
+      message: 'Files uploaded successfully!',
       files: uploadedFiles,
     }
   } catch (error: any) {

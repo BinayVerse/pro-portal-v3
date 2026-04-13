@@ -71,21 +71,17 @@
         </div>
 
         <div class="flex items-center space-x-1 sm:space-x-2">
-          <AppTooltip :text="historyLabel">
+          <AppTooltip text="Open full chat page">
             <button
-              @click="onToggleHistory"
-              :aria-pressed="showHistory"
-              class="flex items-center gap-2 px-2 sm:px-3 md:px-4 py-1 md:py-2 rounded-md bg-dark-800 hover:bg-dark-700 text-xs sm:text-sm md:text-base text-gray-200 border border-transparent focus:outline-none"
+              @click="goToAdminChat"
+              class="px-3 py-1.5 flex items-center gap-2 bg-dark-800 hover:bg-dark-700 rounded-lg text-sm"
             >
-              <UIcon
-                :name="historyIcon"
-                class="w-3.5 sm:w-4 md:w-5 h-3.5 sm:h-4 md:h-5 text-primary-400 flex-shrink-0"
-              />
-              <span class="hidden sm:inline">{{ historyLabel }}</span>
+              <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
+              <span>Open Full Chat</span>
             </button>
           </AppTooltip>
 
-          <AppTooltip v-if="!showHistory" text="Clear conversation">
+          <!-- <AppTooltip v-if="!showHistory" text="Clear conversation">
             <button
               @click="clearConversation"
               class="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-md text-gray-300 hover:bg-dark-800 border border-dark-700"
@@ -93,7 +89,7 @@
             >
               <UIcon name="heroicons:trash" class="w-3.5 sm:w-4 md:w-5 h-3.5 sm:h-4 md:h-5" />
             </button>
-          </AppTooltip>
+          </AppTooltip> -->
 
           <button
             @click="close"
@@ -145,9 +141,7 @@
                   </div>
                   <div class="flex-1 min-w-0">
                     <AppTooltip :text="c.header">
-                      <div
-                        class="text-sm sm:text-base text-gray-200 font-medium truncate"
-                      >
+                      <div class="text-sm sm:text-base text-gray-200 font-medium truncate">
                         {{ c.header }}
                       </div>
                     </AppTooltip>
@@ -409,7 +403,8 @@
               {{ loading ? '...' : 'Send' }}
             </button>
           </AppTooltip>
-          <button v-else
+          <button
+            v-else
             :disabled="!canSend || loading || usageLimitReached"
             type="submit"
             :class="[
@@ -453,9 +448,10 @@ import { useChatStore } from '~/stores/chat/index'
 import { useArtefactsStore } from '~/stores/artefacts'
 import { useProfileStore } from '~/stores/profile/index'
 import { formatResponseToHtml } from '~/utils/formatResponse'
+import { useErrorStore } from '~/stores/error'
 
 const auth = useAuthStore()
-const notify = useNotification()
+const errorStore = useErrorStore()
 const chat = useChatStore()
 const artefactsStore = useArtefactsStore()
 const hasArtefacts = computed(
@@ -699,13 +695,26 @@ onBeforeUnmount(() => {
   // no local timers
 })
 
+function goToAdminChat() {
+  const chatId = chat.currentChatId
+
+  if (chatId) {
+    navigateTo({
+      path: '/admin/chat',
+      query: { id: chatId },
+    })
+  } else {
+    navigateTo('/admin/chat')
+  }
+}
+
 async function onToggleHistory() {
   showHistory.value = !showHistory.value
   if (showHistory.value) {
     try {
       await chat.fetchConversations()
     } catch (err: any) {
-      notify.showError(err?.message || 'Failed to load conversations')
+      errorStore.showError(err?.message || 'Failed to load conversations')
     }
   }
 }
@@ -718,7 +727,7 @@ async function openConversation(chatId: string) {
     open.value = true
     scrollToBottom()
   } catch (err: any) {
-    notify.showError(err?.message || 'Failed to load conversation')
+    errorStore.showError(err?.message || 'Failed to load conversation')
   }
 }
 
@@ -770,13 +779,13 @@ async function sendMessageLocal() {
       usageLimitReached.value = true
 
       chat.disableInteractiveMessages?.()
-      notify.showError(lastMsg.content)
+      errorStore.showError(lastMsg.content)
 
       scrollToBottom()
       return
     }
   } catch (err: any) {
-    notify.showError(err?.message || 'Failed to send message')
+    errorStore.showError(err?.message || 'Failed to send message')
     if (err?.status === 401 || /unauthoriz/i.test(err?.message || '')) {
       await auth.clearAuth()
       navigateTo('/login')
@@ -862,7 +871,7 @@ async function onSelectCategory(cat: any, originMsg: any) {
     } catch (e) {}
     scrollToBottom()
   } catch (err: any) {
-    notify.showError('Failed to load category documents')
+    errorStore.showError('Failed to load category documents')
   }
 }
 
@@ -885,7 +894,7 @@ async function onShowMoreAgents(msg: any) {
     msg.meta.moreDisabled = false
     scrollToBottom()
   } catch (err: any) {
-    notify.showError('Failed to load more agents')
+    errorStore.showError('Failed to load more agents')
   }
 }
 
@@ -901,7 +910,7 @@ async function onSelectDocument(doc: any) {
     } catch (e) {}
     scrollToBottom()
   } catch (err: any) {
-    notify.showError('Failed to load document summary')
+    errorStore.showError('Failed to load document summary')
   }
 }
 
@@ -931,7 +940,7 @@ async function onShowMoreDocuments(msg: any) {
     msg.meta.moreDisabled = false
     scrollToBottom()
   } catch (err: any) {
-    notify.showError('Failed to load more documents')
+    errorStore.showError('Failed to load more documents')
   }
 }
 

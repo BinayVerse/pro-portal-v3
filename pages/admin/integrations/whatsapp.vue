@@ -3,12 +3,18 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 bg-green-500 rounded-lg flex-shrink-0 flex items-center justify-center">
+        <div
+          class="w-10 h-10 bg-green-500 rounded-lg flex-shrink-0 flex items-center justify-center"
+        >
           <UIcon name="mdi:whatsapp" class="w-6 h-6 text-white" />
         </div>
         <div class="min-w-0">
-          <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-white truncate">WhatsApp Business Integration</h1>
-          <p class="text-xs sm:text-sm text-gray-400 truncate">Connect your WhatsApp Business account to provento</p>
+          <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-white truncate">
+            WhatsApp Business Integration
+          </h1>
+          <p class="text-xs sm:text-sm text-gray-400 truncate">
+            Connect your WhatsApp Business account to provento
+          </p>
         </div>
       </div>
       <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-shrink-0">
@@ -214,7 +220,10 @@
               <template #label>
                 <div class="flex items-center space-x-2">
                   <span>Webhook URL</span>
-                  <AppTooltip text="Copy this Webhook URL and add it to your Meta Developer Account under WhatsApp > Configuration > Webhook" placement="top">
+                  <AppTooltip
+                    text="Copy this Webhook URL and add it to your Meta Developer Account under WhatsApp > Configuration > Webhook"
+                    placement="top"
+                  >
                     <UIcon
                       name="heroicons:information-circle"
                       class="w-4 h-4 text-blue-400 cursor-help"
@@ -540,9 +549,11 @@ definePageMeta({
 })
 
 import { useIntegrationsStore } from '~/stores'
+import { useErrorStore } from '~/stores/error'
 
 const integrationsStore = useIntegrationsStore()
 const { showSuccess, showError } = useNotification()
+const errorStore = useErrorStore()
 const config = useRuntimeConfig()
 const route = useRoute()
 
@@ -621,7 +632,7 @@ const refreshQrCode = async () => {
     await integrationsStore.fetchQrCode()
     showSuccess('QR code refreshed successfully!')
   } catch (error) {
-    showError('Failed to refresh QR code. Please try again.')
+    errorStore.showError('Failed to refresh QR code. Please try again.')
     console.error('Error refreshing QR code:', error)
   }
 }
@@ -632,7 +643,7 @@ const downloadQrCode = async () => {
     await integrationsStore.downloadQrCode(orgQuery ? String(orgQuery) : null)
   } catch (error) {
     console.error('Download failed:', error)
-    showError('Error downloading QR code, please try again.')
+    errorStore.showError('Error downloading QR code, please try again.')
   }
 }
 
@@ -641,7 +652,7 @@ const copyWebhookUrl = async () => {
     await navigator.clipboard.writeText(webhookUrl.value)
     showSuccess('Webhook URL copied to clipboard!')
   } catch (error) {
-    showError('Failed to copy webhook URL. Please copy manually.')
+    errorStore.showError('Failed to copy webhook URL. Please copy manually.')
     console.error('Error copying webhook URL:', error)
   }
 }
@@ -681,7 +692,7 @@ const saveConfiguration = async () => {
     // Validate phone number using the phone component
     const phoneValidation = phoneRef.value?.handlePhoneValidation()
     if (!phoneValidation?.status) {
-      showError(phoneValidation?.message || 'Please enter a valid phone number.')
+      errorStore.showError(phoneValidation?.message || 'Please enter a valid phone number.')
       return
     }
 
@@ -696,7 +707,7 @@ const saveConfiguration = async () => {
       !editForm.value.accessToken ||
       !editForm.value.appSecret
     ) {
-      showError(
+      errorStore.showError(
         'Please fill in all required fields: Business Number, App ID, Access Token, and App Secret.',
       )
       return
@@ -718,16 +729,21 @@ const saveConfiguration = async () => {
 
     const orgQuery = route?.query?.org || route?.query?.org_id || null
     if (isUpdate) {
-      await integrationsStore.updateWhatsAppAccount(whatsappData, orgQuery ? String(orgQuery) : null)
+      await integrationsStore.updateWhatsAppAccount(
+        whatsappData,
+        orgQuery ? String(orgQuery) : null,
+      )
     } else {
-      await integrationsStore.createWhatsAppAccount(whatsappData, orgQuery ? String(orgQuery) : null)
+      await integrationsStore.createWhatsAppAccount(
+        whatsappData,
+        orgQuery ? String(orgQuery) : null,
+      )
     }
 
     // Fetch QR code after successful save
     try {
       await integrationsStore.fetchQrCode()
-    } catch (error) {
-    }
+    } catch (error) {}
 
     // Exit edit mode and reset password visibility
     showAppSecret.value = false
@@ -750,8 +766,7 @@ onMounted(async () => {
   if (integrationsStore.whatsappDetails?.business_whatsapp_number) {
     try {
       await integrationsStore.fetchQrCode()
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 })
 

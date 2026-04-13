@@ -1,6 +1,7 @@
 import type { AuthUser, ApiResponse } from "./types";
-import { handleError, handleSuccess, extractErrors } from '../../utils/apiHandler'
 import { handleAuthError as handleAuthErrorShared, clearAuth } from '~/composables/useAuthError'
+import { useErrorStore } from '~/stores/error'
+import { useChatStore } from '~/stores/chat'
 
 export const useAuthStore = defineStore("authStore", {
   state: () => ({
@@ -35,9 +36,21 @@ export const useAuthStore = defineStore("authStore", {
       return await handleAuthErrorShared(err)
     },
 
-    handleError(error: any, fallbackMessage: string, silent: boolean = false): string {
-      return handleError(error, fallbackMessage, silent)
+    privateHandleError(error: any, fallbackMessage: string): string {
+      const message =
+        error?.response?._data?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        fallbackMessage
+
+      this.error = message
+
+      const errorStore = useErrorStore()
+      errorStore.showError(message)
+
+      return message
     },
+
 
 
     setAuthUser(user: AuthUser | null, token?: string | null) {
@@ -65,24 +78,19 @@ export const useAuthStore = defineStore("authStore", {
         });
 
         if (response?.status === "success") {
-          return response.data || response as T;
+          return response as T;   // 🔥 always return full response
         }
 
-        // Handle structured error responses
         if (response?.status === "error") {
           const errorMessage = response.message || "Operation failed";
           this.setError(errorMessage);
           throw new Error(errorMessage);
         }
 
-        // Fallback for legacy responses
-        const errorMessage = response?.message || "Operation failed";
-        this.setError(errorMessage);
-        throw new Error(errorMessage);
+        throw new Error("Unexpected response");
+
       } catch (error: any) {
-        // Use central handler to extract message and show notification
-        const msg = handleError(error, 'An unexpected error occurred')
-        this.setError(msg)
+        const msg = this.privateHandleError(error, 'An unexpected error occurred')
         throw new Error(msg)
       }
     },
@@ -216,6 +224,18 @@ export const useAuthStore = defineStore("authStore", {
       this.user = null;
       this.token = null;
 
+      // Clear chat store when clearing auth
+      try {
+        const chatStore = useChatStore();
+        chatStore.clearChat();
+        if (process.client) {
+          const router = useRouter()
+          router.replace({ query: {} })
+        }
+      } catch (e) {
+        // ignore if chat store not available
+      }
+
       if (process.client) {
         localStorage.removeItem("authUser");
         localStorage.removeItem("authToken");
@@ -250,19 +270,40 @@ export const useAuthStore = defineStore("authStore", {
       try {
         const response: any = await this.apiCall("/api/auth/signin", credentials);
 
+        // 🔐 CASE 1: FINAL LOGIN (no 2FA - fallback / future)
         if (response.user && response.token) {
           this.setAuthUser(response.user, response.token);
 
-          // Set cookie for SSR
           const tokenCookie = useCookie('auth-token', {
             secure: true,
             sameSite: 'lax',
             maxAge: 60 * 60 * 24 * 7
           });
           tokenCookie.value = response.token;
+
+          return response;
         }
 
-        return response;
+        // 🔐 CASE 2: 2FA SETUP REQUIRED
+        if (response.requires_2fa_setup) {
+          return {
+            requires_2fa_setup: true,
+            temp_token: response.temp_token,
+            email: response.user?.email
+          };
+        }
+
+        // 🔐 CASE 3: OTP REQUIRED
+        if (response.requires_otp) {
+          return {
+            requires_otp: true,
+            temp_token: response.temp_token,
+            email: response.user?.email
+          };
+        }
+
+        throw new Error("Invalid login response");
+
       } finally {
         this.setLoading(false);
       }
@@ -275,10 +316,10 @@ export const useAuthStore = defineStore("authStore", {
       try {
         const response: any = await this.apiCall("/api/auth/google-signin", formData);
 
+        // ✅ CASE 1: Direct login (profile incomplete)
         if (response.user && response.token) {
           this.setAuthUser(response.user, response.token);
 
-          // Set cookie for SSR
           const tokenCookie = useCookie('auth-token', {
             secure: true,
             sameSite: 'lax',
@@ -287,11 +328,8 @@ export const useAuthStore = defineStore("authStore", {
           tokenCookie.value = response.token;
         }
 
-        return {
-          status: "success",
-          message: response.message || "Sign-in successful!",
-          redirect: response.redirect || "/admin/profile",
-        };
+        return response;
+
       } finally {
         this.setLoading(false);
       }
@@ -336,7 +374,7 @@ export const useAuthStore = defineStore("authStore", {
       } catch (error) {
         // Handle authentication errors first
         if (!await this.handleAuthError(error)) {
-          this.error = handleError(error, 'Failed to change password');
+          this.privateHandleError(error, 'Failed to change password')
         }
       } finally {
         this.setLoading(false);
@@ -403,6 +441,88 @@ export const useAuthStore = defineStore("authStore", {
 
       const fallback = '/admin/dashboard';
       await navigateTo(queryRedirect || fallback);
+    },
+
+    async setup2FA(tempToken: string) {
+      this.setLoading(true);
+
+      try {
+        const res: any = await this.apiCall('/api/auth/2fa/setup', {
+          temp_token: tempToken
+        });
+
+        return res; // { qrCode, manualKey }
+
+      } finally {
+        this.setLoading(false);
+      }
+    },
+
+    async verify2FASetup(tempToken: string, otp: string) {
+      this.setLoading(true);
+
+      try {
+        const res: any = await this.apiCall('/api/auth/2fa/verify-setup', {
+          temp_token: tempToken,
+          otp
+        });
+
+        // ✅ FINAL LOGIN HERE
+        if (res.access_token) {
+          const token = res.access_token;
+
+          const tokenCookie = useCookie('auth-token', {
+            secure: true,
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7
+          });
+
+          tokenCookie.value = token;
+
+          // fetch user after login
+          await this.fetchCurrentUser();
+
+          return res;
+        }
+
+        throw new Error('Invalid verification response');
+
+      } finally {
+        this.setLoading(false);
+      }
+    },
+
+    async verifyOTPLogin(tempToken: string, otp: string) {
+      this.setLoading(true);
+
+      try {
+        const res: any = await this.apiCall('/api/auth/2fa/verify', {
+          temp_token: tempToken,
+          otp
+        });
+
+        if (res.access_token) {
+          const token = res.access_token;
+
+          // ✅ Set auth state
+          this.setAuthUser(res.user, token);
+
+          // ✅ Set cookie
+          const tokenCookie = useCookie('auth-token', {
+            secure: true,
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7
+          });
+          tokenCookie.value = token;
+
+          return res;
+        }
+
+        throw new Error('Invalid OTP response');
+
+      } finally {
+        this.setLoading(false);
+      }
     },
   },
 });

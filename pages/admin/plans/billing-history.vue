@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-useHead({ title: 'Billing History - provento.ai' })
+useHead({ title: 'Billing History - Admin Dashboard - provento.ai' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
@@ -74,9 +74,9 @@ const billingHistoryStore = useBillingHistoryStore()
 // Filtered invoices based on search query
 const filteredInvoices = computed(() => {
   if (!searchQuery.value.trim()) return invoices.value
-  
+
   const query = searchQuery.value.toLowerCase().trim()
-  
+
   return invoices.value.filter((invoice: any) => {
     return (
       (invoice.invoiceNumber?.toLowerCase() || '').includes(query) ||
@@ -100,7 +100,7 @@ watch([dateRange, selectedPlan], () => {
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(async () => {
     await fetchBillingHistory()
-    
+
     // After fetching filtered results, update available plans
     if (shouldUpdatePlans.value) {
       updateAvailablePlansFromCurrentResults()
@@ -118,29 +118,26 @@ watch(dateRange, () => {
 // Update the fetchBillingHistory function
 async function fetchBillingHistory() {
   loading.value = true
-  
+
   try {
     // Clear any previous errors
     billingHistoryStore.error = null
-    
+
     // Call the store method with filters
     await billingHistoryStore.fetchBillingHistory({
       dateRange: dateRange.value,
-      selectedPlan: selectedPlan.value
+      selectedPlan: selectedPlan.value,
     })
-    
+
     // Set local invoices
     invoices.value = billingHistoryStore.invoices
-    
   } catch (error: any) {
-    
     toast.add({
       title: 'Error',
       description: error.message || 'Failed to fetch billing history',
       icon: 'i-heroicons-x-circle',
-      color: 'red'
+      color: 'red',
     })
-
   } finally {
     loading.value = false
   }
@@ -152,29 +149,30 @@ async function fetchAllPlansForFilter() {
     // Use a separate API call to get all plan names
     const token = localStorage.getItem('authToken')
     if (!token) return
-    
+
     // Calculate date range for "All Time" - use last 2 years as a reasonable default
     const now = dayjs()
     const twoYearsAgo = now.subtract(2, 'year').format('YYYY-MM-DD')
     const today = now.format('YYYY-MM-DD')
-    
+
     const response: any = await $fetch('/api/billing/invoices', {
       headers: { Authorization: `Bearer ${token}` },
       params: {
         startDate: twoYearsAgo,
-        endDate: today
-      }
+        endDate: today,
+      },
     })
-    
+
     if (response?.success && response.data) {
       // Extract unique plan names from all invoices
-      const plans = new Set(response.data
-        .filter((inv: any) => inv && inv.planName && inv.planName.trim() !== '')
-        .map((inv: any) => inv.planName))
-      
+      const plans = new Set(
+        response.data
+          .filter((inv: any) => inv && inv.planName && inv.planName.trim() !== '')
+          .map((inv: any) => inv.planName),
+      )
+
       availablePlans.value = ['All Plans', ...Array.from(plans as Set<string>).sort()]
     }
-    
   } catch (error) {
     console.error('Failed to fetch all plans for filter:', error)
     // If failed, fetch at least one invoice to get plans
@@ -186,25 +184,26 @@ async function fetchAllPlansForFilter() {
 function updateAvailablePlansFromCurrentResults() {
   try {
     // Extract unique plan names from current filtered invoices
-    const plans = new Set(invoices.value
-      .filter(inv => inv && inv.planName && inv.planName.trim() !== '')
-      .map(inv => inv.planName))
-    
+    const plans = new Set(
+      invoices.value
+        .filter((inv) => inv && inv.planName && inv.planName.trim() !== '')
+        .map((inv) => inv.planName),
+    )
+
     // Update available plans
     const newAvailablePlans = ['All Plans', ...Array.from(plans).sort()]
     availablePlans.value = newAvailablePlans
-    
+
     // Check if currently selected plan still exists in the filtered results
     if (selectedPlan.value !== 'All Plans' && !plans.has(selectedPlan.value)) {
       // If the selected plan doesn't exist in filtered results, reset to "All Plans"
       selectedPlan.value = 'All Plans'
-      
+
       // Refetch with the updated plan selection
       setTimeout(() => fetchBillingHistory(), 100)
     }
-    
+
     shouldUpdatePlans.value = false
-    
   } catch (error) {
     console.error('Failed to update available plans:', error)
   }
@@ -215,15 +214,16 @@ async function fetchInitialPlans() {
   try {
     await billingHistoryStore.fetchBillingHistory({
       dateRange: 'All Time',
-      selectedPlan: 'All Plans'
+      selectedPlan: 'All Plans',
     })
-    
-    const plans = new Set(billingHistoryStore.invoices
-      .filter(inv => inv && inv.planName && inv.planName.trim() !== '')
-      .map(inv => inv.planName))
-    
+
+    const plans = new Set(
+      billingHistoryStore.invoices
+        .filter((inv) => inv && inv.planName && inv.planName.trim() !== '')
+        .map((inv) => inv.planName),
+    )
+
     availablePlans.value = ['All Plans', ...Array.from(plans).sort()]
-    
   } catch (error) {
     console.error('Failed to fetch initial plans:', error)
     availablePlans.value = ['All Plans']
@@ -236,9 +236,9 @@ async function handleDownloadInvoice(invoice: any) {
       title: 'Info',
       description: 'No downloadable invoice available for free plans',
       icon: 'i-heroicons-information-circle',
-      color: 'blue'
-    });
-    return;
+      color: 'blue',
+    })
+    return
   }
 
   try {
@@ -248,26 +248,26 @@ async function handleDownloadInvoice(invoice: any) {
       description: 'Preparing your invoice...',
       icon: 'i-heroicons-arrow-down-tray',
       color: 'primary',
-    });
+    })
 
-    await billingHistoryStore.downloadInvoice(invoice.id, invoice.invoiceNumber);
+    await billingHistoryStore.downloadInvoice(invoice.id, invoice.invoiceNumber)
 
     // Update toast to success
-    toast.remove(toastId.id);
+    toast.remove(toastId.id)
     toast.add({
       title: 'Success',
       description: 'Invoice downloaded successfully',
       icon: 'i-heroicons-check-circle',
-      color: 'green'
-    });
+      color: 'green',
+    })
   } catch (error: any) {
     // Handle error
     toast.add({
       title: 'Error',
       description: error.message || 'Failed to download invoice',
       icon: 'i-heroicons-exclamation-triangle',
-      color: 'red'
-    });
+      color: 'red',
+    })
   }
 }
 

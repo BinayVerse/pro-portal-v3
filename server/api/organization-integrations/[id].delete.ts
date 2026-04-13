@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
     // Get current integration to verify ownership and get provider_id and other data
     const currentRes = await query(
       `SELECT
-        provider_id, client_id, client_secret, api_key, access_token,
+        provider_id, module_id, client_id, client_secret, api_key, access_token,
         refresh_token, token_expiry, base_url, login_url, metadata_json, status
        FROM public.organization_integrations
        WHERE id = $1 AND organization_id = $2`,
@@ -100,7 +100,7 @@ export default defineEventHandler(async (event) => {
     return {
       statusCode: 200,
       status: 'success',
-      message: 'Organization integration deleted successfully (also removed from hrms_integration)'
+      message: 'Organization integration deleted successfully!'
     }
   } catch (error: any) {
     console.error('Organization Integration Delete Error:', error)

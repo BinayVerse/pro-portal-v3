@@ -67,3 +67,29 @@ export interface DocumentAnalysis {
   reference_count: number;
   questions?: any[];
 }
+
+export interface ActionableInsights {
+  period?: {
+    startDate: string;
+    endDate: string;
+  };
+  criticalAlerts?: Array<{
+    title: string;
+    description: string;
+    action: string;
+  }>;
+  engagementOpportunities?: Array<{
+    title: string;
+    description: string;
+    targets: string[];
+    impact: string;
+  }>;
+  summary?: string;
+  metrics?: Array<{
+    label: string;
+    value: string | number;
+    change?: number;
+  }>;
+  recommendations?: string[];
+  generatedAt?: string;
+}

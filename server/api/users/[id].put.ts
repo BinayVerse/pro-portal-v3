@@ -93,8 +93,16 @@ export default defineEventHandler(async (event) => {
         throw new CustomError('Department Admins cannot change user roles', 403)
       }
 
-      // Department Admin can only assign departments they have access to
+      // Department Admin can only ADD departments they have access to
+      // (but can keep existing ones and remove any)
       if (params.departments && Array.isArray(params.departments)) {
+        // 🔑 Validate: For users with role 2 (USER) or 3 (DEPARTMENT ADMIN), at least one department must be assigned
+        const targetRoleId = params.role_id ? Number(params.role_id) : previousRoleId
+        if ((targetRoleId === 2 || targetRoleId === 3) && params.departments.length === 0) {
+          setResponseStatus(event, 400)
+          throw new CustomError('At least one department must be assigned to the user', 400)
+        }
+
         // Get Department Admin's departments
         const adminDeptResult = await query(
           `SELECT dept_id FROM user_departments WHERE user_id = $1`,
@@ -102,14 +110,25 @@ export default defineEventHandler(async (event) => {
         )
         const adminDepts = adminDeptResult.rows.map(r => String(r.dept_id))
 
-        // Check if all requested departments are in the admin's departments
-        const allAuthorized = params.departments.every((deptId: string) =>
+        // Get current user's departments to determine which are being added
+        const existingDeptResult = await query(
+          `SELECT dept_id FROM user_departments WHERE user_id = $1`,
+          [String(userId)],
+        )
+        const existingDepts = existingDeptResult.rows.map(r => String(r.dept_id))
+
+        // 🔑 Only validate NEW departments being added (not existing ones)
+        const incomingDepts = params.departments.map(String)
+        const newDepts = incomingDepts.filter(d => !existingDepts.includes(d))
+
+        // Check if all NEW departments are in the admin's departments
+        const allNewAuthorized = newDepts.every((deptId: string) =>
           adminDepts.includes(String(deptId))
         )
 
-        if (!allAuthorized) {
+        if (!allNewAuthorized) {
           setResponseStatus(event, 403)
-          throw new CustomError('Department Admins can only assign users to their own departments', 403)
+          throw new CustomError('You can only assign departments from your own departments', 403)
         }
       }
     }
@@ -299,7 +318,7 @@ export default defineEventHandler(async (event) => {
     /* ============================================================
        🔑 DEPARTMENT SYNC (DIFF-BASED)
     ============================================================ */
-    const targetRoleId = Number(params.role_id)
+    const targetRoleId = Number(params.role_id || previousRoleId)
     const incoming = Array.isArray(params.departments)
       ? params.departments.map(String)
       : []
@@ -315,6 +334,12 @@ export default defineEventHandler(async (event) => {
       // Role no longer supports departments
       await query(`DELETE FROM user_departments WHERE user_id = $1`, [String(userId)])
     } else {
+      // 🔑 For roles 2 and 3, ensure at least one department is assigned
+      if (params.departments !== undefined && incoming.length === 0) {
+        setResponseStatus(event, 400)
+        throw new CustomError('At least one department must be assigned to the user', 400)
+      }
+
       const toAdd = incoming.filter(d => !existingIds.includes(d))
       const toRemove = existingIds.filter(d => !incoming.includes(d))
       const toUpdate = existingIds.filter(d => incoming.includes(d))

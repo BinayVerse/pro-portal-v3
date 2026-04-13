@@ -20,13 +20,40 @@ const handleGoogleResponse = async (response: GoogleResponse) => {
       const result = await authStore.googleSignIn({ googleToken: credential })
 
       if (result.status === 'success') {
-        showNotification(result.message || 'Sign-in successful!', 'success')
-        const user = authStore.user as any
-        if (user?.role_id === 0) {
-          window.location.href = '/admin/superadmin'
-        } else {
-          window.location.href = result.redirect || '/admin/profile'
+        // 🔐 CASE 1: First-time profile incomplete
+        if (result.token) {
+          showNotification(result.message || 'Sign-in successful!', 'success')
+
+          const user = authStore.user as any
+
+          if (user?.role_id === 0) {
+            return navigateTo('/admin/superadmin')
+          }
+
+          return navigateTo(result.redirect || '/admin/profile')
         }
+
+        // 🔐 CASE 2: 2FA setup required
+        if (result.requires_2fa_setup) {
+          return navigateTo({
+            path: '/secure-account',
+            query: {
+              token: result.temp_token,
+            },
+          })
+        }
+
+        // 🔐 CASE 3: OTP required
+        if (result.requires_otp) {
+          return navigateTo({
+            path: '/verify-otp',
+            query: {
+              token: result.temp_token,
+            },
+          })
+        }
+
+        throw new Error('Invalid login flow')
       } else {
         showNotification(result.message || 'Sign-in failed.', 'error')
       }

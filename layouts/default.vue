@@ -351,7 +351,7 @@
       <FooterComponent />
     </main>
 
-    <ChatWidget v-if="auth && auth.isAuthenticated" />
+    <ChatWidget v-if="auth && auth.isAuthenticated && !$route.path.startsWith('/admin')" />
   </div>
 </template>
 

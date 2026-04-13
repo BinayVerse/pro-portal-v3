@@ -29,3 +29,14 @@ export function getEnv() {
 export function isProd() {
   return getEnv() === 'prod'
 }
+
+export function isE2ETest(event: any) {
+  const testSecret = process.env.NUXT_E2E_TEST_SECRET
+  const testHeader = event.node.req.headers['x-test-auth']
+
+  return (
+    process.env.NODE_ENV !== 'prod' &&
+    testSecret &&
+    testHeader === testSecret
+  )
+}

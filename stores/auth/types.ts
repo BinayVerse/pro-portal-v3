@@ -21,3 +21,30 @@ export interface ApiResponse<T = any> {
   user?: AuthUser;
   redirect?: string;
 }
+
+
+export type LoginSuccess = {
+  status: 'success'
+  token: string
+  user: AuthUser
+  redirect?: string
+}
+
+export type Requires2FASetup = {
+  status: 'success'
+  requires_2fa_setup: true
+  temp_token: string
+  user?: { email: string; name?: string }
+}
+
+export type RequiresOTP = {
+  status: 'success'
+  requires_otp: true
+  temp_token: string
+  user?: { email: string; name?: string }
+}
+
+export type AuthResponse =
+  | LoginSuccess
+  | Requires2FASetup
+  | RequiresOTP

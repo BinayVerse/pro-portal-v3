@@ -4,6 +4,7 @@ import { query } from '../../utils/db';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { isPersonalEmail, personalEmailDomains } from '../../utils/auth-utils';
+import { generateTempToken } from '../../utils/auth';
 
 const config = useRuntimeConfig();
 
@@ -86,24 +87,59 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const token = jwt.sign(
-      { user_id: user.user_id, email: user.email, org_id: user.org_id },
-      secret,
-      { expiresIn: '1h' }
-    );
-
     const isComplete = !!(user.name && user.contact_number && user.org_id);
     const redirect = isComplete ? '/admin/dashboard' : '/admin/profile?edit=1';
     const message = isComplete ? 'Login successfully' : 'Please fill in all your details.';
 
+    const isProfileComplete = !!(user.name && user.contact_number && user.org_id)
+
+    // ✅ CASE 1: Profile NOT complete → allow login (NO 2FA)
+    if (!isProfileComplete) {
+      const token = jwt.sign(
+        {
+          user_id: user.user_id,
+          email: user.email,
+          org_id: user.org_id,
+        },
+        secret,
+        { expiresIn: '1h' }
+      )
+
+      return {
+        statusCode: 200,
+        status: 'success',
+        message: 'Please complete your profile',
+        token,
+        user,
+        redirect
+      }
+    }
+
+    // ✅ CASE 2: Profile complete BUT no 2FA → enforce setup
+    if (!user.two_factor_enabled) {
+      return {
+        statusCode: 200,
+        status: 'success',
+        requires_2fa_setup: true,
+        temp_token: generateTempToken(user.user_id),
+        user: {
+          email: user.email,
+          name: user.name
+        }
+      }
+    }
+
+    // ✅ CASE 3: Profile complete + 2FA → OTP login
     return {
-      statusCode: newUser ? 201 : 200,
+      statusCode: 200,
       status: 'success',
-      message,
-      token,
-      user,
-      redirect,
-    };
+      requires_otp: true,
+      temp_token: generateTempToken(user.user_id),
+      user: {
+        email: user.email,
+        name: user.name
+      }
+    }
   } catch (error: unknown) {
     const message =
       error instanceof CustomError

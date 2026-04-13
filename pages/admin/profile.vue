@@ -17,7 +17,12 @@
             </div>
           </div>
           <div v-if="!isEditing" class="flex-shrink-0">
-            <UButton color="primary" icon="i-heroicons-pencil-square" @click="startEdit" class="w-full sm:w-auto">
+            <UButton
+              color="primary"
+              icon="i-heroicons-pencil-square"
+              @click="startEdit"
+              class="w-full sm:w-auto"
+            >
               Edit Profile
             </UButton>
           </div>
@@ -71,10 +76,23 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <p class="text-xs text-gray-400">Country</p>
-              <p class="mt-1">{{ (profile as any).org_country ? COUNTRY_OPTIONS.find(c => c.value === (profile as any).org_country)?.label || (profile as any).org_country : '-' }}</p>
+              <p class="mt-1">
+                {{
+                  (profile as any).org_country
+                    ? COUNTRY_OPTIONS.find((c) => c.value === (profile as any).org_country)
+                        ?.label || (profile as any).org_country
+                    : '-'
+                }}
+              </p>
             </div>
             <div>
-              <p class="text-xs text-gray-400">{{ (profile as any).org_country ? getCountryTaxInfo((profile as any).org_country)?.taxIdLabel || 'Tax ID' : 'Tax ID' }}</p>
+              <p class="text-xs text-gray-400">
+                {{
+                  (profile as any).org_country
+                    ? getCountryTaxInfo((profile as any).org_country)?.taxIdLabel || 'Tax ID'
+                    : 'Tax ID'
+                }}
+              </p>
               <p class="mt-1">{{ (profile as any).org_tax_id || '-' }}</p>
             </div>
           </div>
@@ -169,7 +187,7 @@
                   v-model="state.contact_number"
                   :propPhone="state.contact_number || profile.contact_number"
                   placeholder="Your phone number"
-                  defaultCountry="in"
+                  defaultCountry="us"
                 />
               </UFormGroup>
             </div>
@@ -299,6 +317,22 @@
         </UForm>
       </div>
     </UCard>
+    <UModal v-model="show2FAModal">
+      <div class="p-6 space-y-4">
+        <h3 class="text-lg font-semibold text-white">Enable Two-Factor Authentication</h3>
+
+        <p class="text-gray-400 text-sm">
+          Allow us to enable 2FA to continue using the platform. This helps protect your account and
+          organization data.
+        </p>
+
+        <div class="flex justify-end gap-2 pt-4">
+          <!-- <UButton variant="ghost" @click="handleCancel2FA"> Cancel </UButton> -->
+
+          <UButton color="primary" @click="handleConfirm2FA"> Continue </UButton>
+        </div>
+      </div>
+    </UModal>
   </div>
 </template>
 
@@ -322,6 +356,7 @@ useHead({ title: 'Profile - Admin Dashboard - provento.ai' })
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
 const profileStore = useProfileStore()
+const { showNotification } = useNotification()
 const profile = computed(() => profileStore.userProfile)
 
 const isEditing = ref(false)
@@ -329,6 +364,7 @@ const route = useRoute()
 const submitting = ref(false)
 const phoneRef = ref<any>(null)
 const formRef = ref<any>(null)
+const show2FAModal = ref(false)
 
 // Zod schema: profile + organization + billing fields with country-specific tax ID messages
 const getSchema = (selectedOrgCountry: string) => {
@@ -343,7 +379,10 @@ const getSchema = (selectedOrgCountry: string) => {
       company: z.string().min(3, 'Company must be at least 3 characters'),
       org_country: z.string().min(1, 'Country is required'),
       org_tax_id: isOthersCountry
-        ? z.string().min(5, `${taxIdLabel} must be at least 5 characters`).max(50, 'Tax ID too long')
+        ? z
+            .string()
+            .min(5, `${taxIdLabel} must be at least 5 characters`)
+            .max(50, 'Tax ID too long')
         : z.string().min(1, `${taxIdLabel} is required`).max(50, 'Tax ID too long'),
       address_line1: z.string().min(3, 'Address line 1 is required'),
       address_line2: z.string().optional(),
@@ -551,7 +590,11 @@ watch(
 // Single submit for profile + billing
 const onSubmit = async () => {
   submitting.value = true
+
   try {
+    // 🧠 Track BEFORE state
+    const wasIncomplete = !isProfileComplete.value
+
     if (!validatePhoneField()) {
       throw new Error('Please enter a valid phone number')
     }
@@ -574,15 +617,23 @@ const onSubmit = async () => {
       billing_address: {
         address_line1: state.address_line1,
         address_line2: state.address_line2,
-        address_city: state.address_city, // city name
-        address_state: state.address_state, // ISO code
+        address_city: state.address_city,
+        address_state: state.address_state,
         address_zip: state.address_zip,
-        address_country: state.address_country, // ISO code
+        address_country: state.address_country,
       },
     })
 
     isEditing.value = false
     await profileStore.fetchUserProfile()
+
+    // 🔐 AFTER SAVE → check if now complete
+    const isNowComplete = isProfileComplete.value
+
+    if (wasIncomplete && isNowComplete) {
+      show2FAModal.value = true
+      return
+    }
   } catch (err: any) {
     console.error('Unexpected error saving profile & billing:', err)
   } finally {
@@ -590,8 +641,26 @@ const onSubmit = async () => {
   }
 }
 
-// ----- INIT -----
+const handleConfirm2FA = async () => {
+  show2FAModal.value = false
 
+  const authStore = useAuthStore()
+
+  showNotification('Please login again to enable security verification.', 'success')
+
+  setTimeout(async () => {
+    await authStore.signOut()
+    navigateTo('/login')
+  }, 800)
+}
+
+const handleCancel2FA = () => {
+  show2FAModal.value = false
+
+  showNotification('You must enable 2FA to continue using the platform.', 'warning')
+}
+
+// ----- INIT -----
 onMounted(async () => {
   try {
     await profileStore.fetchUserProfile()
