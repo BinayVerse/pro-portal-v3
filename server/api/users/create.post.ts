@@ -176,9 +176,29 @@ export default defineEventHandler(async (event) => {
 
     // Handle department assignment for USER (role_id = 2) and DEPARTMENT ADMIN (role_id = 3)
     // 🔑 Company Admin can assign one or multiple departments to both roles
-    if ((roleIdNum === 2 || roleIdNum === 3) && userDetails.departments && Array.isArray(userDetails.departments) && userDetails.departments.length > 0) {
+    // For regular users with no departments, auto-assign to "Common"
+    let departmentsToAssign = userDetails.departments || []
+
+    // Auto-assign "Common" department for regular users (role_id = 2) without explicit department selection
+    if (roleIdNum === 2 && (!departmentsToAssign || departmentsToAssign.length === 0)) {
       try {
-        for (const deptId of userDetails.departments) {
+        const commonDept = await query(
+          `SELECT dept_id FROM organization_departments WHERE org_id = $1 AND lower(name) = 'common' AND is_system = true`,
+          [orgDetail.org_id],
+        )
+        if (commonDept.rows.length > 0) {
+          departmentsToAssign = [commonDept.rows[0].dept_id]
+          console.log(`[create.post.ts] Auto-assigned "Common" department to user ${newUserId}`)
+        }
+      } catch (e) {
+        console.error('Failed to fetch Common department for auto-assignment:', e)
+        // Continue without auto-assignment if it fails
+      }
+    }
+
+    if ((roleIdNum === 2 || roleIdNum === 3) && departmentsToAssign && Array.isArray(departmentsToAssign) && departmentsToAssign.length > 0) {
+      try {
+        for (const deptId of departmentsToAssign) {
           await query(
             `INSERT INTO user_departments (user_id, dept_id, org_id, created_by)
              VALUES ($1, $2, $3, $4)
@@ -186,7 +206,7 @@ export default defineEventHandler(async (event) => {
             [String(newUserId), deptId, orgDetail.org_id, String(userId)],
           )
         }
-        console.log(`[create.post.ts] Assigned ${userDetails.departments.length} departments to user ${newUserId}`)
+        console.log(`[create.post.ts] Assigned ${departmentsToAssign.length} departments to user ${newUserId}`)
       } catch (e) {
         console.error('Failed to assign departments to user:', e)
       }

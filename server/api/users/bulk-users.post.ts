@@ -231,8 +231,27 @@ export default defineEventHandler(async (event) => {
         const newUserId = result.rows[0].user_id
 
         // ✅ Assign departments
-        if (departmentIds.length > 0) {
-          for (const deptId of departmentIds) {
+        let deptIdsToAssign = [...departmentIds]
+
+        // Auto-assign "Common" department for regular users (role_id = 2) without explicit departments
+        if (roleId === 2 && departmentIds.length === 0) {
+          try {
+            const commonDeptResult = await client.query(
+              `SELECT dept_id FROM organization_departments WHERE org_id = $1 AND lower(name) = 'common' AND is_system = true`,
+              [orgDetail.org_id],
+            )
+            if (commonDeptResult.rows.length > 0) {
+              deptIdsToAssign = [commonDeptResult.rows[0].dept_id]
+              console.log(`[bulk-users.post.ts] Auto-assigned "Common" department to user ${newUserId}`)
+            }
+          } catch (e) {
+            console.error('Failed to fetch Common department for auto-assignment:', e)
+            // Continue without auto-assignment if it fails
+          }
+        }
+
+        if (deptIdsToAssign.length > 0) {
+          for (const deptId of deptIdsToAssign) {
             await client.query(
               `INSERT INTO user_departments (user_id, dept_id, org_id, created_by)
               VALUES ($1, $2, $3, $4)

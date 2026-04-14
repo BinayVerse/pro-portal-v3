@@ -193,40 +193,58 @@
 
           <template #actions-data="{ row }">
             <div class="flex items-center space-x-2">
-              <!-- Edit (disabled for ALL) -->
-              <AppTooltip v-if="row.id !== 'ALL'" text="Edit department">
+              <!-- EDIT -->
+              <AppTooltip
+                :text="
+                  row.id === 'ALL'
+                    ? 'The All department cannot be modified or disabled'
+                    : row.is_system
+                      ? `The '${row.name}' department is a system department and cannot be modified`
+                      : 'Edit department'
+                "
+              >
                 <button
+                  :disabled="row.id === 'ALL' || row.is_system"
                   @click="editDepartment(row)"
-                  class="text-blue-400 hover:text-blue-300 transition-colors"
+                  :class="[
+                    'transition-colors',
+                    row.id === 'ALL' || row.is_system
+                      ? 'text-gray-500 cursor-not-allowed opacity-50'
+                      : 'text-blue-400 hover:text-blue-300',
+                  ]"
                 >
                   <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
                 </button>
               </AppTooltip>
 
-              <!-- Disabled actions for ALL -->
+              <!-- ACTIVATE / DEACTIVATE -->
               <AppTooltip
-                v-if="row.id === 'ALL'"
-                text="The All department cannot be modified or disabled"
-              >
-                <div class="flex items-center text-gray-500 cursor-not-allowed">
-                  <UIcon name="i-heroicons-lock-closed" class="w-4 h-4" />
-                </div>
-              </AppTooltip>
-
-              <!-- Activate / Deactivate (normal departments only) -->
-              <AppTooltip
-                v-else
-                :text="row.status === 'active' ? 'Deactivate department' : 'Activate department'"
+                :text="
+                  row.id === 'ALL'
+                    ? 'The All department cannot be modified or disabled'
+                    : row.is_system
+                      ? `The '${row.name}' department is a system department and cannot be modified`
+                      : row.status === 'active'
+                        ? 'Deactivate department'
+                        : 'Activate department'
+                "
               >
                 <button
+                  :disabled="row.id === 'ALL' || row.is_system"
                   @click="
-                    row.status === 'active' ? showDeactivateConfirm(row) : showActivateConfirm(row)
+                    !(row.id === 'ALL' || row.is_system) &&
+                    (row.status === 'active'
+                      ? showDeactivateConfirm(row)
+                      : showActivateConfirm(row))
                   "
-                  :class="`transition-colors ${
-                    row.status === 'active'
-                      ? 'text-red-400 hover:text-red-300'
-                      : 'text-green-400 hover:text-green-300'
-                  }`"
+                  :class="[
+                    'transition-colors',
+                    row.id === 'ALL' || row.is_system
+                      ? 'cursor-not-allowed opacity-50 text-gray-500'
+                      : row.status === 'active'
+                        ? 'text-red-400 hover:text-red-300'
+                        : 'text-green-400 hover:text-green-300',
+                  ]"
                 >
                   <UIcon
                     :name="
@@ -427,7 +445,6 @@
         </div>
       </UCard>
     </UModal>
-
   </div>
 </template>
 
@@ -451,6 +468,7 @@ interface Department {
   users: number
   artifacts: number
   initials: string
+  is_system?: boolean
 }
 
 interface DepartmentForm {
@@ -526,20 +544,23 @@ const columns = [
   { key: 'actions', label: 'Actions' },
 ]
 
-// Filter logic - exclude "ALL" row from table display
+// Filter logic - exclude "ALL" row and system departments from table display
 const filteredDepartments = computed(() => {
-  return departmentsList.value
-    .filter((dept) => dept.id !== 'ALL') // Exclude the "ALL" aggregate row from table
-    .filter((dept) => {
-      const matchesSearch =
-        !searchQuery.value ||
-        dept.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        dept.description.toLowerCase().includes(searchQuery.value.toLowerCase())
+  return (
+    departmentsList.value
+      .filter((dept) => dept.id !== 'ALL') // Exclude the "ALL" aggregate row from table
+      // .filter((dept) => !dept.is_system) // Exclude system departments like "Common"
+      .filter((dept) => {
+        const matchesSearch =
+          !searchQuery.value ||
+          dept.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+          dept.description.toLowerCase().includes(searchQuery.value.toLowerCase())
 
-      const matchesStatus = !selectedStatus.value || dept.status === selectedStatus.value
+        const matchesStatus = !selectedStatus.value || dept.status === selectedStatus.value
 
-      return matchesSearch && matchesStatus
-    })
+        return matchesSearch && matchesStatus
+      })
+  )
 })
 
 // Sorting
@@ -616,8 +637,8 @@ const stats = computed<DepartmentStats>(() => {
   // Find the "ALL" row which has aggregated counts from the backend
   const allRow = departmentsList.value.find((d) => d.id === 'ALL')
 
-  // Count only real departments (exclude the "ALL" aggregate row)
-  const realDepartments = departmentsList.value.filter((d) => d.id !== 'ALL')
+  // Count only real, non-system departments (exclude the "ALL" aggregate row and system departments)
+  const realDepartments = departmentsList.value.filter((d) => d.id !== 'ALL' && !d.is_system)
   const totalDepartments = realDepartments.length
   const activeDepartments = realDepartments.filter((d) => d.status === 'active').length
 
@@ -705,7 +726,7 @@ const confirmDeactivate = async () => {
     await departmentsStore.toggleDepartmentStatus(
       selectedDepartment.value.id,
       'inactive',
-      true // Pass silent=true to prevent global error notification
+      true, // Pass silent=true to prevent global error notification
     )
     showDeactivateModal.value = false
   } catch (err: any) {

@@ -49,6 +49,7 @@ export default defineEventHandler(async (event) => {
       d.name,
       d.description,
       d.status,
+      d.is_system,
       COUNT(DISTINCT ud.user_id)::int AS users,
       COUNT(DISTINCT dd.document_id)::int AS artifacts
     FROM organization_departments d
@@ -87,6 +88,7 @@ export default defineEventHandler(async (event) => {
                 name: 'All',
                 description: 'All departments',
                 status: 'active',
+                is_system: false,
                 users: allStats.rows[0].users,
                 artifacts: allStats.rows[0].artifacts,
             },

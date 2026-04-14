@@ -68,6 +68,7 @@ export default defineEventHandler(async (event) => {
         WHERE org_id = $1
           AND status = 'active'
           AND dept_id = ANY($2)
+          AND is_system = false
         ORDER BY name ASC
         `,
         [orgId, deptIds],
@@ -80,13 +81,14 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // ✅ Admin / User / Super Admin → all departments
+    // ✅ Admin / User / Super Admin → all departments (excluding system departments like "Common")
     const result = await query(
       `
       SELECT dept_id, org_id, name, description, status, created_at, updated_at
       FROM organization_departments
       WHERE org_id = $1
         AND status = 'active'
+        AND is_system = false
       ORDER BY name ASC
       `,
       [orgId],

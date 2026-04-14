@@ -283,11 +283,29 @@ export default defineEventHandler(async (event) => {
       }
 
       // 🔑 Handle department assignments
-      // Extra validation - ensure departments is an array of strings
-      if (departments && Array.isArray(departments) && departments.length > 0) {
+      // If no departments provided and user is not a Department Admin, auto-assign to "Common"
+      let departmentsToAssign = departments
+
+      if ((!departmentsToAssign || departmentsToAssign.length === 0) && tokenUserRole !== 3) {
         try {
-          // console.log(`[upload.post.ts] Assigning ${departments.length} departments to document ${documentId}`)
-          // console.log(`[upload.post.ts] Department IDs:`, JSON.stringify(departments))
+          const commonDept = await query(
+            `SELECT dept_id FROM organization_departments WHERE org_id = $1 AND lower(name) = 'common' AND is_system = true`,
+            [org_id]
+          )
+          if (commonDept.rows.length > 0) {
+            departmentsToAssign = [commonDept.rows[0].dept_id]
+          }
+        } catch (e: any) {
+          console.error('Failed to fetch Common department:', e)
+          // Continue without auto-assignment if it fails
+        }
+      }
+
+      // Extra validation - ensure departments is an array of strings
+      if (departmentsToAssign && Array.isArray(departmentsToAssign) && departmentsToAssign.length > 0) {
+        try {
+          // console.log(`[upload.post.ts] Assigning ${departmentsToAssign.length} departments to document ${documentId}`)
+          // console.log(`[upload.post.ts] Department IDs:`, JSON.stringify(departmentsToAssign))
 
           // Delete existing department mappings
           await query(
@@ -296,8 +314,8 @@ export default defineEventHandler(async (event) => {
           )
 
           // Insert new department mappings - iterate safely
-          for (let i = 0; i < departments.length; i++) {
-            const deptId = departments[i]
+          for (let i = 0; i < departmentsToAssign.length; i++) {
+            const deptId = departmentsToAssign[i]
             const trimmedDeptId = String(deptId).trim()
 
             // console.log(`[upload.post.ts] Dept[${i}]: original="${deptId}", trimmed="${trimmedDeptId}", type=${typeof deptId}`)

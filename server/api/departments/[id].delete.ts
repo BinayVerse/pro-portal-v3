@@ -1,11 +1,10 @@
-import { defineEventHandler, readBody, getRouterParam, setResponseStatus } from 'h3'
+import { defineEventHandler, getRouterParam, setResponseStatus } from 'h3'
 import { query } from '../../utils/db'
 import { CustomError } from '../../utils/custom.error'
 import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event) => {
     const deptId = getRouterParam(event, 'id')
-    const { name, description } = await readBody(event)
     const config = useRuntimeConfig()
     const token = event.node.req.headers.authorization?.split(' ')[1]
 
@@ -34,9 +33,9 @@ export default defineEventHandler(async (event) => {
 
     const orgId = user.rows[0].org_id
 
-    // Check if the department is a system department
+    // Check if the department exists and get its details
     const deptCheck = await query(
-        'SELECT is_system FROM organization_departments WHERE dept_id = $1 AND org_id = $2',
+        'SELECT dept_id, is_system, name FROM organization_departments WHERE dept_id = $1 AND org_id = $2',
         [deptId, orgId],
     )
 
@@ -45,30 +44,25 @@ export default defineEventHandler(async (event) => {
         throw new CustomError('Department not found', 404)
     }
 
-    if (deptCheck.rows[0].is_system) {
+    const { is_system, name } = deptCheck.rows[0]
+
+    // Prevent deletion of system departments (like "Common")
+    if (is_system) {
         setResponseStatus(event, 403)
-        throw new CustomError('Cannot edit system departments', 403)
+        throw new CustomError(`Cannot delete system department "${name}"`, 403)
     }
 
-    const result = await query(
-        `
-            UPDATE organization_departments
-            SET name = $1, description = $2, updated_at = now(), updated_by = $5
-            WHERE dept_id = $3 AND org_id = $4
-            RETURNING dept_id AS id, name, description, status, is_system
-        `,
-        [name, description, deptId, orgId, userId],
+    // Delete the department
+    // Foreign key constraints with ON DELETE CASCADE will handle cleanup
+    await query(
+        'DELETE FROM organization_departments WHERE dept_id = $1 AND org_id = $2',
+        [deptId, orgId],
     )
-
-    if (!result.rowCount) {
-        setResponseStatus(event, 404)
-        throw new CustomError('Department not found', 404)
-    }
 
     setResponseStatus(event, 200)
     return {
         statusCode: 200,
         status: 'success',
-        data: result.rows[0],
+        message: `Department "${name}" deleted successfully`,
     }
 })

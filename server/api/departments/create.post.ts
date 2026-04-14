@@ -33,6 +33,12 @@ export default defineEventHandler(async (event) => {
 
     const orgId = user.rows[0].org_id
 
+    // Prevent creating "Common" department (reserved for system use)
+    if (name.toLowerCase() === 'common') {
+        setResponseStatus(event, 403)
+        throw new CustomError('Cannot create department named "Common" - this is a reserved system department', 403)
+    }
+
     // Unique name per org
     const exists = await query(
         'SELECT 1 FROM organization_departments WHERE org_id = $1 AND lower(name) = lower($2)',
@@ -46,9 +52,9 @@ export default defineEventHandler(async (event) => {
 
     const result = await query(
         `
-            INSERT INTO organization_departments (org_id, name, description, status, created_by)
-            VALUES ($1, $2, $3, 'active', $4)
-            RETURNING dept_id AS id, name, description, status
+            INSERT INTO organization_departments (org_id, name, description, status, created_by, is_system)
+            VALUES ($1, $2, $3, 'active', $4, false)
+            RETURNING dept_id AS id, name, description, status, is_system
         `,
         [orgId, name, description, userId],
     )
