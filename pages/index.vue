@@ -802,7 +802,7 @@
         <div class="advisors-strip">
           <span class="adv-label">Advised by</span>
           <div class="adv-items">
-            <span class="adv-pill"><span>Murthy Jayanthi</span> · Ex-SAP, Ex-Salesforce</span>
+            <span class="adv-pill"><span>Murthy Jayanthi</span> · Ex-Amazon, Ex-Ebay</span>
             <span class="adv-pill"
               ><span>Bharadwaj Pudipeddi</span> · Ex-Google Brain, 3 AI patents</span
             >

@@ -16,6 +16,7 @@
         <div>
           <label class="block text-sm text-gray-300 mb-2"> 6-digit code </label>
           <input
+            ref="otpInput"
             v-model="otp"
             maxlength="6"
             inputmode="numeric"
@@ -49,6 +50,7 @@ const { showNotification } = useNotification()
 
 const tempToken = route.query.token as string
 const otp = ref('')
+const otpInput = ref<HTMLInputElement | null>(null)
 
 // 🔹 Verify OTP login
 const handleVerify = async () => {
@@ -88,6 +90,11 @@ const handleVerify = async () => {
 onMounted(() => {
   if (!tempToken) {
     navigateTo('/login')
+    return
   }
+
+  nextTick(() => {
+    otpInput.value?.focus()
+  })
 })
 </script>

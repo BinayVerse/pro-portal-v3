@@ -14,31 +14,41 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <!-- Date Range Picker -->
-        <div class="md:col-span-2 lg:col-span-1.5 flex gap-2 items-center">
-          <!-- From Date -->
-          <div class="flex-1 relative">
+        <!-- <div class="md:col-span-2 lg:col-span-1.5 flex gap-2 items-center"> -->
+        <!-- From Date -->
+        <!-- <div class="flex-1 relative">
             <input
               v-model="filters.fromDate"
               type="date"
-              class="w-full px-3 py-2 bg-dark-700 border border-dark-600 rounded text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm cursor-pointer appearance-none"
+              class="w-full px-3 py-2 bg-dark-700 border border-dark-600 rounded text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm cursor-pointer appearance-none date-input"
               placeholder="mm/dd/yyyy"
             />
-            <UIcon name="i-heroicons-calendar-20-solid" class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-          </div>
+            <UIcon
+              name="i-heroicons-calendar-20-solid"
+              class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
+            />
+          </div> -->
 
-          <!-- Separator -->
-          <span class="text-gray-500 text-xs">to</span>
+        <!-- Separator -->
+        <!-- <span class="text-gray-500 text-xs">to</span> -->
 
-          <!-- To Date -->
-          <div class="flex-1 relative">
+        <!-- To Date -->
+        <!-- <div class="flex-1 relative">
             <input
               v-model="filters.toDate"
               type="date"
-              class="w-full px-3 py-2 bg-dark-700 border border-dark-600 rounded text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm cursor-pointer appearance-none"
+              class="w-full px-3 py-2 bg-dark-700 border border-dark-600 rounded text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm cursor-pointer appearance-none date-input"
               placeholder="mm/dd/yyyy"
             />
-            <UIcon name="i-heroicons-calendar-20-solid" class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-          </div>
+            <UIcon
+              name="i-heroicons-calendar-20-solid"
+              class="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
+            />
+          </div> -->
+        <!-- </div> -->
+
+        <div class="md:col-span-2 lg:col-span-1.5">
+          <AppDateRangePicker v-model="dateRange" />
         </div>
 
         <!-- Employee Filter (Multi-select) -->
@@ -345,7 +355,6 @@ const formatDate = (date: string | Date) => {
   })
 }
 
-
 const formatDateTime = (date: string | Date) => {
   if (!date) return '-'
 
@@ -380,6 +389,11 @@ const filters = ref({
   toDate: today,
   employeeIds: [],
   source: '',
+})
+
+const dateRange = ref({
+  start: filters.value.fromDate,
+  end: filters.value.toDate,
 })
 
 // Applied filters are only set when "Load Report" is clicked
@@ -735,6 +749,17 @@ watch(perPage, () => {
   page.value = 1
 })
 
+watch(
+  dateRange,
+  (val) => {
+    if (!val?.start || !val?.end) return
+
+    filters.value.fromDate = val.start
+    filters.value.toDate = val.end
+  },
+  { deep: true },
+)
+
 // Detect if dates have changed to enable/disable Load Report button
 const hasDateChanged = computed(() => {
   return (
@@ -742,19 +767,28 @@ const hasDateChanged = computed(() => {
     filters.value.toDate !== appliedFilters.value.toDate
   )
 })
+
+// Validate and sync dates - ensure fromDate is never after toDate
+watch(
+  () => filters.value.fromDate,
+  (newFromDate) => {
+    if (newFromDate && filters.value.toDate && newFromDate > filters.value.toDate) {
+      filters.value.toDate = newFromDate
+    }
+  },
+)
+
+watch(
+  () => filters.value.toDate,
+  (newToDate) => {
+    if (newToDate && filters.value.fromDate && newToDate < filters.value.fromDate) {
+      filters.value.fromDate = newToDate
+    }
+  },
+)
 </script>
 
 <style scoped>
-/* Hide native date picker calendar icon */
-input[type='date']::-webkit-calendar-picker-indicator {
-  display: none;
-}
-
-input[type='date']::-webkit-outer-spin-button,
-input[type='date']::-webkit-inner-spin-button {
-  display: none;
-}
-
 /* Custom scrollbar for table */
 :deep(.overflow-x-auto) {
   scrollbar-width: thin;
