@@ -6,7 +6,7 @@ import type { FormSubmitEvent } from '#ui/types'
 useHead({ title: 'Book a Meeting - provento.ai' })
 
 definePageMeta({
-  layout: 'main',
+  layout: 'landing',
 })
 
 const { showNotification } = useNotification()
@@ -225,21 +225,21 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </template>
       </UCard>
     </UModal>
-    <section class="pt-16 pb-24 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-16">
-          <h1 class="text-4xl sm:text-5xl font-bold text-white mb-6">
+    <section class="landing-inner-page">
+      <div class="landing-inner-wrap max-w-5xl">
+        <div class="text-center mb-14">
+          <h1 class="landing-page-title">
             Book a
-            <span class="text-primary-400">Demo</span>
+            <span>Demo</span>
           </h1>
-          <p class="text-xl text-gray-300">
+          <p class="landing-page-sub mx-auto">
             See provento.ai in action and discover how it can transform your artifact workflow
           </p>
         </div>
 
-        <div class="grid lg:grid-cols-2 gap-12">
+        <div class="landing-form-grid">
           <!-- Demo Form -->
-          <div class="card">
+          <div class="landing-panel">
             <h2 class="text-2xl font-bold text-white mb-6">Schedule Your Demo</h2>
 
             <UForm
@@ -369,9 +369,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </div>
 
           <!-- Demo Information -->
-          <div class="space-y-8">
+          <div class="space-y-6">
             <!-- What to Expect -->
-            <div class="card">
+            <div class="landing-panel">
               <h3 class="text-xl font-bold text-white mb-4">What to Expect</h3>
               <ul class="space-y-3">
                 <li v-for="item in demoExpectations" :key="item" class="flex items-start">
@@ -385,7 +385,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             </div>
 
             <!-- Demo Stats -->
-            <div class="card">
+            <div class="landing-panel">
               <h3 class="text-xl font-bold text-white mb-4">Demo Details</h3>
               <div class="space-y-4">
                 <div class="flex items-center">
@@ -411,7 +411,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             </div>
 
             <!-- Contact Alternative -->
-            <div class="card">
+            <div class="landing-panel">
               <h3 class="text-xl font-bold text-white mb-4">Prefer to Talk First?</h3>
               <p class="text-gray-300 mb-4">
                 Have questions before booking? Our sales team is happy to help.

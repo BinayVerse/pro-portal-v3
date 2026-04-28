@@ -1,4 +1,5 @@
 import { defineEventHandler, readBody } from 'h3'
+import { logError, logWarn } from '~/server/utils/logger'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event) as any
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
   // Try direct GET /prices/{id} first
   try {
     const url = `https://${site}.chargebee.com/api/v2/prices/${encodeURIComponent(String(priceId))}`
-    console.log('Chargebee validate-price URL:', url)
+    logWarn('Chargebee validate-price URL: ' + url)
     const resp = await fetch(url, { headers: { Authorization: `Basic ${auth}` } })
     const text = await resp.text()
     let json = null
@@ -45,15 +46,15 @@ export default defineEventHandler(async (event) => {
     }
 
     // If direct GET failed with 404 or similar, fall back to listing prices
-    console.log('Direct price lookup failed', { status: resp.status, body: text })
+    logWarn('Direct price lookup failed with status: ' + resp.status)
   } catch (e) {
-    console.warn('Direct price lookup error', e)
+    logWarn('Direct price lookup error', e)
   }
 
   // Fallback: search prices list
   try {
     const listUrl = `https://${site}.chargebee.com/api/v2/prices?limit=100`
-    console.log('Chargebee prices list URL:', listUrl)
+    logWarn('Chargebee prices list URL: ' + listUrl)
     const listResp = await fetch(listUrl, { headers: { Authorization: `Basic ${auth}` } })
     const listText = await listResp.text()
     let listJson = null
@@ -69,7 +70,7 @@ export default defineEventHandler(async (event) => {
 
     return { success: true, exists: false }
   } catch (e: any) {
-    console.error('Price validation failed', e?.message || e)
+    logError('Price validation failed:', e)
     return { success: false, error: e?.message || 'Failed to validate price' }
   }
 })

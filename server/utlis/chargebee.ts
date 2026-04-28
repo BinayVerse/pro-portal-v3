@@ -1,6 +1,7 @@
 import { ChargeBee } from 'chargebee-typescript'
 import { formatExpiryDate } from './helper'
 import dayjs from 'dayjs'
+import { logger } from './../utils/logger'
 
 const runtimeConfig = useRuntimeConfig()
 
@@ -285,16 +286,16 @@ export async function createSubscription(subscription: any, customerId: string) 
     if (subscription.couponCode)
       requestPayload.coupon_ids = [subscription.couponCode]
 
-    console.log('Chargebee create_with_items for customer:', customerId, 'payload:', JSON.stringify(requestPayload))
+    logger.info({ customerId, payload: requestPayload }, 'Creating Chargebee subscription')
 
     const result = await chargebee.subscription.create_with_items(customerId, requestPayload).request()
 
-    console.log('✅ Chargebee subscription created (PC2 SDK):', result)
+    logger.info({ customerId, subscriptionId: result.subscription.id }, 'Chargebee subscription created')
 
     return { status: 'Success', statusCode: 200, subscription: result }
   }
   catch (error: any) {
-    console.error('Chargebee subscription creation failed:', error)
+    logger.error({ customerId, error: error?.message }, 'Chargebee subscription creation failed')
     return {
       statusCode: error.http_status_code || 500,
       error: {
@@ -461,14 +462,13 @@ export async function getSubscriptionDetails(orgId: string): Promise<Subscriptio
    * 6️⃣ Handle renewal
    * -------------------------------------------------- */
   if (isRenewal) {
-    console.log(
-      '🔁 Renewal detected',
+    logger.info(
       {
         orgId,
-        at: new Date().toISOString(),
         db_subscription_start: dbCycleStart.toISOString(),
         cb_cycle_start: cycleStartIso,
-      }
+      },
+      'Renewal detected'
     )
 
     /* 6.1 Expire ALL active subscriptions + addons */
@@ -657,34 +657,34 @@ export async function downloadInvoicePDF(invoiceId: string): Promise<{
   filename?: string
   error?: any
 }> {
-  
+
   try {
     // First get invoice details to get the invoice number for filename
     const invoiceResult = await getInvoiceById(invoiceId)
-    
-    
+
+
     if (invoiceResult.status !== 'Success') {
-      console.error('Failed to fetch invoice details:', invoiceResult)
-      throw new Error(invoiceResult?.error || 'Failed to fetch invoice details')
+      // logger.error({ invoiceResult }, 'Failed to fetch invoice details')
+      throw new Error((invoiceResult as any)?.error || 'Failed to fetch invoice details')
     }
 
-    const invoiceData = invoiceResult?.data
+    const invoiceData = (invoiceResult as any).data
     if (!invoiceData) {
       throw new Error('No invoice data available')
     }
 
     // Retrieve the PDF from Chargebee
     const result = await chargebee.invoice.pdf(invoiceId).request()
-        
+
     if (!result.download?.download_url) {
       throw new Error('No PDF URL available for this invoice')
     }
 
     const pdfUrl = result.download.download_url
-        
+
     // Fetch the PDF content
     const response = await fetch(pdfUrl)
-    
+
     if (!response.ok) {
       throw new Error(`Failed to download PDF: ${response.statusText} (${response.status})`)
     }
@@ -713,14 +713,14 @@ export async function downloadInvoicePDF(invoiceId: string): Promise<{
  */
 function extractPlanName(lineItems: any[]): string {
   if (!lineItems || !Array.isArray(lineItems)) return 'Unknown Plan'
-  
+
   // Look for the main subscription line item
-  const subscriptionItem = lineItems.find(item => 
-    item.entity_type === 'plan' || 
+  const subscriptionItem = lineItems.find(item =>
+    item.entity_type === 'plan' ||
     item.description?.toLowerCase().includes('subscription') ||
     item.description?.toLowerCase().includes('plan')
   )
-  
+
   return subscriptionItem?.description || 'Unknown Plan'
 }
 
@@ -728,13 +728,13 @@ function extractPlanName(lineItems: any[]): string {
 export async function getInvoiceById(invoiceId: string) {
   try {
     const result = await chargebee.invoice.retrieve(invoiceId).request()
-    
+
     const invoice = result.invoice
-    
+
     // Calculate total amount from line items
     const amount = invoice.amount || calculateTotalFromLineItems(invoice.line_items)
     const invoice_number = invoice.invoice_number || invoice.id || invoiceId
-    
+
     const formattedInvoice = {
       id: invoice.id,
       invoice_number: invoice_number,
@@ -765,7 +765,7 @@ export async function getInvoiceById(invoiceId: string) {
 // Helper function to calculate total from line items
 function calculateTotalFromLineItems(lineItems: any[]): number {
   if (!lineItems || !Array.isArray(lineItems)) return 0
-  
+
   return lineItems.reduce((total, item) => {
     return total + (item.amount || 0)
   }, 0)
@@ -904,13 +904,13 @@ function findMatchingBasePeriod(
     : {}
 }
 
-export async function getCustomerInvoices(customerId: string, options?: { 
+export async function getCustomerInvoices(customerId: string, options?: {
   sort_by?: 'date' | 'updated_at'
   sort_order?: 'asc' | 'desc'
 }) {
   try {
     const params: any = {
-      'customer_id[is]': customerId, 
+      'customer_id[is]': customerId,
       'sort_by[desc]': options?.sort_by || 'date',
     }
 
@@ -923,7 +923,7 @@ export async function getCustomerInvoices(customerId: string, options?: {
       const invoice = item.invoice
       const amount = invoice.amount || calculateTotalFromLineItems(invoice.line_items)
       const invoice_number = invoice.invoice_number || invoice.id
-      
+
       // Get timezone from invoice - use site timezone for display
       const timezone = invoice.site_details_at_creation?.timezone || 'America/Los_Angeles'
       const invoiceDateUTC = dayjs.unix(invoice.date)
@@ -941,14 +941,14 @@ export async function getCustomerInvoices(customerId: string, options?: {
       let billingPeriod = null
       let periodStartDate = null
       let periodEndDate = null
-      
+
       if (period_start && period_end) {
         const formattedPeriod = formatPeriodWithTimezone(period_start, period_end, timezone)
         billingPeriod = formattedPeriod.billing_period
         periodStartDate = formattedPeriod.period_start_date
         periodEndDate = formattedPeriod.period_end_date
       }
-      
+
       return {
         id: invoice.id,
         invoice_number: invoice_number,
@@ -986,25 +986,25 @@ export async function getAllSubscriptionInvoices(subscriptionId: string) {
     let allInvoices: any[] = []
     let offset: string | null = null
     let hasMore = true
-    
+
     while (hasMore) {
       const params: any = {
         'subscription_id[is]': subscriptionId,
         'sort_by[desc]': 'date',
         limit: 100,
       }
-      
+
       if (offset) {
         params.offset = offset
       }
-      
+
       const result = await chargebee.invoice.list(params).request()
-      
+
       const invoices = result.list.map((item: any) => {
         const invoice = item.invoice
         const amount = invoice.amount || calculateTotalFromLineItems(invoice.line_items)
         const invoice_number = invoice.invoice_number || invoice.id
-        
+
         return {
           id: invoice.id,
           invoice_number: invoice_number,
@@ -1023,17 +1023,17 @@ export async function getAllSubscriptionInvoices(subscriptionId: string) {
           plan_name: extractPlanName(invoice.line_items),
         }
       })
-      
+
       allInvoices = [...allInvoices, ...invoices]
       offset = result.next_offset
       hasMore = result.next_offset ? true : false
-      
+
       // Optional: Add a small delay to avoid rate limiting
       if (hasMore) {
         await new Promise(resolve => setTimeout(resolve, 100))
       }
     }
-    
+
     return {
       status: 'Success',
       statusCode: 200,

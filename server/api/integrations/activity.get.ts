@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
 
 dayjs.extend(utc)
+import { logError } from '../../utils/logger'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -215,7 +216,7 @@ export default defineEventHandler(async (event) => {
     }
 
   } catch (error: any) {
-    console.error('Integrations Activity Error:', error)
+    logError('Integrations Activity Error', error)
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)

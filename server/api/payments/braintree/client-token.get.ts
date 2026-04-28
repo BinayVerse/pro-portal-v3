@@ -1,4 +1,5 @@
 import { defineEventHandler } from 'h3'
+import { logError, logInfo } from '../../../utils/logger'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -21,14 +22,14 @@ export default defineEventHandler(async (event) => {
       privateKey,
     })
 
-    console.log('Generating Braintree client token in environment:', envName)
+    logInfo('Generating Braintree client token in environment', { envName })
 
     const resp = await gateway.clientToken.generate({})
     const token = resp && (resp as any).clientToken
-    console.log('Braintree client token generated successfully')
+    logInfo('Braintree client token generated successfully')
     return { success: true, clientToken: token }
   } catch (err: any) {
-    console.error('Failed to generate Braintree client token', err)
+    logError('Failed to generate Braintree client token', err)
     return { success: false, error: err?.message || 'Failed to generate client token' }
   }
 })

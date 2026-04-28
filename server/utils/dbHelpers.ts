@@ -1,7 +1,8 @@
 import { query } from '~/server/utils/db'
 import type { H3Event } from 'h3'
 import { getOrgFromToken } from './auth'
-import { getHeader } from 'h3';
+import { getHeader } from 'h3'
+import { logger } from './logger'
 
 function extractUuid(value: string): string | null {
   if (!value) return null
@@ -36,9 +37,7 @@ export async function updateOrganizationCustomer(
 
     return { success: true, data: res.rows[0] }
   } catch (error: any) {
-    console.error('❌ DB Error: updateOrganizationCustomer failed', {
-      error: error.message || error,
-    })
+    logger.error({ error: error.message || error }, 'DB Error: updateOrganizationCustomer failed')
     return { success: false, error: error.message || 'Update failed' }
   }
 }
@@ -158,7 +157,7 @@ export async function upsertBillingAddress(
     }
 
   } catch (err: any) {
-    console.error('❌ Billing Address upsert failed:', err)
+    logger.error({ error: err.message || err }, 'Billing Address upsert failed')
     return {
       success: false,
       message: err.message || 'Billing update failed',
@@ -322,9 +321,7 @@ export async function updateOrganizationSubscription(
 
   } catch (error: any) {
     await query('ROLLBACK', [])
-    console.error('❌ DB Error: updateOrganizationSubscription failed', {
-      error: error.message || error,
-    })
+    logger.error({ error: error.message || error }, 'DB Error: updateOrganizationSubscription failed')
     return { success: false, error: error.message || 'Update failed' }
   }
 }
@@ -605,7 +602,7 @@ export async function createOrganizationIntegration(
     return { success: true, id: integrationId }
   } catch (error: any) {
     await query('ROLLBACK', [])
-    console.error('❌ DB Error: createOrganizationIntegration failed', error)
+    logger.error({ error: error.message || error }, 'DB Error: createOrganizationIntegration failed')
     return { success: false, error: error.message || 'Create failed' }
   }
 }
@@ -725,7 +722,7 @@ export async function updateOrganizationIntegration(
     return { success: true }
   } catch (error: any) {
     await query('ROLLBACK', [])
-    console.error('❌ DB Error: updateOrganizationIntegration failed', error)
+    logger.error({ error: error.message || error }, 'DB Error: updateOrganizationIntegration failed')
     return { success: false, error: error.message || 'Update failed' }
   }
 }
@@ -774,7 +771,7 @@ export async function deleteOrganizationIntegration(
     return { success: true }
   } catch (error: any) {
     await query('ROLLBACK', [])
-    console.error('❌ DB Error: deleteOrganizationIntegration failed', error)
+    logger.error({ error: error.message || error }, 'DB Error: deleteOrganizationIntegration failed')
     return { success: false, error: error.message || 'Delete failed' }
   }
 }
@@ -825,7 +822,7 @@ export async function createIntegrationAuditLog(
 
     return { success: true }
   } catch (error: any) {
-    console.error('❌ DB Error: createIntegrationAuditLog failed', error)
+    logger.error({ error: error.message || error }, 'DB Error: createIntegrationAuditLog failed')
     return { success: false, error: error.message || 'Audit log failed' }
   }
 }

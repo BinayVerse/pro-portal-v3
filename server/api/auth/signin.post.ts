@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, setResponseStatus } from 'h3';
 import { CustomError } from '../../utils/custom.error';
 import { SigninValidation } from '../../utils/validations';
 import { query } from '../../utils/db';
+import { logError } from '../../utils/logger';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { generateTempToken } from '../../utils/auth';
@@ -97,7 +98,7 @@ export default defineEventHandler(async (event) => {
     };
 
   } catch (error: unknown) {
-    console.error('Sign-in Handler Error:', error);
+    logError('Sign-in Handler Error:', error);
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode);

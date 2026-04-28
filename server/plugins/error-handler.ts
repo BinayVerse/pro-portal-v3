@@ -1,15 +1,29 @@
 import { setResponseStatus } from 'h3'
 import { CustomError } from '../utils/custom.error'
+import { logger } from '../utils/logger'
 
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('error', (error: any, { event }) => {
-    // Log
+    // Log with structured JSON format for CloudWatch
     try {
-      // eslint-disable-next-line no-console
-      console.error('[Error Handler]:', error)
-      if (process.dev && error?.stack) {
-        // eslint-disable-next-line no-console
-        console.error('Stack trace:', error.stack)
+      const errorContext = {
+        statusCode: error?.statusCode || 500,
+        message: error?.message || 'Unknown error',
+        url: event?.node?.req?.url,
+        method: event?.node?.req?.method,
+        timestamp: new Date().toISOString(),
+      }
+
+      if (error instanceof CustomError) {
+        logger.error(errorContext, `CustomError: ${error.message}`)
+      } else {
+        logger.error(
+          {
+            ...errorContext,
+            stack: error?.stack,
+          },
+          `Unhandled Error: ${error?.message || 'Unknown'}`
+        )
       }
     } catch {}
 
@@ -54,8 +68,14 @@ export default defineNitroPlugin((nitroApp) => {
   // Log render errors
   nitroApp.hooks.hook('render:response', (response, { event }) => {
     if (response.statusCode >= 400) {
-      // eslint-disable-next-line no-console
-      console.error(`[${response.statusCode}] ${event.node.req.url}`)
+      logger.error(
+        {
+          statusCode: response.statusCode,
+          url: event.node.req.url,
+          method: event.node.req.method,
+        },
+        `Render Error: ${response.statusCode}`
+      )
     }
   })
 })

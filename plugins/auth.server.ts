@@ -1,4 +1,5 @@
 import { useAuthStore } from '~/stores/auth/index'
+import { logWarn } from '~/server/utils/logger'
 import { useProfileStore } from '~/stores/profile/index'
 
 export default defineNuxtPlugin(async () => {
@@ -15,6 +16,6 @@ export default defineNuxtPlugin(async () => {
     }
   } catch (e) {
     // Ignore profile fetch errors during SSR to avoid blocking render
-    console.warn('SSR profile fetch failed:', e?.message || e)
+    logWarn('SSR profile fetch failed', { error: e?.message || e })
   }
 })

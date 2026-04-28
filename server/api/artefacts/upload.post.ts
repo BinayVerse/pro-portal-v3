@@ -249,17 +249,20 @@ export default defineEventHandler(async (event) => {
         documentId = insertFileResult.rows[0].id
       }
 
-      // 🔑 Department Admin validation for document assignments
-      if (tokenUserRole === 3) {
-        // Department Admin cannot upload common documents
-        if (!departments || departments.length === 0) {
-          throw new CustomError(
-            'Department Admins cannot upload common documents. Please assign this document to at least one of your departments.',
-            403
-          )
-        }
+      // 🔑 Validate department assignment for non-superadmin users
+      // Department is mandatory for normal/google uploads (role_id 1=Admin, 2=User, 3=Department Admin)
+      // Only Superadmins (role_id === 0) can upload without specifying departments
+      const departmentRequired = tokenUserRole !== 0
 
-        // Validate Department Admin can only assign to their own departments
+      if (departmentRequired && (!departments || departments.length === 0)) {
+        throw new CustomError(
+          'Department selection is required. Please assign this document to at least one department.',
+          400
+        )
+      }
+
+      // 🔑 Department Admin validation - can only assign to their own departments
+      if (tokenUserRole === 3) {
         try {
           const adminDeptResult = await query(
             `SELECT dept_id FROM user_departments WHERE user_id = $1`,

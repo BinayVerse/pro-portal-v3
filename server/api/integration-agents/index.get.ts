@@ -2,6 +2,7 @@ import { defineEventHandler, setResponseStatus } from 'h3'
 import { query } from '../../utils/db'
 import { CustomError } from '../../utils/custom.error'
 import jwt from 'jsonwebtoken'
+import { logError } from '../../utils/logger'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -35,7 +36,7 @@ export default defineEventHandler(async (event) => {
       message: 'Integration agents fetched successfully'
     }
   } catch (error: any) {
-    console.error('Integration Agents Error:', error)
+    logError('Integration Agents Error', error)
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)

@@ -49,8 +49,22 @@
               :icon="'heroicons:shield-check'"
               :active="$route.name === 'admin-superadmin' || pendingRoute === 'admin-superadmin'"
               :collapsed="isMobile || isTablet ? false : isCollapsed"
+              :label="'Dashboard'"
               tooltip="Dashboard"
             />
+
+            <!-- Attendance Report (Superadmin only) -->
+            <!-- <SidebarButton
+              to="/admin/attendance-report"
+              :icon="'heroicons:chart-bar'"
+              :active="
+                $route.name === 'admin-attendance-report' ||
+                pendingRoute === 'admin-attendance-report'
+              "
+              :collapsed="isMobile || isTablet ? false : isCollapsed"
+              :label="'Attendance Report'"
+              tooltip="Attendance Report"
+            /> -->
           </template>
 
           <!-- Organization Admin menu -->
@@ -134,6 +148,20 @@
                   ? 'Plans & Billing History'
                   : 'Complete your profile to access this section'
               "
+            />
+
+            <!-- Keka Attendance (Superadmin only) -->
+            <SidebarButton
+              v-if="auth.user?.role_id === 0"
+              :to="makeOrgLink('/admin/attendance-report')"
+              :icon="'heroicons:chart-bar'"
+              :active="
+                $route.name === 'admin-attendance-report' ||
+                pendingRoute === 'admin-attendance-report'
+              "
+              :collapsed="isMobile || isTablet ? false : isCollapsed"
+              :label="'Keka Attendance'"
+              tooltip="Keka Attendance"
             />
 
             <!-- Integrations with submenu -->
@@ -456,17 +484,20 @@
             </div>
           </template>
 
-          <SidebarButton
-            :to="makeOrgLink('/admin/chat')"
-            :icon="'heroicons:chat-bubble-left-ellipsis'"
-            :active="$route.name === 'admin-chat' || pendingRoute === 'admin-chat'"
-            :collapsed="isMobile || isTablet ? false : isCollapsed"
-            :disabled="!isProfileComplete"
-            :label="'AI Chat'"
-            :tooltip="
-              isProfileComplete ? 'AI Chat' : 'Complete your profile to access this section'
-            "
-          />
+          <!-- AI Chat (Only for organization users, NOT for superadmin) -->
+          <template v-if="auth.user?.role_id !== 0">
+            <SidebarButton
+              :to="makeOrgLink('/admin/chat')"
+              :icon="'heroicons:chat-bubble-left-ellipsis'"
+              :active="$route.name === 'admin-chat' || pendingRoute === 'admin-chat'"
+              :collapsed="isMobile || isTablet ? false : isCollapsed"
+              :disabled="!isProfileComplete"
+              :label="'AI Chat'"
+              :tooltip="
+                isProfileComplete ? 'AI Chat' : 'Complete your profile to access this section'
+              "
+            />
+          </template>
         </div>
       </nav>
 
@@ -753,7 +784,6 @@
       >
         <slot />
       </main>
-
     </div>
 
     <!-- Subscription Required Modal -->

@@ -3,6 +3,7 @@ import { defineEventHandler, getQuery } from 'h3'
 
 import { CustomError } from '../../utils/custom.error'
 import { query } from '../../utils/db'
+import { logError } from '../../utils/logger'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -150,6 +151,97 @@ export default defineEventHandler(async (event) => {
     }
 
     /* --------------------------------
+     * AWS ENTITLEMENT FALLBACK
+     * If no plan set but AWS subscription exists, check entitlements
+     * -------------------------------- */
+    if (!hasActiveBasePlan && row.source === 'aws') {
+      const awsSubRes = await query(
+        `
+        SELECT customer_id FROM aws_marketplace_subscriptions
+        WHERE org_id = $1 AND active = true
+        LIMIT 1
+        `,
+        [orgId]
+      )
+
+      if (awsSubRes.rows[0]?.customer_id) {
+        const customerId = awsSubRes.rows[0].customer_id
+        const entitlementRes = await query(
+          `
+          SELECT dimension, plan_type, expiry_date, updated_at
+          FROM aws_marketplace_entitlements
+          WHERE customer_id = $1
+          ORDER BY updated_at DESC
+          LIMIT 1
+          `,
+          [customerId]
+        )
+
+        if (entitlementRes.rows[0]) {
+          const entitlement = entitlementRes.rows[0]
+
+          // Map AWS entitlement to plan title
+          const ENTITLEMENT_PLAN_MAP: Record<string, string> = {
+            BasicTier: 'Starter',
+            ProfessionalTier: 'Professional',
+            CustomTier: 'Enterprise',
+          }
+
+          const planTitle = ENTITLEMENT_PLAN_MAP[entitlement.dimension] || entitlement.dimension
+
+          const planRes = await query(
+            `
+            SELECT id, title, price_currency, price_amount, duration,
+                   users, limit_requests, features, trial_period_days,
+                   storage_limit_gb, support_level, artefacts, metadata
+            FROM plans
+            WHERE LOWER(title) = LOWER($1)
+              AND LOWER(duration) = LOWER($2)
+              AND active = TRUE
+            LIMIT 1
+            `,
+            [planTitle, entitlement.plan_type || 'Monthly']
+          )
+
+          if (planRes.rows[0]) {
+            const plan = planRes.rows[0]
+
+            // Check if entitlement is still active
+            const expiryDate = new Date(entitlement.expiry_date)
+            if (expiryDate.getTime() > Date.now()) {
+              basePlanStart = expiryDate
+              basePlanEnd = new Date(expiryDate)
+
+              // Subtract plan duration to get start date
+              const dur = String(entitlement.plan_type || 'Monthly').toLowerCase()
+              if (dur.includes('year')) {
+                basePlanStart.setFullYear(basePlanStart.getFullYear() - 1)
+              } else {
+                basePlanStart.setMonth(basePlanStart.getMonth() - 1)
+              }
+
+              hasActiveBasePlan = true
+
+              // Update row to use entitlement plan data
+              row.plan_id = plan.id
+              row.title = plan.title
+              row.price_amount = plan.price_amount
+              row.price_currency = plan.price_currency
+              row.duration = plan.duration
+              row.users = plan.users
+              row.limit_requests = plan.limit_requests
+              row.storage_limit_gb = plan.storage_limit_gb
+              row.artefacts = plan.artefacts
+              row.support_level = plan.support_level
+              row.features = plan.features
+              row.metadata = plan.metadata
+            }
+          }
+        }
+      }
+    }
+
+    /* --------------------------------
      * NORMALIZE FEATURES
      * -------------------------------- */
     let features: string[] = []
@@ -290,7 +382,7 @@ export default defineEventHandler(async (event) => {
       },
     }
   } catch (err) {
-    console.error('Org plan lookup error:', err)
+    logError('Org plan lookup error', err)
     throw new CustomError('Failed to fetch organization plan', 500)
   }
 })

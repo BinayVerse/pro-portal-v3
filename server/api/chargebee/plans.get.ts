@@ -1,4 +1,5 @@
 import { query } from '../../utils/db'
+import { logError } from '../../utils/logger'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -67,7 +68,7 @@ export default defineEventHandler(async (event) => {
 
     return { success: true, data: out }
   } catch (err: any) {
-    console.error('DB plans fetch error:', err?.message || err)
+    logError('DB plans fetch error:', err)
     throw createError({ statusCode: 500, statusMessage: 'Failed to fetch plans from DB' })
   }
 })

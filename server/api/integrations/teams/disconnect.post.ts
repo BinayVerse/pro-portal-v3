@@ -1,4 +1,5 @@
 import { defineEventHandler, getHeaders, setResponseStatus } from 'h3';
+import { logWarn, logError } from '../../../utils/logger';
 import jwt from 'jsonwebtoken';
 import { query } from '../../../utils/db';
 import { CustomError } from '../../../utils/custom.error';
@@ -57,7 +58,7 @@ export default defineEventHandler(async (event) => {
                 [orgId, 'teams']
             );
         } catch (err2) {
-            console.warn('Failed to remove channel_notifications entry for teams:', err2);
+            logWarn('Failed to remove channel_notifications entry for teams', { error: err2?.message || err2 });
         }
 
         setResponseStatus(event, 200);
@@ -66,7 +67,7 @@ export default defineEventHandler(async (event) => {
             message: 'Teams disconnected successfully',
         };
     } catch (err) {
-        console.error('DB error (Teams disconnect):', err);
+        logError('DB error (Teams disconnect)', err);
         throw new CustomError('Failed to disconnect Teams tenant.', 500);
     }
 });

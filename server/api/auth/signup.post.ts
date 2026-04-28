@@ -7,6 +7,7 @@ import { isPersonalEmail, personalEmailDomains } from '../../utils/auth-utils';
 import { query } from '../../utils/db';
 import { sendWelcomeMail, sendOrganizationOnboardedMail } from '../helper';
 import { getCookie, setCookie } from 'h3'
+import { logWarn, logInfo, logError } from '../../utils/logger'
 
 const isValidPhoneNumber = (wpNumber: string): boolean => {
   const phoneRegex = /^\+(\d{1,3})\d{10,14}$/;
@@ -132,53 +133,71 @@ export default defineEventHandler(async (event) => {
       )
 
       if (res.rowCount === 0) {
-        console.warn(`⚠️ No AWS subscription found for customer_id ${customerId}`)
+        logWarn(`No AWS subscription found for customer_id ${customerId}`)
       }
 
-      // Process entitlement
-      // const entitlement = await query(
-      //   `SELECT * FROM aws_marketplace_entitlements WHERE customer_id = $1`,
-      //   [customerId]
-      // );
+      // Process entitlement - Map AWS entitlement to internal plan
+      const entitlementRes = await query(
+        `SELECT dimension, plan_type, expiry_date FROM aws_marketplace_entitlements WHERE customer_id = $1 ORDER BY updated_at DESC LIMIT 1`,
+        [customerId]
+      );
 
-      // if (!entitlement?.rows?.length) {
-      //   throw new CustomError('Entitlement record not found for this customer', 404);
-      // }
+      if (entitlementRes?.rows?.length) {
+        const entitlementRow = entitlementRes.rows[0];
+        const dimension = entitlementRow.dimension;
 
-      // const entitlementRow = entitlement.rows[0];
-      // let dimension = entitlementRow.dimension;
-      // const planName = dimension.replace(/Tier$/i, '');
+        // Map AWS entitlement dimension to plan title
+        const ENTITLEMENT_PLAN_MAP: Record<string, string> = {
+          BasicTier: 'Starter',
+          ProfessionalTier: 'Professional',
+          CustomTier: 'Enterprise',
+        };
 
-      // const plan = await query(
-      //   `
-      //     SELECT id, title, duration
-      //     FROM plans
-      //     WHERE LOWER(title) = LOWER($1) AND duration = 'Monthly' AND active = TRUE
-      //     LIMIT 1;
-      //   `,
-      //   [planName]
-      // );
+        const planTitle = ENTITLEMENT_PLAN_MAP[dimension] || dimension;
 
+        const planRes = await query(
+          `
+            SELECT id, title, duration
+            FROM plans
+            WHERE LOWER(title) = LOWER($1) AND LOWER(duration) = LOWER($2) AND active = TRUE
+            LIMIT 1;
+          `,
+          [planTitle, entitlementRow.plan_type || 'Monthly']
+        );
 
-      // if (!plan?.rows?.length) {
-      //   throw new CustomError(`Plan "${planName}" (Monthly) not found in plans table`, 404);
-      // }
+        if (planRes?.rows?.length) {
+          const selectedPlanId = planRes.rows[0].id;
 
-      // const selectedPlanId = plan.rows[0].id;
+          // Calculate plan_start_date: use expiry_date minus the plan duration
+          const expiryDate = new Date(entitlementRow.expiry_date);
+          let planStartDate = new Date(expiryDate);
 
-      // if (selectedPlanId) {
-      //   await query(
-      //     `
-      //       UPDATE public.organizations
-      //       SET plan_id = $1,
-      //           plan_start_date = $2, 
-      //           updated_at = CURRENT_TIMESTAMP
-      //       WHERE org_id = $3;
-      //     `,
-      //     [selectedPlanId, entitlementRow.created_at, orgId]
-      //   );
-      // }
+          const duration = entitlementRow.plan_type || 'Monthly';
+          if (duration.toLowerCase() === 'yearly') {
+            planStartDate.setFullYear(planStartDate.getFullYear() - 1);
+          } else {
+            planStartDate.setMonth(planStartDate.getMonth() - 1);
+          }
 
+          // Update organization with the plan
+          await query(
+            `
+              UPDATE public.organizations
+              SET plan_id = $1,
+                  plan_start_date = $2,
+                  updated_at = CURRENT_TIMESTAMP
+              WHERE org_id = $3;
+            `,
+            [selectedPlanId, planStartDate.toISOString(), orgId]
+          );
+
+          logInfo(`AWS subscription plan assigned: ${planTitle} for org ${orgId}`);
+        } else {
+          logWarn(`Plan not found for entitlement dimension: ${dimension}`);
+        }
+      } else {
+        logWarn(`No entitlements found for customer_id ${customerId}. Plan will be assigned later.`);
+      }
     }
 
 
@@ -203,6 +222,13 @@ export default defineEventHandler(async (event) => {
         [category, orgId, userId]
       );
     }
+
+    // 🔑 Create 'Common' department as system department for new organization
+    await query(
+      `INSERT INTO organization_departments (org_id, name, description, status, created_by, is_system)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [orgId, 'Common', 'Default system department for managing common users and artifacts.', 'active', userId, true]
+    );
 
     if (awsCustomerId) {
       const sessionToken = getCookie(event, 'aws_marketplace_session')
@@ -237,7 +263,7 @@ export default defineEventHandler(async (event) => {
         domain: configInner.public.appUrl || 'unknown',
       });
     } catch (notifyErr) {
-      console.warn('Failed to send onboarding notification to sales team:', notifyErr);
+      logWarn('Failed to send onboarding notification to sales team:', notifyErr);
     }
 
     setResponseStatus(event, 201);
@@ -248,7 +274,7 @@ export default defineEventHandler(async (event) => {
       data: user.rows[0],
     };
   } catch (error: unknown) {
-    console.error('Signup error:', JSON.stringify(error, null, 2));
+    logError('Signup error:', error);
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode);

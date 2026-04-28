@@ -1,5 +1,6 @@
 import { CustomError } from './custom.error';
 import axios, { AxiosError } from 'axios';
+import { logger } from './logger';
 
 export async function deleteDocument(
     bucketName: string,
@@ -40,11 +41,11 @@ export async function deleteDocument(
         // If the error is an axios error
         if (error.response) {
             const errorMessage = error.response.data?.message || 'Failed to delete vectorized document from ';
-            console.error('Error deleteing vectorized document:', errorMessage);
+            logger.error({ status: error.response.status, message: errorMessage, orgId }, 'Error deleting vectorized document');
             throw new CustomError(errorMessage, error.response.status);
         } else {
             // Network or other unexpected errors
-            console.error('Error deleteing vectorized document:', error.message || error);
+            logger.error({ error: error?.message || error, orgId }, 'Error deleting vectorized document');
             throw new CustomError(error.message || 'An unexpected vectorized error occurred', 500);
         }
     }

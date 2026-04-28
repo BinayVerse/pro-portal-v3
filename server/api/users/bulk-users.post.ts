@@ -1,4 +1,5 @@
 import { defineEventHandler, readBody, setResponseStatus } from 'h3'
+import { logError, logInfo } from '../../utils/logger'
 import { CustomError } from '../../utils/custom.error'
 import { getClient, query } from '../../utils/db'
 import jwt from 'jsonwebtoken'
@@ -242,10 +243,10 @@ export default defineEventHandler(async (event) => {
             )
             if (commonDeptResult.rows.length > 0) {
               deptIdsToAssign = [commonDeptResult.rows[0].dept_id]
-              console.log(`[bulk-users.post.ts] Auto-assigned "Common" department to user ${newUserId}`)
+              logInfo('Auto-assigned Common department to user', { userId: newUserId })
             }
           } catch (e) {
-            console.error('Failed to fetch Common department for auto-assignment:', e)
+            logError('Failed to fetch Common department for auto-assignment', e)
             // Continue without auto-assignment if it fails
           }
         }
@@ -309,7 +310,7 @@ export default defineEventHandler(async (event) => {
       if (row.teams_status === 'active' || row.teams_status === 'connected') channels.push('teams')
       orgQr = row.qr_code || null
     } catch (e) {
-      console.error('Failed to fetch integrations for bulk user emails', e?.message || e)
+      logError('Failed to fetch integrations for bulk user emails', e)
     }
 
     for (const user of successfulUsers) {
@@ -322,11 +323,11 @@ export default defineEventHandler(async (event) => {
           if (channels.length > 0) {
             await sendUserAdditionMail(user.name, user.email, orgQr, orgDetail.org_id)
           } else {
-            console.info('Skipping invite email for', user.email, '— no channels connected for org')
+            logInfo('Skipping invite email - no channels connected for org', { email: user.email })
           }
         }
       } catch (err: any) {
-        console.error(`Failed to process user ${user.email}:`, err.message)
+        logError(`Failed to process user ${user.email}`, err)
       }
     }
 
@@ -340,7 +341,7 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error: any) {
     if (client) await client.query('ROLLBACK')
-    console.error('Handler Error:', error)
+    logError('Handler Error', error)
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)

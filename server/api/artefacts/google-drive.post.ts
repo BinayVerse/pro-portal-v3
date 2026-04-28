@@ -99,6 +99,42 @@ export default defineEventHandler(async (event) => {
       throw new CustomError('Category is required', 400)
     }
 
+    // 🔑 Validate department assignment for non-superadmin users
+    // Department is mandatory for normal/google uploads (role_id 1=Admin, 2=User, 3=Department Admin)
+    // Only Superadmins (role_id === 0) can upload without specifying departments
+    const departmentRequired = tokenUserRole !== 0
+
+    if (departmentRequired && (!departments || departments.length === 0)) {
+      throw new CustomError(
+        'Department selection is required. Please assign this document to at least one department.',
+        400
+      )
+    }
+
+    // 🔑 Department Admin validation - can only assign to their own departments
+    if (tokenUserRole === 3) {
+      try {
+        const adminDeptResult = await query(
+          `SELECT dept_id FROM user_departments WHERE user_id = $1`,
+          [String(userId)]
+        )
+        const adminDeptIds = adminDeptResult.rows.map((row) => String(row.dept_id))
+
+        // Check if all requested departments are in admin's departments
+        const unauthorizedDepts = departments.filter((deptId) => !adminDeptIds.includes(String(deptId)))
+        if (unauthorizedDepts.length > 0) {
+          throw new CustomError(
+            `Cannot assign documents to departments outside your scope. Unauthorized departments: ${unauthorizedDepts.join(', ')}`,
+            403
+          )
+        }
+      } catch (e: any) {
+        if (e instanceof CustomError) throw e
+        console.error('Failed to validate Department Admin scope:', e)
+        throw new CustomError('Failed to validate department permissions', 500)
+      }
+    }
+
     // Lookup category ID by name
     const categoryQuery = `
       SELECT id FROM document_category

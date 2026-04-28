@@ -1,4 +1,5 @@
 import { defineEventHandler, getHeaders, setResponseStatus } from 'h3';
+import { logError } from '../../../utils/logger';
 import jwt from 'jsonwebtoken';
 import { query } from '../../../utils/db';
 import { CustomError } from '../../../utils/custom.error';
@@ -76,17 +77,17 @@ export default defineEventHandler(async (event) => {
                             try {
                                 await sendChannelAvailableMail(u.name, u.email, 'teams', undefined, orgId);
                             } catch (e) {
-                                console.error('Failed to send Teams availability email to', u.email, e?.message || e);
+                                logError(`Failed to send Teams availability email to ${u.email}`, e);
                             }
                         }
                         await markChannelNotified(orgId, 'teams')
                     }
                 } catch (e) {
-                    console.error('Failed to notify users about Teams availability', e?.message || e);
+                    logError('Failed to notify users about Teams availability', e);
                 }
             }
         } catch (e) {
-            console.error('Teams notification check failed:', e?.message || e);
+            logError('Teams notification check failed', e);
         }
 
         return {
@@ -95,7 +96,7 @@ export default defineEventHandler(async (event) => {
             data: row,
         };
     } catch (err) {
-        console.error('DB error (Teams details):', err);
+        logError('DB error (Teams details)', err);
         throw new CustomError('Failed to fetch Teams tenant details.', 500);
     }
 });

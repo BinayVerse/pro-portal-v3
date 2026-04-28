@@ -2,6 +2,7 @@
 import { defineEventHandler, getQuery, getRouterParam } from 'h3';
 import { query } from '../../../utils/db';
 import { CustomError } from '../../../utils/custom.error';
+import { logError } from '../../../utils/logger';
 import jwt from 'jsonwebtoken';
 
 export default defineEventHandler(async (event) => {
@@ -247,7 +248,7 @@ export default defineEventHandler(async (event) => {
             }
         };
     } catch (error: any) {
-        console.error('Error message:', error.message);
+        logError('Error fetching department analytics:', error);
         throw new CustomError(
             `Internal Server Error: Failed to fetch department analytics - ${error.message}`,
             500

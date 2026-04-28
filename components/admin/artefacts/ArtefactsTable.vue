@@ -96,7 +96,7 @@
               :key="deptId"
               size="xs"
               variant="solid"
-              color="blue"
+              :color="getDepartmentBadgeColor(deptId)"
               class="font-medium"
               :ui="{ rounded: 'rounded-full' }"
             >
@@ -521,5 +521,12 @@ const getDepartmentTooltip = (deptIds?: string[]): string => {
   }
   const deptNames = deptIds.map((id: string) => props.departmentNameMap[id] || 'Unknown').join(', ')
   return `Department-specific - Accessible only to: ${deptNames}`
+}
+
+// Helper function to get badge color for department
+const getDepartmentBadgeColor = (deptId: string): string => {
+  const deptName = props.departmentNameMap[deptId]
+  // Use gray color for Common department, blue for others
+  return deptName === 'Common' ? 'gray' : 'blue'
 }
 </script>

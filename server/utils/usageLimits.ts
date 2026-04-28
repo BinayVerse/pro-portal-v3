@@ -1,4 +1,5 @@
 import { query } from './db'
+import { logger } from './logger'
 
 export interface UsageLimits {
   users: number | null
@@ -131,7 +132,7 @@ export async function getOrgUsageLimits(orgId: string): Promise<UsageLimits> {
       conversations: row.conversations,
     }
   } catch (error) {
-    console.error('Error fetching org usage limits:', error)
+    logger.error({ orgId, error: error instanceof Error ? error.message : error }, 'Error fetching org usage limits')
     return {
       users: 0,
       documents: 0,
@@ -177,7 +178,7 @@ export async function getOrgUsageStats(orgId: string): Promise<UsageStats> {
       totalConversations,
     }
   } catch (error) {
-    console.error('Error fetching org usage stats:', error)
+    logger.error({ orgId, error: error instanceof Error ? error.message : error }, 'Error fetching org usage stats')
     return {
       totalUsers: 0,
       totalDocuments: 0,
@@ -197,17 +198,17 @@ export async function checkUserLimitExceeded(
   const limits = await getOrgUsageLimits(orgId)
   const stats = await getOrgUsageStats(orgId)
 
-  console.log(`[checkUserLimitExceeded] orgId: ${orgId}, limits.users: ${limits.users}, current: ${stats.totalUsers}`)
+  logger.debug({ orgId, limit: limits.users, current: stats.totalUsers }, 'Checking user limit')
 
   // Unlimited plan (-1) - always allow
   if (limits.users === -1) {
-    console.log(`[checkUserLimitExceeded] Unlimited plan - allowing user creation`)
+    logger.debug({ orgId }, 'Unlimited plan - allowing user creation')
     return { exceeded: false, current: stats.totalUsers, limit: null, message: '' }
   }
 
   if (limits.users === 0) {
     // Plan expired or not subscribed - block all user creation
-    console.log(`[checkUserLimitExceeded] Plan expired/unsubscribed - blocking user creation`)
+    logger.debug({ orgId }, 'Plan expired/unsubscribed - blocking user creation')
     return {
       exceeded: true,
       current: stats.totalUsers,
@@ -223,7 +224,7 @@ export async function checkUserLimitExceeded(
 
   const wouldBe = stats.totalUsers + numberOfNewUsers
   if (wouldBe > limits.users) {
-    console.log(`[checkUserLimitExceeded] Limit exceeded - would be: ${wouldBe}, limit: ${limits.users}`)
+    logger.warn({ orgId, wouldBe, limit: limits.users }, 'User limit would be exceeded')
     return {
       exceeded: true,
       current: stats.totalUsers,
@@ -263,7 +264,7 @@ export async function checkDocumentLimitExceeded(
 
   // Unlimited plan (-1) - always allow
   if (limits.documents === -1 && limits.storageGb === -1) {
-    console.log(`[checkDocumentLimitExceeded] Unlimited plan - allowing upload`)
+    logger.debug({ orgId }, 'Unlimited plan - allowing upload')
     return {
       exceeded: false,
       documentCountExceeded: false,
@@ -282,7 +283,7 @@ export async function checkDocumentLimitExceeded(
 
   // Check if plan is expired/unsubscribed (limits are 0 and not unlimited)
   if (limits.documents === 0 || limits.storageGb === 0) {
-    console.log(`[checkDocumentLimitExceeded] Plan expired/unsubscribed - limits are 0, blocking upload`)
+    logger.debug({ orgId }, 'Plan expired/unsubscribed - limits are 0, blocking upload')
     documentCountExceeded = true
     storageLimitExceeded = true
     message = `Artifact upload not allowed. Your plan has expired or is not subscribed. Please renew your subscription.`
@@ -307,7 +308,7 @@ export async function checkDocumentLimitExceeded(
     if (stats.totalDocuments >= limits.documents) {
       documentCountExceeded = true
       message += `The Artifact limit for your plan has been reached. Please contact your Organization Admin to upgrade and continue.`
-      console.log(`[checkDocumentLimitExceeded] Artifact count exceeded - current: ${stats.totalDocuments}, limit: ${limits.documents}`)
+      logger.warn({ orgId, current: stats.totalDocuments, limit: limits.documents }, 'Artifact count exceeded')
     }
   }
 
@@ -316,7 +317,7 @@ export async function checkDocumentLimitExceeded(
     if (currentStorageGb + fileStorageGb > limits.storageGb) {
       storageLimitExceeded = true
       message += `The Artifact Storage limit for your plan has been reached. Please contact your Organization Admin to upgrade and continue. This upload would exceed your storage limit by ${(currentStorageGb + fileStorageGb - limits.storageGb).toFixed(2)}GB.`
-      console.log(`[checkDocumentLimitExceeded] Storage limit exceeded - current: ${currentStorageGb.toFixed(2)}GB, file: ${fileStorageGb.toFixed(2)}GB, limit: ${limits.storageGb}GB`)
+      logger.warn({ orgId, current: currentStorageGb.toFixed(2), file: fileStorageGb.toFixed(2), limit: limits.storageGb }, 'Storage limit exceeded')
     }
   }
 

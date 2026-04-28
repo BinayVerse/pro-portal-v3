@@ -43,6 +43,14 @@ const PrivateSchema = z.object({
   // NUXT_BRAINTREE_MERCHANT_ID: z.string(),
   // NUXT_BRAINTREE_PUBLIC_KEY: z.string(),
   // NUXT_BRAINTREE_PRIVATE_KEY: z.string(),
+  // // Keka
+  NUXT_KEKA_BASE_URL: z.string(),
+  NUXT_KEKA_LOGIN_URL: z.string(),
+  NUXT_KEKA_CLIENT_SECRET: z.string(),
+  NUXT_KEKA_CLIENT_ID: z.string(),
+  NUXT_KEKA_API_KEY: z.string(),
+  NUXT_KEKA_EMAIL_IDS: z.string(),
+
   // Cloudflare
   NUXT_CF_DOMAIN: z.string(),
   NUXT_CF_KEY_PAIR_ID: z.string(),

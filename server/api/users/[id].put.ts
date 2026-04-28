@@ -1,4 +1,5 @@
 import { defineEventHandler, readBody, getRouterParam, setResponseStatus } from 'h3'
+import { logWarn, logError } from '../../utils/logger'
 import { CustomError } from '../../utils/custom.error'
 import { query } from '../../utils/db'
 import bcrypt from 'bcrypt'
@@ -266,14 +267,14 @@ export default defineEventHandler(async (event) => {
                 { expiresIn: 604800 },
               )
             } catch (err) {
-              console.warn('Failed to generate signed QR url for user invite:', err)
+              logWarn('Failed to generate signed QR url for user invite', { error: err?.message })
             }
           }
 
           await sendUserAdditionMail(currentUser.name, currentUser.email, signedUrl, orgId)
         }
       } catch (err) {
-        console.error('Failed to determine integrations or send user addition email on role change:', err)
+        logError('Failed to determine integrations or send user addition email on role change', err)
       }
     }
 
@@ -410,7 +411,7 @@ export default defineEventHandler(async (event) => {
 
       // Promoted to Org Admin (already exists in your code earlier)
     } catch (emailErr) {
-      console.error('Failed to send role transition email:', emailErr)
+      logError('Failed to send role transition email', emailErr)
     }
 
 
@@ -423,7 +424,7 @@ export default defineEventHandler(async (event) => {
       userId: result.rows[0].user_id,
     }
   } catch (err: any) {
-    console.error('Error updating user:', err)
+    logError('Error updating user', err)
     if (err instanceof CustomError) {
       setResponseStatus(event, err.statusCode)
       return {

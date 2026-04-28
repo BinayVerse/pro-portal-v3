@@ -1,4 +1,5 @@
 import { defineEventHandler, readBody, createError } from 'h3'
+import { logWarn, logError } from './../../utils/logger'
 import { query } from '~/server/utils/db'
 import jwt from 'jsonwebtoken'
 
@@ -26,7 +27,7 @@ export default defineEventHandler(async (event) => {
           }
         } catch (e) {
           // ignore token decode errors; we'll handle missing orgId below
-          console.warn('complete-order: failed to decode token for org lookup', e)
+          logWarn('complete-order: failed to decode token for org lookup', { error: e?.message })
         }
       }
     }
@@ -53,7 +54,7 @@ export default defineEventHandler(async (event) => {
       }
     } catch (e) {
       // ignore conversion errors
-      console.warn('complete-order: failed to normalize amount', e)
+      logWarn('complete-order: failed to normalize amount', { error: e?.message })
     }
 
     // Hosted page flow removed: record order in external system if needed.
@@ -61,7 +62,7 @@ export default defineEventHandler(async (event) => {
     // If you want to persist orders, implement a dedicated orders table and insert here.
     return { success: true }
   } catch (err: any) {
-    console.error('complete-order failed', err)
+    logError('complete-order failed', err)
     return { success: false, error: err?.message || 'Failed to record order' }
   }
 })

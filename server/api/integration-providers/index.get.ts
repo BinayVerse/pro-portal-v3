@@ -1,6 +1,7 @@
 import { defineEventHandler, setResponseStatus } from 'h3'
 import { query } from '../../utils/db'
 import { CustomError } from '../../utils/custom.error'
+import { logError } from '../../utils/logger'
 import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event) => {
@@ -35,7 +36,7 @@ export default defineEventHandler(async (event) => {
       message: 'Integration providers fetched successfully'
     }
   } catch (error: any) {
-    console.error('Integration Providers Error:', error)
+    logError('Integration Providers Error:', error)
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)

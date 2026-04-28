@@ -2,6 +2,7 @@
 import { defineEventHandler, getQuery, setResponseStatus } from 'h3'
 import jwt from 'jsonwebtoken'
 import { query } from '~/server/utils/db'
+import { logError } from '~/server/utils/logger'
 import { getAllSubscriptionInvoices, getCustomerInvoices } from '~/server/utlis/chargebee'
 import dayjs from 'dayjs'
 import isBetween from 'dayjs/plugin/isBetween.js' 
@@ -197,7 +198,7 @@ export default defineEventHandler(async (event) => {
     }
 
   } catch (error: any) {
-    console.error('Error fetching invoices:', error)
+    logError('Error fetching invoices:', error)
     setResponseStatus(event, 500)
     return {
       success: false,

@@ -1,6 +1,7 @@
 import { defineEventHandler, getRouterParam, readBody } from 'h3';
 import { CustomError } from '../../../utils/custom.error';
 import { query } from '../../../utils/db';
+import { logError } from '../../../utils/logger';
 import jwt from 'jsonwebtoken';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
@@ -77,7 +78,7 @@ export default defineEventHandler(async (event) => {
             message: 'Documents fetched successfully',
         };
     } catch (err: any) {
-        if (process.dev) console.error('Error fetching documents:', err);
+        if (process.dev) logError('Error fetching documents:', err);
         throw new CustomError(err.message || 'Failed to fetch documents', 500);
     }
 });

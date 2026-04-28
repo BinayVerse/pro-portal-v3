@@ -1,6 +1,7 @@
 import QRCode from 'qrcode';
 import { CustomError } from './custom.error';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { logger } from './logger';
 
 export const generateQRCode = async (companyName: string, wpNumber: string): Promise<string> => {
   const config = useRuntimeConfig();
@@ -47,7 +48,7 @@ export const generateQRCode = async (companyName: string, wpNumber: string): Pro
     return fileUrl;
 
   } catch (error) {
-    console.error('Error generating or uploading QR code:', error);
+    logger.error({ error: error instanceof Error ? error.message : error, companyName, wpNumber }, 'Error generating or uploading QR code');
     throw new CustomError('QR code generation or upload failed', 500);
   }
 };

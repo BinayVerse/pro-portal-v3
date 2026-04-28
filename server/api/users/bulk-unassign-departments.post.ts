@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { defineEventHandler, readBody, setResponseStatus } from 'h3'
 import { query } from '../../utils/db'
+import { logError } from '../../utils/logger'
 import { CustomError } from '../../utils/custom.error'
 import jwt from 'jsonwebtoken'
 
@@ -157,7 +158,7 @@ export default defineEventHandler(async (event: H3Event) => {
       throw error
     }
 
-    console.error('Bulk unassign departments error:', error)
+    logError('Bulk unassign departments error', error)
     setResponseStatus(event, 500)
     throw new CustomError('Failed to unassign departments', 500)
   }

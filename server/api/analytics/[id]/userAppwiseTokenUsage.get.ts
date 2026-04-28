@@ -3,6 +3,7 @@
 import { defineEventHandler, getQuery, getRouterParam } from 'h3'
 import { query } from '../../../utils/db'
 import { CustomError } from '../../../utils/custom.error'
+import { logError } from '../../../utils/logger'
 import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event) => {
@@ -159,7 +160,7 @@ export default defineEventHandler(async (event) => {
       },
     }
   } catch (err) {
-    if (process.dev) console.error('SQL execution error:', err)
+    if (process.dev) logError('SQL execution error:', err)
     throw new CustomError(
       'Internal Server Error: Failed to fetch token usage data',
       500

@@ -1,5 +1,6 @@
 import { defineEventHandler, getRouterParam, setResponseStatus } from 'h3'
 import { CustomError } from '../../../utils/custom.error'
+import { logError } from '../../../utils/logger'
 import { query } from '../../../utils/db'
 import jwt from 'jsonwebtoken'
 
@@ -43,7 +44,7 @@ export default defineEventHandler(async (event) => {
       departments: result.rows.map((row) => row.dept_id),
     }
   } catch (err: any) {
-    console.error('Error fetching user departments:', err)
+    logError('Error fetching user departments', err)
     setResponseStatus(event, 500)
     throw new CustomError('Failed to fetch user departments', 500)
   }

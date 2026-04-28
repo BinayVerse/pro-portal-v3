@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody } from 'h3';
 import { CustomError } from '../../utils/custom.error';
 import { query } from '../../utils/db';
+import { logWarn, logError } from '../../utils/logger';
 import { generateResetLink, sendWelcomeMail, sendOrganizationOnboardedMail } from '../helper';
 import { GoogleSignupValidation } from '../../utils/validations';
 import jwt from 'jsonwebtoken';
@@ -13,11 +14,11 @@ export default defineEventHandler(async (event) => {
 
     try {
         const params = await readBody(event);
-    const token = event.node.req.headers['authorization']?.split(' ')[1];
+        const token = event.node.req.headers['authorization']?.split(' ')[1];
 
-    if (!token) throw new CustomError('Unauthorized: No token provided', 401);
+        if (!token) throw new CustomError('Unauthorized: No token provided', 401);
 
-    const { user_id, name, email, company, contact_number, org_country, org_tax_id, billing_address } = params;
+        const { user_id, name, email, company, contact_number, org_country, org_tax_id, billing_address } = params;
 
         /** ------------------------------------------------------------------
          * Detect Billing-Only Update
@@ -154,6 +155,13 @@ export default defineEventHandler(async (event) => {
                 );
             }
 
+            // 🔑 Create 'Common' department as system department for new organization
+            await query(
+                `INSERT INTO organization_departments (org_id, name, description, status, created_by, is_system)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [orgId, 'Common', 'Default system department for managing common users and artifacts.', 'active', user_id, true]
+            );
+
             // Update user org
             await query(
                 `UPDATE users SET role_id = '1', org_id = $1, contact_number = $2 WHERE user_id = $3`,
@@ -279,7 +287,7 @@ export default defineEventHandler(async (event) => {
                 billingUpdated = true;
 
             } catch (err) {
-                console.warn('Billing address update error:', err);
+                logWarn('Billing address update error:', err);
             }
         }
 
@@ -351,7 +359,7 @@ export default defineEventHandler(async (event) => {
         };
 
     } catch (err: any) {
-        console.error('Profile update error:', err);
+        logError('Profile update error:', err);
         throw new CustomError(err.message || 'Internal Server Error', err.statusCode || 500);
     }
 });

@@ -2,6 +2,7 @@ import { defineEventHandler, setResponseStatus } from 'h3'
 import { CustomError } from '../../utils/custom.error'
 import { query } from '../../utils/db'
 import jwt from 'jsonwebtoken'
+import { logError } from '../../utils/logger'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -63,13 +64,12 @@ export default defineEventHandler(async (event) => {
 
       const result = await query(
         `
-        SELECT dept_id, org_id, name, description, status, created_at, updated_at
+        SELECT dept_id, org_id, name, description, status, created_at, updated_at, is_system
         FROM organization_departments
         WHERE org_id = $1
           AND status = 'active'
           AND dept_id = ANY($2)
-          AND is_system = false
-        ORDER BY name ASC
+        ORDER BY CASE WHEN is_system = true THEN 0 ELSE 1 END, name ASC
         `,
         [orgId, deptIds],
       )
@@ -81,15 +81,14 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // ✅ Admin / User / Super Admin → all departments (excluding system departments like "Common")
+    // ✅ Admin / User / Super Admin → all departments (including system departments for filtering)
     const result = await query(
       `
-      SELECT dept_id, org_id, name, description, status, created_at, updated_at
+      SELECT dept_id, org_id, name, description, status, created_at, updated_at, is_system
       FROM organization_departments
       WHERE org_id = $1
         AND status = 'active'
-        AND is_system = false
-      ORDER BY name ASC
+      ORDER BY CASE WHEN is_system = true THEN 0 ELSE 1 END, name ASC
       `,
       [orgId],
     )
@@ -101,7 +100,7 @@ export default defineEventHandler(async (event) => {
       data: result.rows || [],
     }
   } catch (err: any) {
-    console.error('Error fetching departments:', err)
+    logError('Error fetching departments', err)
     setResponseStatus(event, 500)
     throw new CustomError('Failed to fetch departments', 500)
   }

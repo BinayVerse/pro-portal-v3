@@ -1,4 +1,5 @@
 import { defineEventHandler, readBody, setResponseStatus } from 'h3' // uses chargebee-typescript wrapper
+import { logError, logInfo, logWarn } from '../../../utils/logger'
 import { cancelSubscription, createChargebeeCustomer, createSubscription } from '~/server/utlis/chargebee'
 import { z } from 'zod'
 import { ChargeBee } from 'chargebee-typescript'
@@ -73,7 +74,7 @@ export default defineEventHandler(async (event) => {
   const quantity = Number(orderDetails.quantity || 1)
 
 
-  console.log('Processing Braintree checkout with data:', orderDetails)
+  logInfo('Processing Braintree checkout with data', { orderDetails })
 
   try {
     let effectivePurchaseType: any
@@ -82,7 +83,7 @@ export default defineEventHandler(async (event) => {
       const apiKey = config.chargebeeApiKey
 
       if (!site || !apiKey) {
-        console.warn('Chargebee configuration missing — skipping Chargebee sync')
+        logWarn('Chargebee configuration missing — skipping Chargebee sync')
       }
 
       // console.log(`Chargebee integration active for site: ${site}`)
@@ -91,7 +92,7 @@ export default defineEventHandler(async (event) => {
       const { customerId, status, error: errorMessage, statusCode: charStatusCode } = await createChargebeeCustomer(orderDetails)
 
       if (status === 'Error') {
-        console.warn('Error while trying to create customer details:', JSON.stringify(errorMessage, null, 2))
+        logWarn('Error while trying to create customer details', { errorMessage })
         throw new CustomError(`Error while trying to create customer details: ${errorMessage}`, charStatusCode)
       }
 
@@ -301,14 +302,14 @@ export default defineEventHandler(async (event) => {
 
 
       } else {
-        console.warn('Missing Chargebee plan ID, skipping subscription creation')
+        logWarn('Missing Chargebee plan ID, skipping subscription creation')
         throw new CustomError('Missing Chargebee plan ID, skipping subscription creation', 500)
       }
     } catch (err: any) {
       if (effectivePurchaseType === 'subscription') {
-        console.warn('[SUBSCRIPTION] Error while creating subscription:', err)
+        logWarn('Error while creating subscription', { error: err?.message })
       } else {
-        console.warn('[ADDON] Error while processing addon purchase:', err)
+        logWarn('Error while processing addon purchase', { error: err?.message })
       }
 
       if (err instanceof CustomError) {
@@ -330,7 +331,7 @@ export default defineEventHandler(async (event) => {
       data: orderDetails,
     }
   } catch (err: any) {
-    console.error('Braintree checkout error:', err)
+    logError('Braintree checkout error', err)
     if (err instanceof CustomError) {
       setResponseStatus(event, err.statusCode)
       return {

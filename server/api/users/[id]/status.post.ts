@@ -1,6 +1,7 @@
 import { CustomError } from '../../../utils/custom.error'
 import { query } from '../../../utils/db'
 import jwt from 'jsonwebtoken'
+import { logError } from '../../../utils/logger'
 
 export default defineEventHandler(async (event) => {
   const userId = getRouterParam(event, 'id')
@@ -79,7 +80,7 @@ export default defineEventHandler(async (event) => {
       data: result.rows[0],
     }
   } catch (err: any) {
-    console.error('Error updating user active status:', err)
+    logError('Error updating user active status', err)
     setResponseStatus(event, 500)
     throw new CustomError(err.message || 'Error updating user status', 500)
   }

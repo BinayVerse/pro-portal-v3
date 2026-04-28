@@ -1,5 +1,6 @@
 import { CustomError } from './custom.error';
 import axios, { AxiosError } from 'axios';
+import { logger } from './logger';
 
 export async function summarizeDocument(
     bucketName: string,
@@ -43,11 +44,11 @@ export async function summarizeDocument(
         // If the error is an axios error
         if (error.response) {
             const errorMessage = error.response.data?.message || 'Failed to summarize document';
-            console.error('Error summarizing document:', errorMessage);
+            logger.error({ status: error.response.status, message: errorMessage, orgId }, 'Error summarizing document');
             throw new CustomError(errorMessage, error.response.status);
         } else {
             // Network or other unexpected errors
-            console.error('Error summarizing document:', error.message || error);
+            logger.error({ error: error?.message || error, orgId }, 'Error summarizing document');
             throw new CustomError(error.message || 'An unexpected error occurred', 500);
         }
     }

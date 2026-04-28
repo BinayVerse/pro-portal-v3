@@ -1,4 +1,5 @@
 import { query } from './db'
+import { logger } from './logger'
 
 /**
  * Get the list of department IDs a user is assigned to
@@ -12,7 +13,7 @@ export async function getUserDepartments(userId: string): Promise<string[]> {
     )
     return result.rows.map((row) => row.dept_id)
   } catch (err) {
-    console.error('Failed to fetch user departments:', err)
+    logger.error({ userId, error: err instanceof Error ? err.message : err }, 'Failed to fetch user departments')
     return []
   }
 }
@@ -67,7 +68,7 @@ export async function canAccessDocument(userId: string, userRole: number, docume
     )
     return result.rows.length > 0
   } catch (err) {
-    console.error('Error checking document access:', err)
+    logger.error({ userId, documentId, orgId, error: err instanceof Error ? err.message : err }, 'Error checking document access')
     return false
   }
 }

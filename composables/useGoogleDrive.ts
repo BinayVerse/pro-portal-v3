@@ -116,7 +116,6 @@ export const useGoogleDrive = () => {
           prompt: 'consent',
           callback: (response: any) => {
             if (response.error) {
-              console.error('Authentication error:', response.error)
               errorStore.showError('Authentication failed. Please try again.')
               isLoading.value = false
               return
@@ -127,7 +126,6 @@ export const useGoogleDrive = () => {
         })
         .requestAccessToken()
     } catch (error) {
-      console.error('Google sign-in error:', error)
       errorStore.showError('Failed to initialize Google sign-in. Please try again.')
       isLoading.value = false
     }
@@ -170,7 +168,6 @@ export const useGoogleDrive = () => {
       googlePicker.setVisible(true)
       isLoading.value = false
     } catch (error) {
-      console.error('Picker creation error:', error)
       errorStore.showError('Failed to create file picker. Please try again.')
       isLoading.value = false
     }
@@ -216,7 +213,6 @@ export const useGoogleDrive = () => {
       }
     } else if (data && data.action === window.google.picker.Action.CANCEL) {
       showWarning('File picker cancelled.')
-      console.info('Picker closed or cancelled.')
       isLoading.value = false
       return []
     }

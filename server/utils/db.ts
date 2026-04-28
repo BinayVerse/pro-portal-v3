@@ -1,4 +1,5 @@
 import pkg from "pg";
+import { logger } from "./logger";
 const { Pool } = pkg;
 
 const config = useRuntimeConfig();
@@ -20,8 +21,7 @@ const pool = new Pool({
 
 // Gracefully handle pool errors without crashing the process
 pool.on("error", (err) => {
-  // eslint-disable-next-line no-console
-  console.error("[db] Pool error:", err?.message || err);
+  logger.error({ error: err?.message || err }, "Database pool error");
 });
 
 function isTransientError(error: any): boolean {
@@ -89,15 +89,13 @@ export async function query(text: string, params: any[] = [], opts?: { retries?:
     } catch (error: any) {
       if (attempt < retries && isTransientError(error)) {
         attempt += 1;
-        // eslint-disable-next-line no-console
-        console.warn(`[db] Transient error on attempt ${attempt}, retrying in ${backoffMs}ms:`, error?.message || error);
+        logger.warn({ attempt, backoffMs, error: error?.message }, `Transient database error, retrying`);
         await delay(backoffMs);
         continue;
       }
 
       // Log the original DB error for debugging
-      // eslint-disable-next-line no-console
-      console.error('[db] Query error:', { message: error?.message, code: error?.code, stack: error?.stack })
+      logger.error({ message: error?.message, code: error?.code, stack: error?.stack }, 'Database query error')
 
       if (error?.code === "ECONNREFUSED") {
         throw new Error("Database connection refused - check if database is running");

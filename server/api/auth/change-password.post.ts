@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, setResponseStatus } from 'h3'
 import { CustomError } from '../../utils/custom.error'
 import { query } from '../../utils/db'
+import { logError } from '../../utils/logger'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { sendPasswordUpdatedMail } from '../helper'
@@ -82,7 +83,7 @@ export default defineEventHandler(async (event) => {
       await sendPasswordUpdatedMail(name, email)
     } catch (err) {
       // Log and continue — password was updated
-      console.error('Failed to send password updated email:', err)
+      logError('Failed to send password updated email:', err)
     }
 
     setResponseStatus(event, 201)
@@ -92,7 +93,7 @@ export default defineEventHandler(async (event) => {
       message: 'Password changed successfully',
     }
   } catch (error: any) {
-    console.error(error)
+    logError('Error changing password:', error)
     if (error instanceof CustomError) {
       throw error
     }

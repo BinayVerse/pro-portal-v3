@@ -1,6 +1,7 @@
 import { defineEventHandler, setResponseStatus, getQuery } from 'h3'
 import { query } from '../utils/db'
 import { CustomError } from '../utils/custom.error'
+import { logError } from '../utils/logger'
 import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event) => {
@@ -46,7 +47,7 @@ export default defineEventHandler(async (event) => {
       message: 'Integration modules fetched successfully for agent'
     }
   } catch (error: any) {
-    console.error('Integration Modules By Agent Error:', error)
+    logError('Integration Modules By Agent Error:', error)
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)

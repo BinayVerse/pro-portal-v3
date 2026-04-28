@@ -43,7 +43,7 @@
 
             <!-- Title + Period -->
             <div>
-              <h3 class="text-xl font-semibold text-white">AI Knowledge Gap</h3>
+              <h3 class="text-xl font-semibold text-white">Knowledge Enhancement Opportunities</h3>
 
               <p class="text-sm text-gray-400 mt-1">
                 Period: {{ formatDateRange(period.start_date, period.end_date) }}
@@ -146,14 +146,14 @@
                 <div class="flex items-start justify-between mb-2">
                   <h5 class="text-red-400 font-semibold flex-1">{{ question.intent }}</h5>
                   <span class="bg-red-500/20 text-red-300 text-xs px-2 py-1 rounded ml-2">
-                    Asked {{ question.combined_frequency }}x
+                    Queried {{ question.combined_frequency }}x
                   </span>
                 </div>
                 <p class="text-sm text-gray-400">
-                  {{ question.unique_askers }} unique asker{{
+                  {{ question.unique_askers }} unique user{{
                     question.unique_askers !== 1 ? 's' : ''
                   }}
-                  | Last asked: {{ formatDate(question.last_asked) }}
+                  | Last queried: {{ formatDate(question.last_asked) }}
                 </p>
               </div>
             </div>
@@ -260,7 +260,7 @@
 
                 <div class="mb-3 space-y-1">
                   <p class="text-sm text-gray-300">
-                    <span class="text-gray-400">Asked {{ cluster.total_times_asked }} times</span>
+                    <span class="text-gray-400">Queried {{ cluster.total_times_asked }} times</span>
                   </p>
                   <p class="text-sm text-gray-300">
                     <span class="text-gray-400"
@@ -333,6 +333,17 @@
             >
               Export
             </UButton>
+
+            <!-- Send Email (Primary) -->
+            <UButton
+              size="lg"
+              :loading="props.sendingEmail"
+              :disabled="props.sendingEmail"
+              class="min-w-[150px] justify-center bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 transition-all duration-200 shadow-md"
+              @click="handleSendEmail"
+            >
+              {{ props.sendingEmail ? 'Sending...' : 'Send Email' }}
+            </UButton>
           </div>
         </div>
       </div>
@@ -348,6 +359,7 @@ const props = defineProps<{
   modelValue: boolean
   knowledgeGapData: any | null
   loading: boolean
+  sendingEmail: boolean
   error: string | null
 }>()
 
@@ -355,6 +367,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'close'): void
   (e: 'export'): void
+  (e: 'sendEmail'): void
   (e: 'retry'): void
 }>()
 
@@ -398,6 +411,10 @@ const handleClose = () => {
 
 const handleExport = () => {
   emit('export')
+}
+
+const handleSendEmail = () => {
+  emit('sendEmail')
 }
 
 const formatDateRange = (startDate?: string, endDate?: string) => {

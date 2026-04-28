@@ -1,4 +1,5 @@
 import { defineEventHandler, readBody, setResponseStatus } from 'h3'
+import { logError } from '../../utils/logger'
 import { query } from '../../utils/db'
 import { CustomError } from '../../utils/custom.error'
 import jwt from 'jsonwebtoken'
@@ -134,7 +135,7 @@ export default defineEventHandler(async (event) => {
       message: 'Organization integration created successfully'
     }
   } catch (error: any) {
-    console.error('Organization Integration Create Error:', error)
+    logError('Organization Integration Create Error', error)
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)

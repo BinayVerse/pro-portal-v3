@@ -118,7 +118,6 @@ export async function encryptSensitiveData(plaintext: string): Promise<string> {
     // Convert to base64 for safe storage
     return btoa(String.fromCharCode(...Array.from(combined)))
   } catch (error) {
-    console.error('Encryption failed:', error)
     // If encryption fails, return plaintext (fallback for error handling)
     return plaintext
   }
@@ -163,7 +162,6 @@ export async function decryptSensitiveData(encrypted: string): Promise<string> {
     const decoder = new TextDecoder()
     return decoder.decode(plaintext)
   } catch (error) {
-    console.error('Decryption failed:', error)
     // If decryption fails, return encrypted value as-is
     return encrypted
   }

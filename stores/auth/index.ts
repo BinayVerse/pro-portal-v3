@@ -2,6 +2,7 @@ import type { AuthUser, ApiResponse } from "./types";
 import { handleAuthError as handleAuthErrorShared, clearAuth } from '~/composables/useAuthError'
 import { useErrorStore } from '~/stores/error'
 import { useChatStore } from '~/stores/chat'
+import { useLogger } from '~/composables/useLogger'
 
 export const useAuthStore = defineStore("authStore", {
   state: () => ({
@@ -386,7 +387,8 @@ export const useAuthStore = defineStore("authStore", {
         await this.clearAuth();
         await navigateTo("/");
       } catch (error: any) {
-        console.error("Error during logout:", error.message);
+        const { error: logError } = useLogger()
+        logError("Error during logout", error)
       }
     },
 
@@ -412,7 +414,8 @@ export const useAuthStore = defineStore("authStore", {
               this.user = { ...this.user, departments: deptIds };
             } catch (deptError) {
               // Silently fail if departments can't be loaded
-              console.warn('Failed to load user departments in fetchCurrentUser:', deptError);
+              const { warn } = useLogger()
+              warn('Failed to load user departments in fetchCurrentUser', { error: deptError })
             }
           }
 

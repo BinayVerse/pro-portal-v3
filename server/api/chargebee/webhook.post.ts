@@ -1,4 +1,5 @@
 import { query, getClient } from '../../../server/utils/db'
+import { logger } from '~/server/utils/logger'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -11,11 +12,7 @@ export default defineEventHandler(async (event) => {
   const eventId = payload?.event_id || payload?.id || (payload?.event && payload.event.id) || null
   const eventType = payload?.event_type || payload?.type || payload?.event?.event_type || null
 
-  console.log('📨 Chargebee webhook received:', {
-    eventId,
-    eventType,
-    timestamp: new Date().toISOString(),
-  })
+  logger.info({ eventId, eventType }, 'Chargebee webhook received')
 
   // Insert to webhook_events (idempotent)
   try {
@@ -28,11 +25,11 @@ export default defineEventHandler(async (event) => {
 
     if (!insertRes || (Array.isArray(insertRes.rows) && insertRes.rows.length === 0)) {
       // already seen
-      console.log('⚠️  Webhook already processed:', eventId)
+      logger.warn({ eventId }, 'Webhook already processed')
       return { success: true }
     }
   } catch (e: any) {
-    console.error('Failed to persist webhook event', e?.message || e)
+    logger.error({ error: e?.message }, 'Failed to persist webhook event')
     // continue processing but be careful
   }
 
@@ -98,16 +95,16 @@ export default defineEventHandler(async (event) => {
 
           if (orgRes?.rows?.[0]) {
             const orgId = orgRes.rows[0].org_id
-            console.log('🔄 Renewal webhook: Syncing subscription for org:', orgId)
+            logger.info({ orgId }, 'Renewal webhook: Syncing subscription')
 
             // Import and call the sync function
             const { getSubscriptionDetails } = await import('~/server/utlis/chargebee')
             await getSubscriptionDetails(orgId)
 
-            console.log('✅ Renewal webhook: Subscription synced successfully')
+            logger.info({ orgId }, 'Renewal webhook: Subscription synced successfully')
           }
         } catch (syncErr: any) {
-          console.error('Renewal sync error:', syncErr?.message || syncErr)
+          logger.error({ error: syncErr?.message }, 'Renewal sync error')
           // Don't fail the webhook, just log the error
         }
       }
@@ -133,17 +130,17 @@ export default defineEventHandler(async (event) => {
 
           if (orgRes?.rows?.[0]) {
             const orgId = orgRes.rows[0].org_id
-            console.log('📋 Invoice webhook: Processing invoice', invoiceId, 'for org:', orgId)
+            logger.info({ orgId, invoiceId }, 'Invoice webhook: Processing invoice')
 
             // If we have a subscription ID, sync it to ensure all data is current
             if (subscriptionId) {
               const { getSubscriptionDetails } = await import('~/server/utlis/chargebee')
               await getSubscriptionDetails(orgId)
-              console.log('✅ Invoice webhook: Subscription data synced')
+              logger.info({ orgId }, 'Invoice webhook: Subscription data synced')
             }
           }
         } catch (syncErr: any) {
-          console.error('Invoice sync error:', syncErr?.message || syncErr)
+          logger.error({ error: syncErr?.message }, 'Invoice sync error')
           // Don't fail the webhook
         }
       }
@@ -154,7 +151,7 @@ export default defineEventHandler(async (event) => {
     // Fallback: store event only
     return { success: true }
   } catch (err: any) {
-    console.error('Webhook processing error:', err?.message || err)
+    logger.error({ error: err?.message }, 'Webhook processing error')
     throw createError({ statusCode: 500, statusMessage: 'Failed to process webhook' })
   }
 })

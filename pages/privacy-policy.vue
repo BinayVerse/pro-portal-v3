@@ -2,17 +2,20 @@
 useHead({ title: 'Privacy Policy - provento.ai' })
 
 definePageMeta({
-  layout: 'main',
+  layout: 'landing',
 })
 </script>
 
 <template>
-  <main id="main">
-    <section class="pt-16 pb-24 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-7xl mx-auto">
-        <h1 class="font-semibold text-3xl text-white">Privacy Policy</h1>
-        <p class="text-gray-400">Last updated: 07/03/2024 12:00 PM</p>
-        <p class="mt-8 text-gray-300">
+  <div id="main">
+    <section class="landing-inner-page">
+      <div class="landing-inner-wrap">
+        <div class="mb-10">
+          <h1 class="landing-page-title">Privacy <span>Policy</span></h1>
+          <p class="landing-page-sub">Last updated: 07/03/2024 12:00 PM</p>
+        </div>
+        <div class="legal-content">
+        <p>
           This Privacy Policy describes Our policies and procedures on the collection, use and
           disclosure of Your information when You use the Service and tells You about Your privacy
           rights and how the law protects You.
@@ -570,9 +573,10 @@ definePageMeta({
             </NuxtLink>
           </li>
         </ul>
+        </div>
       </div>
     </section>
-  </main>
+  </div>
 </template>
 
 <style lang="scss" scoped></style>

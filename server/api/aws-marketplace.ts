@@ -42,11 +42,11 @@ export default defineEventHandler(async (event: H3Event) => {
     // 2️⃣ If already linked → login
     const existing = await query(
         `
-    SELECT org_id, active
-    FROM aws_marketplace_subscriptions
-    WHERE customer_id = $1
-    LIMIT 1
-    `,
+        SELECT org_id, active
+        FROM aws_marketplace_subscriptions
+        WHERE customer_id = $1
+        LIMIT 1
+        `,
         [customerId]
     )
 
@@ -59,11 +59,11 @@ export default defineEventHandler(async (event: H3Event) => {
 
     await query(
         `
-    INSERT INTO aws_marketplace_sessions
-      (customer_id, session_token, expires_at)
-    VALUES
-      ($1, $2, now() + interval '2 hours')
-    `,
+        INSERT INTO aws_marketplace_sessions
+        (customer_id, session_token, expires_at)
+        VALUES
+        ($1, $2, now() + interval '2 hours')
+        `,
         [customerId, sessionToken]
     )
 

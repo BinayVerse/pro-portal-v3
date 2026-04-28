@@ -1,9 +1,18 @@
 import { sendEmail } from '../../utils/ses';
+import {
+  getEmailLayout,
+  sectionBlock,
+  textBlock,
+  linkBlock,
+  listBlock,
+  CTA_BUTTON,
+} from '../../utils/emailTemplates';
 import crypto from 'crypto';
 import { query } from '../../utils/db';
 import { getCompanySizeLabel, getRequestForLabel } from '../../utils/display-mappings';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { logError, logWarn } from '../../utils/logger';
 
 async function resolveQrUrl(qrUrl?: string | null): Promise<string | null> {
   if (!qrUrl) return null;
@@ -29,200 +38,11 @@ async function resolveQrUrl(qrUrl?: string | null): Promise<string | null> {
     }
     return qrUrl;
   } catch (err) {
-    console.warn('resolveQrUrl error:', err);
+    logWarn('resolveQrUrl error', { error: err?.message || err });
     return qrUrl || null;
   }
 }
 
-const EMAIL_HEADER = (title: string) => `
-  <div style="width:100%;background:#13dcff;color:#fff;padding:18px 0;border-radius:8px 8px 0 0;text-align:center;margin-bottom:16px">
-    <div style="max-width:680px;margin:0 auto;padding:0 20px">
-      <h1 style="margin:0;font-size:20px">${title}</h1>
-    </div>
-  </div>
-`;
-
-const EMAIL_FOOTER = `
-  <div style="max-width:680px;margin:12px auto;text-align:center;color:#9aa4ae;font-size:12px">
-    <p style="margin:8px 0">© 2025 provento.ai. All rights reserved.</p>
-  </div>
-`;
-
-// 🔹 Section Block (title + description)
-const sectionBlock = (title: string, desc: string) => `
-  <table width="100%" style="margin-bottom:20px;border-collapse:collapse;">
-    <tr>
-      <td style="font-size:16px;font-weight:600;padding-bottom:4px;">
-        ${title}
-      </td>
-    </tr>
-    <tr>
-      <td style="font-size:15px;line-height:1.5;color:#374151;">
-        ${desc}
-      </td>
-    </tr>
-  </table>
-`;
-
-// 🔹 Simple paragraph
-const textBlock = (text: string) => `
-  <p style="margin:0 0 16px;line-height:1.5;">
-    ${text}
-  </p>
-`;
-
-// 🔹 CTA link (inline style)
-const linkBlock = (text: string, url: string) => `
-  <a href="${url}" style="color:#15c;text-decoration:none;font-weight:500;">
-    ${text}
-  </a>
-`;
-
-// 🔹 Bullet list (email-safe)
-const listBlock = (items: string[]) => `
-  <table width="100%" style="margin:10px 0 20px;">
-    ${items
-    .map(
-      (item) => `
-        <tr>
-          <td style="font-size:15px;padding:4px 0;">
-            • ${item}
-          </td>
-        </tr>
-      `
-    )
-    .join('')}
-  </table>
-`;
-
-const CTA_BUTTON = (text: string, url: string) => `
-  <table width="100%" style="margin:24px 0;">
-    <tr>
-      <td align="center">
-        <a href="${url}"
-           style="background:#22d3ee;
-                  color:#000;
-                  padding:12px 22px;
-                  border-radius:8px;
-                  text-decoration:none;
-                  font-weight:600;
-                  display:inline-block;">
-          ${text}
-        </a>
-      </td>
-    </tr>
-  </table>
-`;
-
-const LINKEDIN_ICON = `
-  <a href="http://linkedin.com/company/provento-ai"
-     target="_blank"
-     style="display:inline-block;margin:0 6px;">
-     
-    <img 
-      src="https://provento-public-logo.s3.us-east-1.amazonaws.com/Linked-In-logo.png"
-      width="28"
-      height="28"
-      alt="LinkedIn"
-      style="display:block;border-radius:4px;"
-    />
-
-  </a>
-`
-
-const getEmailLayout = (content: string) => {
-  const LOGO_URL = `https://provento-public-logo.s3.us-east-1.amazonaws.com/provento-logo.png`
-  const LOGO_TEXT_URL = `https://provento-public-logo.s3.us-east-1.amazonaws.com/provento-logo-with-text.png`
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    <body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,sans-serif;">
-
-      <table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 0;">
-        <tr>
-          <td align="center">
-
-            <table width="600" cellpadding="0" cellspacing="0" 
-              style="background:#ffffff;border-radius:10px;overflow:hidden;
-                    box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-
-              <!-- Header -->
-              <tr>
-                <td align="center" style="padding:20px;border-bottom:1px solid #e5e7eb;">
-                  <img 
-                    src="${LOGO_TEXT_URL}" 
-                    alt="provento.ai" 
-                    width="100"
-                    style="display:block;margin:auto;"
-                  />
-                </td>
-              </tr>
-
-              <!-- Content -->
-              <tr>
-                <td style="padding:24px;color:#333;font-size:15px;line-height:1.6;">
-                  ${content}
-                  <p style="font-size: 16px; line-height: 1.5; margin: 0; padding-top: 30px;">Cheers,</p>
-                  <p style="font-size: 16px; line-height: 1.5; margin: 0;"><strong>The provento.ai Team</strong></p>
-                </td>
-              </tr>
-
-              <!-- Footer -->
-              <tr>
-                <td align="center" style="padding:30px 20px;border-top:1px solid #e5e7eb;background:#f9fafb;">
-                  
-                  <!-- Logo -->
-                  <div style="margin-bottom:12px;">
-                    <img 
-                      src="${LOGO_URL}"
-                      height="32"
-                      alt="provento.ai"
-                      style="display:block;margin:auto;"
-                    />
-                  </div>
-
-                  <!-- Copyright -->
-                  <p style="margin:0 0 14px;color:#6b7280;font-size:12px;">
-                    © ${new Date().getFullYear()} provento.ai. All rights reserved.
-                  </p>
-
-                  <!-- Social Icons -->
-                  <div style="margin-bottom:16px;">
-                    ${LINKEDIN_ICON}
-                  </div>
-
-                  <!-- Help Text -->
-                  <p style="margin:0 0 12px;color:#6b7280;font-size:13px;line-height:1.5;">
-                    If you have any questions or concerns, please contact us at 
-                    <a href="mailto:${useRuntimeConfig().sesFromEmailId}"
-                      style="color:#0ea5e9;text-decoration:none;">
-                      support
-                    </a>.
-                  </p>
-
-                  <!-- Links -->
-                  <p style="margin:0;font-size:12px;">
-                    <a href="${useRuntimeConfig().public.appUrl}"
-                      style="color:#0ea5e9;text-decoration:none;margin:0 8px;">
-                      View in Browser
-                    </a>
-                    |
-                    <a href="${useRuntimeConfig().public.appUrl}/privacy-policy"
-                      style="color:#0ea5e9;text-decoration:none;margin:0 8px;">
-                      Privacy Policy
-                    </a>
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `
-}
 
 
 function generateRandomString(length = 10): string {
@@ -255,7 +75,7 @@ export const shouldNotifyChannel = async (orgId: string | number, channel: strin
     const diffMs = new Date().getTime() - new Date(last).getTime()
     return diffMs > windowHours * 3600 * 1000
   } catch (e) {
-    console.error('shouldNotifyChannel error', e)
+    logError('shouldNotifyChannel error', e)
     return true
   }
 }
@@ -264,7 +84,7 @@ export const markChannelNotified = async (orgId: string | number, channel: strin
   try {
     await query(`INSERT INTO channel_notifications (org_id, channel, last_notified) VALUES ($1, $2, NOW()) ON CONFLICT (org_id, channel) DO UPDATE SET last_notified = NOW()`, [orgId, channel])
   } catch (e) {
-    console.error('markChannelNotified error', e)
+    logError('markChannelNotified error', e)
   }
 }
 
@@ -307,7 +127,7 @@ export const generateResetLink = async (
     const resetLink = `${appUrl}/update-password?token=${encodeURIComponent(token)}`;
     return { resetLink };
   } catch (err) {
-    console.error('Error generating reset link:', err);
+    logError('Error generating reset link', err);
     throw err;
   }
 };
@@ -378,7 +198,7 @@ export const sendWelcomeMail = async (name: string, email: string, password: str
     await sendEmail(msg);
     // console.log('Signup email sent successfully');
   } catch (error: any) {
-    console.error('Error sending signup email:', error.response?.body || error.message);
+    logError('Error sending signup email', { error: error?.response?.body || error?.message });
     throw new Error(`Failed to send signup email: ${error.response?.body?.errors[0]?.message || error.message}`);
   }
 };
@@ -462,7 +282,7 @@ export const sendDepartmentAdminWelcomeMail = async (
         – The provento.ai Team`,
     })
   } catch (err: any) {
-    console.error('Failed to send department admin welcome mail:', err)
+    logError('Failed to send department admin welcome mail', err)
     throw err
   }
 }
@@ -559,14 +379,14 @@ export const sendUserAdditionMail = async (name: string, email: string, qrCode: 
         orgQr = row.qr_code || orgQr
       }
     } catch (e) {
-      console.error('Could not fetch org integrations for email invite:', e)
+      logError('Could not fetch org integrations for email invite', e)
     }
 
     // Resolve QR url to a public/signed URL if needed
     try {
       orgQr = await resolveQrUrl(orgQr)
     } catch (err) {
-      console.warn('Could not resolve QR url for email invite:', err)
+      logWarn('Could not resolve QR url for email invite', { error: err?.message || err })
     }
 
     const whatsapp_enabled = channels.includes('whatsapp')
@@ -703,7 +523,7 @@ export const sendChannelAvailableMail = async (name: string, email: string, chan
         if (channel === 'teams') teams_enabled = true
       }
     } catch (e) {
-      console.error('Could not determine org integrations for channel available email:', e)
+      logError('Could not determine org integrations for channel available email', e)
       // fallback to channel param
       if (channel === 'whatsapp') whatsapp_enabled = !!qrCode
       if (channel === 'slack') slack_enabled = true
@@ -714,7 +534,7 @@ export const sendChannelAvailableMail = async (name: string, email: string, chan
     try {
       orgQr = await resolveQrUrl(orgQr)
     } catch (err) {
-      console.warn('Could not resolve QR url for channel available email:', err)
+      logWarn('Could not resolve QR url for channel available email', { error: err?.message || err })
     }
 
     const qrHtml = (whatsapp_enabled && orgQr) ? `<div style="text-align:center;margin:16px 0"><img src="${orgQr}" alt="WhatsApp QR Code" style="max-width:240px;border:1px solid #ccc;border-radius:8px"/></div>` : ''
@@ -1009,7 +829,7 @@ export const sendMeetingRequestMail = async ({
 
       await sendEmail(userMsg);
     } catch (userMailError) {
-      console.warn('Failed to send confirmation email to user:', userMailError);
+      logWarn('Failed to send confirmation email to user', { error: userMailError?.message || userMailError });
       // Do not throw — sales email was already sent and contact saved
     }
   } catch (error: any) {
@@ -1083,7 +903,7 @@ export const sendProviderRequestMail = async ({
       text: `New provider request from ${organization_name || 'Unknown Org'} - ${provider_name}`,
     })
   } catch (err: any) {
-    console.error('Failed to send provider request email:', err)
+    logError('Failed to send provider request email', err)
     throw err
   }
 }

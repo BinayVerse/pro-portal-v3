@@ -29,7 +29,6 @@ export function useSubscriptionCheck() {
       const result = await orgStore.fetchOrgPlan(orgId)
       return result.success && !!orgStore.currentPlan?.plan
     } catch (error) {
-      console.error('Failed to check subscription:', error)
       return false
     }
   }

@@ -1,4 +1,5 @@
 import { defineEventHandler, setResponseStatus } from 'h3'
+import { logError } from '../../utils/logger'
 import { query } from '../../utils/db'
 import { CustomError } from '../../utils/custom.error'
 import jwt from 'jsonwebtoken'
@@ -53,7 +54,7 @@ export default defineEventHandler(async (event) => {
       adminDepartmentIds = deptResult.rows.map((row) => String(row.dept_id))
       // console.log(`[all.get.ts] Department Admin ${tokenUserId} has departments:`, adminDepartmentIds)
     } catch (e) {
-      console.error('Failed to fetch department assignments for Department Admin:', e)
+      logError('Failed to fetch department assignments for Department Admin', e)
     }
   }
 

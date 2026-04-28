@@ -637,8 +637,8 @@ const stats = computed<DepartmentStats>(() => {
   // Find the "ALL" row which has aggregated counts from the backend
   const allRow = departmentsList.value.find((d) => d.id === 'ALL')
 
-  // Count only real, non-system departments (exclude the "ALL" aggregate row and system departments)
-  const realDepartments = departmentsList.value.filter((d) => d.id !== 'ALL' && !d.is_system)
+  // Count all departments except the "ALL" aggregate row (includes system departments like "Common")
+  const realDepartments = departmentsList.value.filter((d) => d.id !== 'ALL')
   const totalDepartments = realDepartments.length
   const activeDepartments = realDepartments.filter((d) => d.status === 'active').length
 

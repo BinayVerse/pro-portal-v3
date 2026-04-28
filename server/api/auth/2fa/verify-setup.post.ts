@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import { query } from '~/server/utils/db'
 import { verifyTempToken } from '~/server/utils/auth'
 import { CustomError } from '~/server/utils/custom.error'
+import { logError } from '~/server/utils/logger'
 import { isE2ETest } from '~/server/utlis/helper'
 
 export default defineEventHandler(async (event) => {
@@ -103,7 +104,7 @@ export default defineEventHandler(async (event) => {
         }
 
     } catch (error: any) {
-        console.error('2FA Verify Setup Error:', error)
+        logError('2FA Verify Setup Error:', error)
 
         if (error instanceof CustomError) {
             setResponseStatus(event, error.statusCode)

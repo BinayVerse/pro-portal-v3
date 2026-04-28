@@ -122,16 +122,15 @@
               </UFormGroup>
 
               <!-- Departments -->
-              <UFormGroup name="departments">
-                <template #label>
+              <UFormGroup label="Departments" name="departments" required>
+                <!-- <template #label>
                   <span class="text-sm font-medium text-gray-300">
                     Departments
                     <span v-if="isDepartmentAdmin" class="text-red-500 dark:text-red-400 ml-[-2px]"
                       >*</span
                     >
-                    <span v-else>(Optional)</span>
                   </span>
-                </template>
+                </template> -->
                 <USelectMenu
                   v-model="state.departments"
                   :options="restrictedDepartmentOptions"
@@ -139,17 +138,11 @@
                   value-attribute="dept_id"
                   multiple
                   searchable
-                  :placeholder="
-                    isDepartmentAdmin
-                      ? 'Select at least one department'
-                      : 'Select departments or leave empty for Common'
-                  "
+                  :placeholder="'Select at least one department'"
                 >
                   <template #label>
                     <span v-if="!state.departments.length" class="text-gray-400">
-                      {{
-                        isDepartmentAdmin ? 'Select at least one department' : 'Select departments'
-                      }}
+                      Select at least one department
                     </span>
                     <span v-else>
                       {{ selectedDepartmentsLabel }}
@@ -325,16 +318,15 @@
               </UFormGroup>
 
               <!-- Departments -->
-              <UFormGroup name="departments">
-                <template #label>
+              <UFormGroup label="Departments" name="departments" required>
+                <!-- <template #label>
                   <span class="text-sm font-medium text-gray-300">
                     Departments
                     <span v-if="isDepartmentAdmin" class="text-red-500 dark:text-red-400 ml-[-2px]"
                       >*</span
                     >
-                    <span v-else>(Optional)</span>
                   </span>
-                </template>
+                </template> -->
                 <USelectMenu
                   v-model="googleDriveState.departments"
                   :options="restrictedDepartmentOptions"
@@ -342,27 +334,17 @@
                   value-attribute="dept_id"
                   multiple
                   searchable
-                  :placeholder="
-                    isDepartmentAdmin
-                      ? 'Select at least one department'
-                      : 'Select departments or leave empty for Common'
-                  "
+                  :placeholder="'Select at least one department'"
                 >
                   <template #label>
                     <span v-if="!googleDriveState.departments.length" class="text-gray-400">
-                      {{
-                        isDepartmentAdmin ? 'Select at least one department' : 'Select departments'
-                      }}
+                      Select at least one department
                     </span>
                     <span v-else>
                       {{ selectedGoogleDepartmentsLabel }}
                     </span>
                   </template>
                 </USelectMenu>
-                <p v-if="isDepartmentAdmin" class="text-xs text-amber-400 mt-2">
-                  ⚠️ Department Admins must assign documents to at least one department. You cannot
-                  upload Common documents.
-                </p>
               </UFormGroup>
 
               <!-- Description -->
@@ -697,7 +679,7 @@ const schema = z.object({
     .string()
     .min(1, 'Description is required')
     .max(100, 'Description must be 100 characters or less'),
-  departments: z.array(z.string()).optional().default([]),
+  departments: z.array(z.string()).min(1, 'Department is required'),
 })
 
 type Schema = z.output<typeof schema>
@@ -1254,12 +1236,9 @@ const uploadFromGoogleDrive = async () => {
     return
   }
 
-  // 🔑 Validate Department Admin is not uploading as Common document
-  if (
-    isDepartmentAdmin.value &&
-    (!googleDriveState.departments || googleDriveState.departments.length === 0)
-  ) {
-    errorStore.showError('Department Admins must assign documents to at least one department.')
+  // 🔑 Validate department selection is required for all non-superadmin users
+  if (!googleDriveState.departments || googleDriveState.departments.length === 0) {
+    errorStore.showError('Department selection is required. Please assign files to at least one department.')
     return
   }
 
@@ -1353,12 +1332,9 @@ const handleGoogleOAuthSignIn = async () => {
     return
   }
 
-  // 🔑 Validate Department Admin is not uploading as Common document
-  if (
-    isDepartmentAdmin.value &&
-    (!googleDriveState.departments || googleDriveState.departments.length === 0)
-  ) {
-    errorStore.showError('Department Admins must assign documents to at least one department.')
+  // 🔑 Validate department selection is required for all non-superadmin users
+  if (!googleDriveState.departments || googleDriveState.departments.length === 0) {
+    errorStore.showError('Department selection is required. Please assign files to at least one department.')
     return
   }
 

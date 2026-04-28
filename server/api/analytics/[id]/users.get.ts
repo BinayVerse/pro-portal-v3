@@ -1,6 +1,7 @@
 import { defineEventHandler, getRouterParam } from 'h3';
 import { query } from '../../../utils/db';
 import { CustomError } from '../../../utils/custom.error';
+import { logError } from '../../../utils/logger';
 import jwt from 'jsonwebtoken';
 
 export default defineEventHandler(async (event) => {
@@ -73,7 +74,7 @@ export default defineEventHandler(async (event) => {
                 : 'No users found in the specified organization',
         };
     } catch (err) {
-        if (process.dev) console.error('Error fetching users:', err);
+        if (process.dev) logError('Error fetching users:', err);
         throw new CustomError('Internal Server Error: Failed to fetch users', 500);
     }
 });

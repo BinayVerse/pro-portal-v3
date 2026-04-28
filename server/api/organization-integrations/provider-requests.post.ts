@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import { CustomError } from '../../utils/custom.error'
 import { query } from '../../utils/db'
 import { sendProviderRequestMail } from '../helper'
+import { logError } from '../../utils/logger'
 
 export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig()
@@ -85,7 +86,7 @@ export default defineEventHandler(async (event) => {
                 'Your integration request has been submitted. Our team will contact you soon.',
         }
     } catch (error: any) {
-        console.error('Provider Request Error:', error)
+        logError('Provider Request Error', error)
 
         if (error instanceof CustomError) {
             setResponseStatus(event, error.statusCode)

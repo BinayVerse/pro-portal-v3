@@ -2,6 +2,7 @@ import { defineEventHandler, setResponseStatus } from 'h3'
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl as getCfSignedUrl } from '@aws-sdk/cloudfront-signer'
 import { CustomError } from '../../utils/custom.error'
+import { logError, logWarn } from '../../utils/logger'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -56,7 +57,7 @@ export default defineEventHandler(async (event) => {
           dateLessThan: new Date(Date.now() + expiresIn * 1000),
         })
       } catch (e) {
-        console.error("SIGNING FAILED:", e)
+        logError('SIGNING FAILED', e)
         throw e
       }
 
@@ -67,8 +68,8 @@ export default defineEventHandler(async (event) => {
       })
 
     } catch (err) {
-      console.warn(`Skipping missing video: ${video.key}`)
-      console.error('HeadObject failed FULL:', {
+      logWarn(`Skipping missing video: ${video.key}`)
+      logError('HeadObject failed', {
         key: video.key,
         name: err?.name,
         message: err?.message,

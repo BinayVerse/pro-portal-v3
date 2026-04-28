@@ -375,5 +375,30 @@ export const useAnalyticsStore = defineStore('analyticsStore', {
         this.loading = false;
       }
     },
+
+    async sendKnowledgeGapEmail(orgId: string, knowledgeGapData: any) {
+      try {
+        this.loading = true;
+
+        // The URL already contains the orgId, but we also include it in the body for redundancy
+        const response = await $fetch<{ message: string }>(
+          `/api/analytics/${orgId}/send-knowledge-gap-email`,
+          {
+            method: "POST",
+            headers: this.getAuthHeaders(),
+            body: knowledgeGapData,
+          }
+        );
+
+        return response;
+      } catch (error) {
+        console.error("sendKnowledgeGapEmail error:", error);
+        if (await handleAuthErrorShared(error)) return;
+        this.handleError(error, "Failed to send knowledge gap email");
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
   }
 });

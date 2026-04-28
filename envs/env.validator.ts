@@ -1,4 +1,5 @@
 import { Env } from './env.schema'
+import { logError, logWarn } from '../server/utils/logger'
 
 export default function validateEnvs() {
   try {
@@ -6,7 +7,7 @@ export default function validateEnvs() {
     const validation = Env.safeParse(envs)
     if (!validation.success) {
       validation.error.issues.forEach((issue) => {
-        console.warn(`Missing env ${issue.path.join('.')} ${issue.message}`)
+        logWarn(`Missing env ${issue.path.join('.')} ${issue.message}`)
       })
       // Don't exit in development mode, just warn
       if (process.env.NODE_ENV === 'production') {
@@ -15,7 +16,7 @@ export default function validateEnvs() {
     }
   }
   catch (error) {
-    console.error('Unable to parse .env. validation error:', error)
+    logError('Unable to parse .env. validation error', error)
     // Don't exit in development mode
     if (process.env.NODE_ENV === 'production') {
       process.exit(1)

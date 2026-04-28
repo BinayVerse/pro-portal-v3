@@ -50,6 +50,13 @@ export default defineNuxtConfig({
     chargebeeFamily: process.env.NUXT_CHARGEBEE_FAMILY,
     chargebeeProductCatalogVersion: process.env.NUXT_CHARGEBEE_CATALOG_VERSION || '2',
     chargebeeGatewayKey: process.env.NUXT_CHARGEBEE_GATEWAY_KEY,
+    // Keka
+    kekaBaseUrl: process.env.NUXT_KEKA_BASE_URL,
+    kekaLoginUrl: process.env.NUXT_KEKA_LOGIN_URL,
+    kekaClientSecret: process.env.NUXT_KEKA_CLIENT_SECRET,
+    kekaClientId: process.env.NUXT_KEKA_CLIENT_ID,
+    kekaApiKey: process.env.NUXT_KEKA_API_KEY,
+    kekaEmailIds: process.env.NUXT_KEKA_EMAIL_IDS,
     // Braintree
     braintreeEnvironment: process.env.NUXT_BRAINTREE_ENVIRONMENT,
     braintreeMerchantId: process.env.NUXT_BRAINTREE_MERCHANT_ID,

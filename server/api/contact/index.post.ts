@@ -5,6 +5,7 @@ import { CustomError } from '../../utils/custom.error';
 import { ContactUsValidation } from '../../utils/validations';
 import { query } from '../../utils/db';
 import { sendMeetingRequestMail } from '../helper';
+import { logWarn } from '../../utils/logger';
 
 const config = useRuntimeConfig();
 const secretkey = config.googleCaptchaSecretKey;
@@ -68,7 +69,7 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
         domain: validate.data.domain || 'unknown',
       });
     } catch (emailError) {
-      console.warn('Email sending failed, but contact was saved:', emailError);
+      logWarn('Email sending failed, but contact was saved', { error: emailError?.message || emailError });
     }
 
     setResponseStatus(event, 201);

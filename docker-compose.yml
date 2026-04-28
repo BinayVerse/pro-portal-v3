@@ -1,3 +1,30 @@
+# version: '3.8'
+
+# services:
+#   provento-admin-portal:
+#     image: 154567116744.dkr.ecr.us-east-1.amazonaws.com/provento/provento-admin-portal:${IMAGE_TAG}
+#     ports:
+#       - '80:80'
+#     env_file:
+#       - .env
+#     networks:
+#       - provento
+#     deploy:
+#       replicas: 1
+#       labels:
+#         service.project: 'admin-portal'
+#         service.agent: 'admin-portal'
+#       update_config:
+#         parallelism: 1
+#         delay: 10s
+#         order: start-first
+#       resources:
+#         limits:
+#           memory: 1G
+
+# networks:
+#   provento:
+
 version: '3.8'
 
 services:
@@ -9,18 +36,31 @@ services:
       - .env
     networks:
       - provento
+
     deploy:
       replicas: 1
+
       labels:
-        service.project: 'admin-portal'
-        service.agent: 'admin-portal'
+        logging: "true"
+        service: "admin-portal"      # ✅ service identifier 
+        env: "${ENVIRONMENT}"        # ✅ dynamic (prod/test/dev)
+
       update_config:
         parallelism: 1
         delay: 10s
         order: start-first
+
       resources:
         limits:
           memory: 1G
 
+    # ✅ Logging config
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: "/${ENVIRONMENT}/admin-portal"
+        awslogs-region: "us-east-1"
+        awslogs-stream: "admin-portal"
+          
 networks:
   provento:

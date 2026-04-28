@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, setResponseStatus } from "h3";
 import { CustomError } from "../../utils/custom.error";
 import { query } from "../../utils/db";
+import { logError } from "../../utils/logger";
 import bcrypt from "bcrypt";
 import { sendPasswordUpdatedMail } from '../helper';
 import { getPasswordRegex } from "../../utils/validations";
@@ -71,7 +72,7 @@ export default defineEventHandler(async (event) => {
     }
 
   } catch (error: any) {
-    console.error(error);
+    logError('Error updating password:', error);
 
     // Pass through known CustomError instances
     if (error instanceof CustomError) {

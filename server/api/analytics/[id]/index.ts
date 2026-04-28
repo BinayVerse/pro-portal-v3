@@ -1,6 +1,7 @@
 import { defineEventHandler, getRouterParam, getQuery } from "h3";
 import { query } from "../../../utils/db";
 import { CustomError } from "../../../utils/custom.error";
+import { logError } from "../../../utils/logger";
 import jwt from "jsonwebtoken";
 import { groupSimilarTexts } from "~/server/utils/embeddingUtils";
 import { cleanText } from "~/server/utils/cleanText";
@@ -225,7 +226,7 @@ export default defineEventHandler(async (event) => {
                             allClusters.push(...partial);
                         }
                     } catch (chunkErr) {
-                        if (process.dev) console.error('groupSimilarTexts failed for a chunk of organization questions:', chunkErr);
+                        if (process.dev) logError('groupSimilarTexts failed for a chunk of organization questions:', chunkErr);
 
                         // If chunk has more than 1 item, try splitting and processing halves to avoid model errors
                         if (chunkItems.length > 1) {
@@ -247,7 +248,7 @@ export default defineEventHandler(async (event) => {
                             // push as single cluster
                             allClusters.push({ representative: q, similar_questions: [q], total_count: 1 });
                         } catch (fallbackErr) {
-                            if (process.dev) console.error('Fallback grouping also failed for chunk:', fallbackErr);
+                            if (process.dev) logError('Fallback grouping also failed for chunk:', fallbackErr);
                         }
                     }
                 };
@@ -321,7 +322,7 @@ export default defineEventHandler(async (event) => {
             }
         } catch (grpErr) {
             // If embedding/grouping fails for this org, log and continue with empty grouping
-            if (process.dev) console.error('groupSimilarTexts failed for organization questions:', grpErr);
+            if (process.dev) logError('groupSimilarTexts failed for organization questions:', grpErr);
             groupedQuestions = [];
         }
 
@@ -337,7 +338,7 @@ export default defineEventHandler(async (event) => {
                         // Lower threshold and enable fuzzy merging for document-level grouping to collapse typos
                         grouped = await groupSimilarTexts(doc.questions || [], 0.8, undefined, { fuzzyMerge: true, maxEditDistance: 2, relativeEditDistance: 0.18 });
                     } catch (docErr) {
-                        if (process.dev) console.error(`groupSimilarTexts failed for document ${doc.document_source}:`, docErr);
+                        if (process.dev) logError(`groupSimilarTexts failed for document ${doc.document_source}:`, docErr);
                         grouped = [];
                     }
 
@@ -387,7 +388,7 @@ export default defineEventHandler(async (event) => {
                 }
             }
         } catch (alignErr) {
-            if (process.dev) console.error('Alignment failed:', alignErr);
+            if (process.dev) logError('Alignment failed:', alignErr);
         }
 
         const responseData = {
@@ -438,7 +439,7 @@ export default defineEventHandler(async (event) => {
             message: "Organization details fetched successfully",
         };
     } catch (error) {
-        if (process.dev) console.error(error);
+        if (process.dev) logError('Error fetching organization details:', error);
         throw new CustomError(
             "Internal Server Error: Failed to fetch organization details",
             500

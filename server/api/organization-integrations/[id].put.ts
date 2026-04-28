@@ -3,6 +3,7 @@ import { query } from '../../utils/db'
 import { CustomError } from '../../utils/custom.error'
 import jwt from 'jsonwebtoken'
 import { updateOrganizationIntegration, createIntegrationAuditLog } from '../../utils/dbHelpers'
+import { logError } from '../../utils/logger'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -131,7 +132,7 @@ export default defineEventHandler(async (event) => {
       message: message
     }
   } catch (error: any) {
-    console.error('Organization Integration Update Error:', error)
+    logError('Organization Integration Update Error', error)
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)

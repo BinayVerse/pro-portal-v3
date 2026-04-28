@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken'
 import { formatDateTime } from '../../utils'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
+import { logError } from '../utils/logger'
 
 dayjs.extend(utc)
 
@@ -217,7 +218,7 @@ export default defineEventHandler(async (event) => {
       message: 'Dashboard data fetched successfully',
     }
   } catch (err: any) {
-    console.error('Dashboard API Error:', err)
+    logError('Dashboard API Error', err)
     setResponseStatus(event, 500)
     throw new CustomError(err.message || 'Failed to fetch dashboard data', 500)
   }

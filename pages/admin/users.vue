@@ -387,7 +387,7 @@
                   :key="dept"
                   size="xs"
                   variant="solid"
-                  color="blue"
+                  :color="dept === 'Common' ? 'gray' : 'blue'"
                   class="font-medium"
                   :ui="{ rounded: 'rounded-full' }"
                 >

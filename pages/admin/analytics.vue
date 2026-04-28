@@ -24,8 +24,8 @@
               class="w-5 h-5"
               :class="{ 'animate-pulse': knowledgeGapLoading }"
             />
-            <span class="hidden sm:inline">AI Knowledge Gap</span>
-            <span class="sm:hidden">Gap</span>
+            <span class="hidden sm:inline">Knowledge Enhancement Opportunities</span>
+            <span class="sm:hidden">Knowledge</span>
           </button>
 
           <!-- AI Actionable Button with Badge -->
@@ -484,9 +484,11 @@
         v-model="knowledgeGapModalOpen"
         :knowledge-gap-data="knowledgeGapData?.data"
         :loading="knowledgeGapLoading"
+        :sending-email="knowledgeGapEmailSending"
         :error="knowledgeGapError"
         @close="knowledgeGapModalOpen = false"
         @export="handleExportKnowledgeGap"
+        @send-email="handleSendKnowledgeGapEmail"
         @retry="openKnowledgeGap"
       />
 
@@ -566,6 +568,7 @@ const knowledgeGapModalOpen = ref(false)
 const knowledgeGapLoading = ref(false)
 const knowledgeGapError = ref<string | null>(null)
 const knowledgeGapData = ref<any>(null)
+const knowledgeGapEmailSending = ref(false)
 
 // Computed organization ID (use route query for superadmin)
 const organizationId = computed(() => {
@@ -1604,6 +1607,38 @@ const handleSendInsightsEmail = async () => {
   }
 }
 
+const handleSendKnowledgeGapEmail = async () => {
+  if (!organizationId.value || !knowledgeGapData.value) {
+    showNotification('Organization ID or knowledge gap data missing', 'error')
+    return
+  }
+
+  try {
+    knowledgeGapEmailSending.value = true
+
+    const payload = {
+      orgId: organizationId.value,
+      org_id: organizationId.value,
+      knowledgeGap: knowledgeGapData.value,
+      period: {
+        start_date: dateRange.value.startDate,
+        end_date: dateRange.value.endDate,
+        timeZone: dateRange.value.timeZone,
+        org_id: organizationId.value,
+      },
+    }
+
+    await analyticsStore.sendKnowledgeGapEmail(organizationId.value, payload)
+
+    showNotification('Knowledge Gap email sent successfully', 'success')
+  } catch (error) {
+    console.error(error)
+    showNotification('Failed to send knowledge gap email', 'error')
+  } finally {
+    knowledgeGapEmailSending.value = false
+  }
+}
+
 // Knowledge Gap methods
 const openKnowledgeGap = async () => {
   if (!organizationId.value) {
@@ -1682,7 +1717,7 @@ const handleExportKnowledgeGap = async () => {
     const safeString = (val: any) => val ?? 'N/A'
 
     // Header
-    rows.push(['AI Knowledge Gap Report'])
+    rows.push(['Knowledge Enhancement Opportunities Report'])
     rows.push([`Generated: ${dayjs().format('YYYY-MM-DD HH:mm:ss')}`])
     if (period.start_date && period.end_date) {
       rows.push([`Period: ${formatDateRange(period.start_date, period.end_date)}`])
@@ -1703,7 +1738,7 @@ const handleExportKnowledgeGap = async () => {
     // Top Unanswered Questions
     if (topUnanswered.length) {
       rows.push(['TOP UNANSWERED QUESTIONS'])
-      rows.push(['Intent', 'Frequency', 'Unique Askers', 'Last Asked'])
+      rows.push(['Intent', 'Frequency', 'Unique Users', 'Last Asked'])
       topUnanswered.forEach((q: any) => {
         rows.push([
           safeString(q.intent),

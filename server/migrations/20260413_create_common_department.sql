@@ -14,7 +14,7 @@ INSERT INTO public.organization_departments (org_id, name, description, status, 
 SELECT 
   o.org_id,
   'Common',
-  'Default department for documents without specific department assignment',
+  'Default system department for managing common users and artifacts.',
   'active',
   true,
   'system',
