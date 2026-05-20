@@ -28,7 +28,7 @@
     </div>
 
     <!-- Processed -->
-    <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
+    <div class="bg-dark-800 rounded-lg p-3 sm:p-4 lg:p-6 border border-dark-700">
       <div v-if="props.loading" class="animate-pulse">
         <div class="flex items-center justify-between">
           <div>
@@ -54,7 +54,7 @@
     </div>
 
     <!-- Categories -->
-    <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
+    <div class="bg-dark-800 rounded-lg p-3 sm:p-4 lg:p-6 border border-dark-700">
       <div v-if="props.loading" class="animate-pulse">
         <div class="flex items-center justify-between">
           <div>
@@ -78,7 +78,7 @@
     </div>
 
     <!-- Total Size -->
-    <div class="bg-dark-800 rounded-lg p-6 border border-dark-700">
+    <div class="bg-dark-800 rounded-lg p-3 sm:p-4 lg:p-6 border border-dark-700">
       <div v-if="props.loading" class="animate-pulse">
         <div class="flex items-center justify-between">
           <div>

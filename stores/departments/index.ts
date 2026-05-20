@@ -11,6 +11,9 @@ export const useDepartmentsStore = defineStore('departmentsStore', {
 
         departmentLoading: false,
         departmentError: null,
+
+        // Track the org ID for superadmin context
+        currentOrgId: null as string | null,
     }),
 
     getters: {
@@ -52,13 +55,25 @@ export const useDepartmentsStore = defineStore('departmentsStore', {
         /* -----------------------------------------
          * Fetch departments
          * ---------------------------------------*/
-        async fetchDepartments() {
+        async fetchDepartments(orgId?: string | null) {
             this.loading = true
             this.error = null
 
             try {
+                // Store the org ID for future calls
+                const effectiveOrgId = orgId || this.currentOrgId
+                if (orgId) {
+                    this.currentOrgId = orgId
+                }
+
+                // Build URL with org parameter for superadmin
+                let url = '/api/departments/all'
+                if (effectiveOrgId) {
+                    url += `?org=${encodeURIComponent(effectiveOrgId)}`
+                }
+
                 const res = await $fetch<{ data: Department[] }>(
-                    '/api/departments/all',
+                    url,
                     { headers: this.getAuthHeaders() },
                 )
 

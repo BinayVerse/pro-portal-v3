@@ -20,6 +20,7 @@ export async function predictRag(payload: any, authToken: string): Promise<any> 
     })
 
     if (response.status === 200) {
+      console.log('RAG prediction response:', response.data)
       return response.data
     }
 

@@ -10,15 +10,34 @@
           Manage and configure third-party application integrations
         </p>
       </div>
-      <UButton
-        @click="openAddApplicationModal"
-        icon="heroicons:plus"
-        color="primary"
-        class="w-full sm:w-auto flex-shrink-0"
-        :disabled="loadingIntegrations"
-      >
-        Add Application
-      </UButton>
+
+      <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+        <span class="text-xs sm:text-sm text-gray-400 whitespace-nowrap">
+          {{ integrationsStore.getGroupedIntegrations.length }} /
+          {{ integrationLimit === -1 ? 'Unlimited' : integrationLimit }} integrations used
+        </span>
+
+        <AppTooltip
+          :text="
+            !isIntegrationAllowed(integrationsStore.getGroupedIntegrations.length)
+              ? 'API integration limit reached. Please upgrade your plan to continue using integrations.'
+              : ''
+          "
+        >
+          <UButton
+            @click="openAddApplicationModal"
+            icon="heroicons:plus"
+            color="primary"
+            class="w-full sm:w-auto flex-shrink-0"
+            :disabled="
+              loadingIntegrations ||
+              !isIntegrationAllowed(integrationsStore.getGroupedIntegrations.length)
+            "
+          >
+            Add Application
+          </UButton>
+        </AppTooltip>
+      </div>
     </div>
 
     <!-- Tabs for filtering -->
@@ -341,7 +360,24 @@
       <p class="text-sm text-gray-400 mb-4 text-center">
         Create your first application integration to get started
       </p>
-      <UButton @click="openAddApplicationModal" icon="heroicons:plus"> Add Application </UButton>
+      <AppTooltip
+        :text="
+          !isIntegrationAllowed(integrationsStore.getGroupedIntegrations.length)
+            ? 'Integration limit reached. Upgrade your plan to add more integrations.'
+            : ''
+        "
+      >
+        <UButton
+          @click="openAddApplicationModal"
+          icon="heroicons:plus"
+          :disabled="
+            loadingIntegrations ||
+            !isIntegrationAllowed(integrationsStore.getGroupedIntegrations.length)
+          "
+        >
+          Add Application
+        </UButton>
+      </AppTooltip>
     </div>
 
     <!-- Delete Confirmation Modal -->
@@ -486,13 +522,21 @@
         </div>
         <!-- Request Provider CTA -->
         <div class="mt-3 text-left">
-          <button
-            type="button"
-            class="text-sm text-primary-400 hover:text-primary-300 underline"
-            @click="openRequestProviderModal"
-          >
-            Don’t see your provider?
-          </button>
+          <AppTooltip :text="getTooltip('new_provider_request')">
+            <button
+              type="button"
+              :disabled="!isEnabled('new_provider_request')"
+              :class="[
+                'text-sm underline',
+                isEnabled('new_provider_request')
+                  ? 'text-primary-400 hover:text-primary-300'
+                  : 'text-gray-500 cursor-not-allowed opacity-50',
+              ]"
+              @click="openRequestProviderModal"
+            >
+              Don’t see your provider?
+            </button>
+          </AppTooltip>
         </div>
 
         <!-- Select Module (Multi-select) -->
@@ -766,8 +810,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { useOrganizationIntegrations } from '~/composables/useOrganizationIntegrations'
 import { useNotification } from '~/composables/useNotification'
+import { useFeatures } from '~/composables/useFeatures'
+import { useFeaturesStore } from '~/stores/features'
+import { useOrganizationStore } from '~/stores/organization'
 import ConfirmPopup from '~/components/ui/ConfirmPopup.vue'
 import ProviderCredentialHelp from '~/components/integrations/ProviderCredentialHelp.vue'
 import { useOrganizationIntegrationsStore } from '~/stores/organization-integrations'
@@ -782,7 +830,9 @@ useHead({
   title: 'Applications - Admin Dashboard - provento.ai',
 })
 
+const route = useRoute()
 const { showSuccess, showInfo } = useNotification()
+const { isEnabled, isIntegrationAllowed, getTooltip } = useFeatures()
 const errorStore = useErrorStore()
 const authStore = useAuthStore()
 const integrationsStore = useOrganizationIntegrationsStore()
@@ -917,6 +967,11 @@ const filteredApplications = computed(() => {
 
 // Check if fields should be disabled (locked to integration group)
 const areFieldsLocked = computed(() => !!editingAppId.value)
+
+// Get integration limit from features store
+const featuresStore = useFeaturesStore()
+const orgStore = useOrganizationStore()
+const integrationLimit = computed(() => featuresStore.getIntegrationLimit())
 
 // Filter providers based on selected agent only
 const filteredProviders = computed(() => {
@@ -1389,6 +1444,9 @@ const handleScrollOrResize = () => {
 }
 
 const openRequestProviderModal = () => {
+  if (!isEnabled('new_provider_request')) {
+    return
+  }
   requestProviderForm.value = getDefaultRequestProviderForm()
   showApplicationModal.value = false
   showRequestProviderModal.value = true
@@ -1427,8 +1485,14 @@ onMounted(async () => {
 
   // Fetch all necessary data
   try {
+    // Ensure org plan is loaded to initialize feature flags
+    await orgStore.fetchOrgPlan()
+
+    // Get org ID from route query params (for superadmin selection)
+    const orgId = (route.query?.org || route.query?.org_id) as string | undefined
+
     await fetchMasterData() // Fetch providers, modules, agents
-    await fetchIntegrations() // Fetch integrations for the organization
+    await fetchIntegrations({ org: orgId || undefined }) // Fetch integrations for the organization with org param for superadmin
   } catch (err) {
     console.error('Failed to load integrations:', err)
     errorStore.showError('Failed to load integrations')

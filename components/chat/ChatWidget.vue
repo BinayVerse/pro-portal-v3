@@ -368,6 +368,30 @@
                       {{ c }}
                     </div>
                   </div>
+
+                  <!-- Feedback buttons -->
+                  <div v-if="shouldShowFeedback(m)" class="flex items-center gap-2 mt-3 pt-3 border-t border-dark-700">
+                    <button
+                      :disabled="!!feedbackState[m._id] || feedbackLoading"
+                      @click="handleFeedback(idx, 'helpful')"
+                      class="flex items-center gap-1 text-xs sm:text-sm text-gray-400 hover:text-green-400 transition-colors disabled:opacity-50"
+                      title="Mark as helpful"
+                    >
+                      <span>👍</span>
+                      <span class="hidden sm:inline" v-if="feedbackState[m._id] !== 'helpful'">Helpful</span>
+                      <span class="hidden sm:inline text-green-400" v-else>Submitted</span>
+                    </button>
+                    <button
+                      :disabled="!!feedbackState[m._id] || feedbackLoading"
+                      @click="handleFeedback(idx, 'not_helpful')"
+                      class="flex items-center gap-1 text-xs sm:text-sm text-gray-400 hover:text-red-400 transition-colors disabled:opacity-50"
+                      title="Mark as not helpful"
+                    >
+                      <span>👎</span>
+                      <span class="hidden sm:inline" v-if="feedbackState[m._id] !== 'not_helpful'">Not helpful</span>
+                      <span class="hidden sm:inline text-red-400" v-else>Submitted</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -436,6 +460,13 @@
         />
       </div>
     </div>
+
+    <!-- Feedback Modal -->
+    <FeedbackModal
+      :is-open="feedbackModalOpen"
+      @close="feedbackModalOpen = false"
+      @submit="handleFeedbackModalSubmit"
+    />
   </teleport>
 </template>
 
@@ -458,6 +489,13 @@ const hasArtefacts = computed(
   () => Array.isArray(artefactsStore.artefacts) && artefactsStore.artefacts.length > 0,
 )
 const usageLimitReached = ref(false)
+
+// Feedback tracking
+const feedbackModalOpen = ref(false)
+const feedbackMessageIndex = ref<number | null>(null)
+const pendingFeedback = ref<{ feedback: 'not_helpful'; messageIndex: number; messageId: string } | null>(null)
+const feedbackLoading = computed(() => chat.feedbackLoading || false)
+const feedbackState = computed(() => chat.feedbackState || {})
 
 const open = ref(false)
 const input = ref('')
@@ -851,6 +889,121 @@ function onOutsideClick(e: MouseEvent) {
   if (isResizeEnabled.value) {
     open.value = false
     showHistory.value = false
+  }
+}
+
+// Feedback handlers
+function shouldShowFeedback(message: any) {
+  if (!message) return false
+
+  // Only assistant messages
+  if (!['bot', 'assistant'].includes(message.from)) return false
+
+  // Skip special UI/system messages
+  if (message.meta?.type === 'agent_list') return false
+  if (message.meta?.type === 'document_list') return false
+
+  // Skip usage limit
+  if (isUsageLimitMessage(message.content)) return false
+
+  // ❗ ONLY skip if it's explicitly a greeting variant
+  const greetingVariants = [
+    "Hi there! 👋 I'm here to help.",
+    "Hello! 👋 I'm ready to help you out.",
+    "Hey! 🙌 I'm ready to help you.",
+    "Hi! 😊 Let's get started.",
+  ]
+
+  if (greetingVariants.includes(message.content?.trim())) {
+    return false
+  }
+  return true
+}
+
+async function handleFeedback(messageIndex: number, feedback: 'helpful' | 'not_helpful') {
+  try {
+    const message = messages.value[messageIndex]
+    if (!message) return
+
+    // Get or create stable message ID
+    const messageId = message._id || `widget_${chat.currentChatId}_${messageIndex}`
+
+    // ❗ prevent double click
+    if (feedbackState.value[messageId]) return
+
+    const payload = {
+      channel: 'admin',
+      message_id: messageId,
+      question_text: getQuestionForMessage(messageIndex),
+      answer_text: message.content,
+      feedback: feedback,
+      comment: undefined,
+      reason: undefined,
+    }
+
+    if (feedback === 'not_helpful') {
+      // Open modal for additional feedback
+      pendingFeedback.value = { feedback: 'not_helpful', messageIndex, messageId }
+      feedbackMessageIndex.value = messageIndex
+      feedbackModalOpen.value = true
+    } else {
+      // ✅ optimistic UI
+      chat.feedbackState[messageId] = 'helpful'
+
+      try {
+        await chat.submitFeedback(payload)
+        errorStore.showSuccess?.('Thank you for your feedback!')
+      } catch (error: any) {
+        // Error already handled in store
+      }
+    }
+  } catch (error: any) {
+    errorStore.showError(error?.message || 'Failed to submit feedback')
+  }
+}
+
+function getQuestionForMessage(messageIndex: number): string {
+  // Find the user message that precedes this bot message
+  for (let i = messageIndex - 1; i >= 0; i--) {
+    if (messages.value[i]?.from === 'user') {
+      return messages.value[i].content
+    }
+  }
+  return ''
+}
+
+async function handleFeedbackModalSubmit(data: { reason: string; comment: string }) {
+  if (!pendingFeedback.value) return
+
+  try {
+    const messageIndex = pendingFeedback.value.messageIndex
+    const messageId = pendingFeedback.value.messageId
+    const message = messages.value[messageIndex]
+    if (!message) return
+
+    const payload = {
+      channel: 'admin',
+      message_id: messageId,
+      question_text: getQuestionForMessage(messageIndex),
+      answer_text: message.content,
+      feedback: 'not_helpful' as const,
+      reason: data.reason,
+      comment: data.comment,
+    }
+
+    // ✅ optimistic UI
+    chat.feedbackState[messageId] = 'not_helpful'
+
+    try {
+      await chat.submitFeedback(payload)
+      errorStore.showSuccess?.('Thank you for your feedback!')
+    } finally {
+      feedbackModalOpen.value = false
+      pendingFeedback.value = null
+      feedbackMessageIndex.value = null
+    }
+  } catch (error: any) {
+    errorStore.showError(error?.message || 'Failed to submit feedback')
   }
 }
 

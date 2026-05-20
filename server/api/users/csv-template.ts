@@ -1,6 +1,7 @@
 import { defineEventHandler, setResponseStatus } from 'h3'
 import { CustomError } from '../../utils/custom.error'
 import { query } from '../../utils/db'
+import { logError } from '~/server/utils/logger'
 import jwt from 'jsonwebtoken'
 import ExcelJS from 'exceljs'
 
@@ -203,7 +204,7 @@ export default defineEventHandler(async (event) => {
       },
     })
   } catch (err: any) {
-    console.error('Error generating Excel template:', err)
+    logError('Error generating Excel template:', err)
     setResponseStatus(event, 500)
     throw new CustomError('Failed to generate Excel template', 500)
   }

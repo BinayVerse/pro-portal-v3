@@ -256,7 +256,7 @@ export async function createItemPrice(
 // 🚀 Subscription Management (v2)
 // =============================
 
-export async function createSubscription(subscription: any, customerId: string) {
+export async function createSubscription(subscription: any, customerId: string, skipTrial: boolean = false) {
   try {
     const runtimeConfig = useRuntimeConfig()
     const requestPayload: any = {
@@ -280,7 +280,11 @@ export async function createSubscription(subscription: any, customerId: string) 
       requestPayload.subscription_items = [item]
     }
 
-    // if (subscription.trialEnd) requestPayload.trial_end = subscription.trialEnd
+    // Skip trial if organization has already used their trial
+    if (skipTrial) {
+      requestPayload.trial_days = 0
+      requestPayload.trial_end_date = Math.floor(Date.now() / 1000)
+    }
 
     // Include coupon_ids if provided
     if (subscription.couponCode)

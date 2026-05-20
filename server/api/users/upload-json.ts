@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, setResponseStatus, getQuery } from 'h3'
 import { CustomError } from '../../utils/custom.error'
 import { uploadBulkUserValidation } from '~/server/utils/validations'
 import { query } from '../../utils/db'
+import { logError } from '~/server/utils/logger'
 import jwt from 'jsonwebtoken'
 
 interface User {
@@ -242,7 +243,7 @@ export default defineEventHandler(async (event) => {
       org_id: effectiveOrgId,
     }
   } catch (error: any) {
-    console.error('upload-json handler error:', error)
+    logError('upload-json handler error:', error)
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)
       return {

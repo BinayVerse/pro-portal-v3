@@ -24,7 +24,9 @@ function autoLink(text: string) {
 
 export function formatResponseToHtml(text: string) {
   if (!text) return ''
-  const lines = text.split(/\r?\n/)
+  // Convert literal \n strings to actual newlines (handle escaped newlines from API)
+  let processedText = text.replace(/\\n/g, '\n')
+  const lines = processedText.split(/\r?\n/)
   const parts: string[] = []
   let listType: 'ul' | 'ol' | null = null
   const closeList = () => {
@@ -40,7 +42,9 @@ export function formatResponseToHtml(text: string) {
   let pendingBlank = false
   const flushPara = () => {
     if (paraBuffer.length) {
-      const t = autoLink(applyInlineFormatting(escapeHtml(paraBuffer.join(' ').trim())))
+      // Join lines with <br> to preserve line breaks within paragraphs
+      const joined = paraBuffer.map(l => escapeHtml(l.trim())).join('<br>')
+      const t = autoLink(applyInlineFormatting(joined))
       if (t) parts.push(`<p>${t}</p>`)
       paraBuffer = []
     }
@@ -148,4 +152,3 @@ export function formatPreview(
     ? plain.slice(0, maxLength) + '…'
     : plain
 }
-

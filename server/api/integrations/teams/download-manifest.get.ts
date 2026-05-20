@@ -1,6 +1,7 @@
 import { defineEventHandler, setResponseStatus } from 'h3';
 import { CustomError } from '../../../utils/custom.error';
 import jwt from 'jsonwebtoken';
+import { logError } from '~/server/utils/logger'
 import path from 'path';
 import {
     S3Client,
@@ -58,7 +59,7 @@ export default defineEventHandler(async (event) => {
             fileName,
         };
     } catch (error: any) {
-        console.error('Error accessing S3 file:', {
+        logError('Error accessing S3 file:', {
             message: error.message,
             name: error.name,
             code: error?.$metadata?.httpStatusCode,

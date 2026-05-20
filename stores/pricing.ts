@@ -21,6 +21,8 @@ export interface PricingPlan {
   product_family?: string | null
   is_free?: boolean
   metadata?: any
+  featureFlags?: Record<string, any>
+  flattenedFeatureFlags?: Record<string, boolean>
 }
 
 
@@ -87,6 +89,8 @@ export const usePricingStore = defineStore('pricing', () => {
             product_family: p.product_family || null,
             is_free: p.is_free,
             metadata: p.metadata || {},
+            featureFlags: p.featureFlags || {},
+            flattenedFeatureFlags: p.flattenedFeatureFlags || {},
           }
         })
         return { success: true }

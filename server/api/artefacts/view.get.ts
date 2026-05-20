@@ -116,7 +116,7 @@ export default defineEventHandler(async (event) => {
                 }
             } catch (e: any) {
                 if (e instanceof CustomError) throw e
-                console.error('Department access check failed:', e)
+                logError('Department access check failed:', e)
                 // Continue if check fails to avoid breaking existing behavior
             }
         }

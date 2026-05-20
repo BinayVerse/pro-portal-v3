@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     return response.data
 
   } catch (error: any) {
-    console.error('Knowledge Gap Error:', error?.response?.data || error.message)
+    logError('Knowledge Gap Error:', error?.response?.data || error.message)
 
     setResponseStatus(event, error?.response?.status || 500)
 

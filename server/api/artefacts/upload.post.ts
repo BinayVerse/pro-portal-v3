@@ -140,7 +140,7 @@ export default defineEventHandler(async (event) => {
             departments = []
           }
         } catch (e: any) {
-          console.error('Failed to parse departments field:', departmentsField, 'error:', e.message)
+          logError('Failed to parse departments field:', departmentsField, 'error:', e.message)
           departments = []
         }
       } else {
@@ -280,7 +280,7 @@ export default defineEventHandler(async (event) => {
           }
         } catch (e: any) {
           if (e instanceof CustomError) throw e
-          console.error('Failed to validate Department Admin scope:', e)
+          logError('Failed to validate Department Admin scope:', e)
           throw new CustomError('Failed to validate department permissions', 500)
         }
       }
@@ -299,7 +299,7 @@ export default defineEventHandler(async (event) => {
             departmentsToAssign = [commonDept.rows[0].dept_id]
           }
         } catch (e: any) {
-          console.error('Failed to fetch Common department:', e)
+          logError('Failed to fetch Common department:', e)
           // Continue without auto-assignment if it fails
         }
       }
@@ -338,7 +338,7 @@ export default defineEventHandler(async (event) => {
           }
           // console.log(`[upload.post.ts] Successfully assigned departments to document ${documentId}`)
         } catch (e: any) {
-          console.error('Failed to assign departments to document:', e)
+          logError('Failed to assign departments to document:', e)
           // Don't fail the upload if department assignment fails
         }
       } else {

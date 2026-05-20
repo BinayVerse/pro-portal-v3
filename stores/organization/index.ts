@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, readonly } from 'vue'
 import { handleError, handleSuccess } from '../../utils/apiHandler'
+import { useFeaturesStore } from '../features'
 
 export const useOrganizationStore = defineStore('organizationStore', () => {
   const currentPlan = ref<any | null>(null)
@@ -18,12 +19,26 @@ export const useOrganizationStore = defineStore('organizationStore', () => {
       try { data = text ? JSON.parse(text) : null } catch { data = null }
       if (res.ok && data?.success) {
         currentPlan.value = data.data || null
+
+        // Update feature flags in the features store
+        if (currentPlan.value?.plan?.flattenedFeatureFlags) {
+          const featuresStore = useFeaturesStore()
+          featuresStore.setUserFeatureFlags(currentPlan.value.plan.flattenedFeatureFlags)
+        }
+
         return { success: true, data: currentPlan.value }
       }
 
       // Fallback: server may return direct object
       if (res.ok && data) {
         currentPlan.value = data || null
+
+        // Update feature flags in the features store
+        if (currentPlan.value?.plan?.flattenedFeatureFlags) {
+          const featuresStore = useFeaturesStore()
+          featuresStore.setUserFeatureFlags(currentPlan.value.plan.flattenedFeatureFlags)
+        }
+
         return { success: true, data: currentPlan.value }
       }
 

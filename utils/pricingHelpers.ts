@@ -28,48 +28,80 @@ export function getFeaturesForUnlimitedPlan(opt: any) {
   return feats
 }
 
-export function deriveFeatures(opt: any) {
+export function deriveFeatures(opt: any, planName?: string) {
   if (!opt) return []
 
-  // For unlimited plans, only show DB features
+  // Unlimited plans → only DB features
   if (isUnlimitedPlan(opt)) {
     return getFeaturesForUnlimitedPlan(opt)
   }
 
   const out: string[] = []
+  const feats = Array.isArray(opt.features) ? opt.features.map((f: any) => String(f)) : []
 
+  const isProfessional = planName?.toLowerCase().includes('professional')
+
+  // ✅ 1. ARTIFACTS 
   const artefacts = Number(opt.artefacts || opt.price_amount || 0)
   if (!Number.isNaN(artefacts)) {
     if (artefacts === 0 || artefacts === -1) out.push('Unlimited artifacts')
     else out.push(`Up to ${artefacts} artifacts`)
   }
 
+  // ✅ 2. AI QUERIES (skip for Professional)
   const lr = Number(opt.limit_requests)
-  if (!Number.isNaN(lr)) {
-    if (lr === -1 || lr === 99999 || lr >= 1000000) out.push('Unlimited AI queries')
-    // else out.push(`Up to ${lr.toLocaleString()} AI queries per month`)
-    else out.push(`${lr.toLocaleString()} AI queries per month`)
+  if (!isProfessional && !Number.isNaN(lr)) {
+    if (lr === -1 || lr === 99999 || lr >= 1000000) {
+      out.push('Unlimited AI queries')
+    } else {
+      out.push(`${lr.toLocaleString()} AI queries per month`)
+    }
   }
 
-  const feats = Array.isArray(opt.features) ? opt.features.map((f: any) => String(f)) : []
-  const hasSlack = feats.includes('Slack Collaboration')
-  const hasWhatsApp = feats.includes('WhatsApp Collaboration')
-  const hasTeams = feats.includes('Teams Collaboration')
-  // if (hasSlack && hasWhatsApp && hasTeams) out.push('All integrations')
-  // else if (hasSlack && hasWhatsApp) out.push('Basic integrations')
-
-  if (opt.storage_limit_gb === null || opt.storage_limit_gb === undefined || opt.storage_limit_gb === -1)
+  // ✅ 3. STORAGE
+  if (
+    opt.storage_limit_gb === null ||
+    opt.storage_limit_gb === undefined ||
+    opt.storage_limit_gb === -1
+  ) {
     out.push('Unlimited storage')
-  else out.push(`${opt.storage_limit_gb} GB storage`)
+  } else {
+    out.push(`${opt.storage_limit_gb} GB storage`)
+  }
 
+  // ✅ 4. USERS
   const users = Number(opt.users)
   if (users === -1) out.push('Unlimited Users')
   else if (!Number.isNaN(users) && users < 99999) out.push(`Up to ${users} Users`)
 
+  // ✅ 5. FEATURES FROM DB (THIS is where Application Integration* comes from)
   const used = new Set(['Slack Collaboration', 'WhatsApp Collaboration', 'Teams Collaboration'])
+
+  let appIntegration: string | null = null
+  const otherFeatures: string[] = []
+
   feats.forEach((f: any) => {
-    if (!used.has(f)) out.push(f)
+    if (f.toLowerCase().includes('application')) {
+      appIntegration = f
+    } else if (!used.has(f)) {
+      otherFeatures.push(f)
+    }
   })
 
-  return out
+  // ✅ FINAL ORDER BUILDING
+
+  const final: string[] = []
+
+  // 1️⃣ ALWAYS FIRST (if Professional)
+  if (isProfessional && appIntegration) {
+    final.push(appIntegration)
+  }
+
+  // 2️⃣ SYSTEM FEATURES (artifacts, AI, storage, users already in `out`)
+  final.push(...out)
+
+  // 3️⃣ REMAINING DB FEATURES
+  final.push(...otherFeatures)
+
+  return final
 }

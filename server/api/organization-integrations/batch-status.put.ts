@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, setResponseStatus } from 'h3'
 import { query } from '../../utils/db'
 import { CustomError } from '../../utils/custom.error'
+import { logError } from '~/server/utils/logger'
 import jwt from 'jsonwebtoken'
 import { createIntegrationAuditLog } from '../../utils/dbHelpers'
 
@@ -176,7 +177,7 @@ export default defineEventHandler(async (event) => {
       errors: results.errors
     }
   } catch (error: any) {
-    console.error('Organization Integration Batch Status Update Error:', error)
+    logError('Organization Integration Batch Status Update Error:', error)
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)

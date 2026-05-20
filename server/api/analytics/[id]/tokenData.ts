@@ -157,7 +157,7 @@ export default defineEventHandler(async (event) => {
             },
         }
     } catch (error) {
-        if (process.dev) console.error('SQL error:', error)
+        if (process.dev) logError('SQL error:', error)
         throw new CustomError(
             'Internal Server Error: Failed to fetch daily token usage',
             500

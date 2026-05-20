@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, setResponseStatus } from 'h3'
 import { query } from '../../../utils/db'
 import { CustomError } from '../../../utils/custom.error'
+import { logError } from '~/server/utils/logger'
 import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event) => {
@@ -123,13 +124,13 @@ export default defineEventHandler(async (event) => {
         try {
           await sendChannelAvailableMail(u.name, u.email, 'slack', undefined, orgId)
         } catch (e) {
-          console.error('Failed to send Slack availability email to', u.email, e?.message || e)
+          logError('Failed to send Slack availability email to', u.email, e?.message || e)
         }
       }
       await markChannelNotified(orgId, 'slack')
     }
   } catch (e) {
-    console.error('Failed to fetch users for Slack notification', e?.message || e)
+    logError('Failed to fetch users for Slack notification', e?.message || e)
   }
 
   setResponseStatus(event, 201)

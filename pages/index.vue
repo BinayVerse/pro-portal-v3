@@ -567,68 +567,70 @@
           system integration, AI Signals, and flexible pricing — all without writing a single line
           of code.
         </p>
-        <table class="comp-table">
-          <thead>
-            <tr>
-              <th>Capability</th>
-              <th class="us">Provento.ai</th>
-              <th>Traditional Automation</th>
-              <th>X Pilot</th>
-              <th>AI Assistants</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Multi-channel (Slack + Teams + WhatsApp)</td>
-              <td class="us comp-yes">✓ All three</td>
-              <td class="comp-no">✗</td>
-              <td class="comp-partial">Teams only</td>
-              <td class="comp-partial">Varies</td>
-            </tr>
-            <tr>
-              <td>Pre-built enterprise integrations</td>
-              <td class="us comp-yes">✓ Ready now</td>
-              <td class="comp-partial">Complex setup</td>
-              <td class="comp-partial">MS stack only</td>
-              <td class="comp-no">Minimal</td>
-            </tr>
-            <tr>
-              <td>No-code setup for IT teams</td>
-              <td class="us comp-yes">✓ 30 mins</td>
-              <td class="comp-no">✗</td>
-              <td class="comp-partial">Partial</td>
-              <td class="comp-no">✗</td>
-            </tr>
-            <tr>
-              <td>AI-native natural language</td>
-              <td class="us comp-yes">✓</td>
-              <td class="comp-no">✗</td>
-              <td class="comp-partial">Limited</td>
-              <td class="comp-partial">Chat only</td>
-            </tr>
-            <tr>
-              <td>Proactive AI Signals to executives</td>
-              <td class="us comp-yes">✓ Unique</td>
-              <td class="comp-no">✗</td>
-              <td class="comp-no">✗</td>
-              <td class="comp-no">✗</td>
-            </tr>
-            <tr>
-              <td>Role-based access control</td>
-              <td class="us comp-yes">✓ Enterprise-ready</td>
-              <td class="comp-partial">Partial</td>
-              <td class="comp-yes">✓</td>
-              <td class="comp-no">✗</td>
-            </tr>
-            <tr>
-              <td>SMB to Enterprise pricing</td>
-              <td class="us comp-yes">✓ From $29/mo</td>
-              <td class="comp-partial">Enterprise only</td>
-              <td class="comp-partial">Enterprise only</td>
-              <td class="comp-partial">Varies</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="comp-table-wrapper">
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th class="us">Provento.ai</th>
+                <th>Traditional Automation</th>
+                <th>X Pilot</th>
+                <th>AI Assistants</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Multi-channel (Slack + Teams + WhatsApp)</td>
+                <td class="us comp-yes">✓ All three</td>
+                <td class="comp-no">✗</td>
+                <td class="comp-partial">Teams only</td>
+                <td class="comp-partial">Varies</td>
+              </tr>
+              <tr>
+                <td>Pre-built enterprise integrations</td>
+                <td class="us comp-yes">✓ Ready now</td>
+                <td class="comp-partial">Complex setup</td>
+                <td class="comp-partial">MS stack only</td>
+                <td class="comp-no">Minimal</td>
+              </tr>
+              <tr>
+                <td>No-code setup for IT teams</td>
+                <td class="us comp-yes">✓ 30 mins</td>
+                <td class="comp-no">✗</td>
+                <td class="comp-partial">Partial</td>
+                <td class="comp-no">✗</td>
+              </tr>
+              <tr>
+                <td>AI-native natural language</td>
+                <td class="us comp-yes">✓</td>
+                <td class="comp-no">✗</td>
+                <td class="comp-partial">Limited</td>
+                <td class="comp-partial">Chat only</td>
+              </tr>
+              <tr>
+                <td>Proactive AI Signals to executives</td>
+                <td class="us comp-yes">✓ Unique</td>
+                <td class="comp-no">✗</td>
+                <td class="comp-no">✗</td>
+                <td class="comp-no">✗</td>
+              </tr>
+              <tr>
+                <td>Role-based access control</td>
+                <td class="us comp-yes">✓ Enterprise-ready</td>
+                <td class="comp-partial">Partial</td>
+                <td class="comp-yes">✓</td>
+                <td class="comp-no">✗</td>
+              </tr>
+              <tr>
+                <td>SMB to Enterprise pricing</td>
+                <td class="us comp-yes">✓ From $29/mo</td>
+                <td class="comp-partial">Enterprise only</td>
+                <td class="comp-partial">Enterprise only</td>
+                <td class="comp-partial">Varies</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <p class="comp-tagline">Others help you <em>chat.</em> We help you <span>execute.</span></p>
       </div>
     </section>
@@ -641,20 +643,6 @@
         <p class="sec-sub">
           MVP++ complete with enterprise pilots signed and real signal from the market.
         </p>
-        <div class="traction-bar">
-          <div class="tr-item">
-            <span class="tr-n">MVP++</span>
-            <div class="tr-l">Product complete &amp; live</div>
-          </div>
-          <div class="tr-item">
-            <span class="tr-n">3 LOIs</span>
-            <div class="tr-l">Enterprise pilots signed</div>
-          </div>
-          <div class="tr-item">
-            <span class="tr-n">50+</span>
-            <div class="tr-l">Waitlist sign-ups</div>
-          </div>
-        </div>
         <div class="traction-grid">
           <div class="built-list">
             <h4>What We've Built</h4>
@@ -702,11 +690,40 @@
         <p class="sec-sub">
           Start free. Scale as you grow. No long-term commitments. 20% discount on annual billing.
         </p>
+        <div class="billing-toggle" :class="{ yearly: billingCycle === 'yearly' }">
+          <button
+            type="button"
+            class="billing-btn"
+            :class="{ active: billingCycle === 'monthly' }"
+            @click="billingCycle = 'monthly'"
+          >
+            Monthly
+          </button>
+
+          <button
+            type="button"
+            class="billing-btn"
+            :class="{ active: billingCycle === 'yearly' }"
+            @click="billingCycle = 'yearly'"
+          >
+            <span>Yearly</span>
+            <span class="save-badge">Save 20%</span>
+          </button>
+        </div>
         <div class="pricing-grid">
           <div class="price-card">
             <div class="price-name">Starter</div>
-            <div class="price-amt">$29</div>
-            <div class="price-per">per month · up to 50 users</div>
+            <div class="price-amt">
+              {{ billingCycle === 'monthly' ? pricing.starter.monthly : pricing.starter.yearly }}
+            </div>
+
+            <div class="price-per">
+              {{
+                billingCycle === 'monthly'
+                  ? 'per month · up to 50 users'
+                  : 'per year · up to 50 users'
+              }}
+            </div>
             <ul class="price-features">
               <li>1,000 AI queries per month</li>
               <li>5 GB storage</li>
@@ -721,10 +738,23 @@
           <div class="price-card featured">
             <div class="price-popular">Most Popular</div>
             <div class="price-name" style="margin-top: 14px">Professional</div>
-            <div class="price-amt">$99</div>
-            <div class="price-per">per month · up to 500 users</div>
+            <div class="price-amt">
+              {{
+                billingCycle === 'monthly'
+                  ? pricing.professional.monthly
+                  : pricing.professional.yearly
+              }}
+            </div>
+
+            <div class="price-per">
+              {{
+                billingCycle === 'monthly'
+                  ? 'per month · up to 500 users'
+                  : 'per year · up to 500 users'
+              }}
+            </div>
             <ul class="price-features">
-              <li>10,000 AI queries per month</li>
+              <li>Application Integration *</li>
               <li>50 GB storage</li>
               <li>Up to 1,000 artifacts</li>
               <li>Slack, Teams + WhatsApp</li>
@@ -734,12 +764,14 @@
             <NuxtLink to="/book-meeting" class="price-cta price-cta-filled"
               >Start Free Trial</NuxtLink
             >
+            <span class="price-note">* Additional fee for custom integration</span>
           </div>
           <div class="price-card">
             <div class="price-name">Enterprise</div>
             <div class="price-amt" style="font-size: 2rem">Custom</div>
             <div class="price-per">unlimited users · dedicated instance</div>
             <ul class="price-features">
+              <li>Unlimited artifacts</li>
               <li>Unlimited AI queries</li>
               <li>Unlimited storage</li>
               <li>All integrations + custom APIs</li>
@@ -845,6 +877,18 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'landing' })
+const billingCycle = ref<'monthly' | 'yearly'>('monthly')
+
+const pricing = {
+  starter: {
+    monthly: '$75',
+    yearly: '$720',
+  },
+  professional: {
+    monthly: '$200',
+    yearly: '$1920',
+  },
+}
 
 useHead({
   title: 'provento.ai - One AI Layer. Every System. Your Channel.',

@@ -12,11 +12,19 @@ export const useChatStore = defineStore('chat', () => {
   const conversations = ref<any[]>([])
   const loading = ref(false)
   const historyLoading = ref(false)
+  const feedbackLoading = ref(false)
   const currentChatId = ref<string | null>(null)
 
   // Track current selected category/document for marking in UI
   const selectedCategoryId = ref<string | null>(null)
   const selectedDocumentId = ref<string | null>(null)
+
+  // Track which messages have feedback submitted
+  const feedbackState = ref<Record<string, 'helpful' | 'not_helpful'>>({})
+
+  // Track the last RAG response for follow-up flow
+  const lastRagResponse = ref<any>(null)
+  const lastRagQuestion = ref<string>('')
 
   const USAGE_LIMIT_TEXT = 'usage limit for your plan has been reached'
 
@@ -221,10 +229,13 @@ export const useChatStore = defineStore('chat', () => {
     try {
       const token = auth.token || undefined
       if (!token) throw new Error('unauthorized')
+
+      // Load conversation messages
       const res: any = await $fetch(`/api/chat/history?chat_id=${encodeURIComponent(chatId)}&limit=500`, {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
       })
+
       const rows = res?.data || []
       const ordered = (rows || []).slice().reverse()
       const mapped: any[] = []
@@ -321,6 +332,19 @@ export const useChatStore = defineStore('chat', () => {
         }
       }
 
+      // Add stable IDs to bot messages for feedback tracking
+      // Count bot messages to get consistent index
+      let botIndex = 0
+      for (let i = 0; i < mapped.length; i++) {
+        const m = mapped[i]
+        if (m && m.from === 'bot' && !m._id) {
+          // Use a consistent format: {chatId}_{botIndex}_{something}
+          // This will match feedback stored with similar pattern
+          m._id = `${chatId}_${botIndex}`
+          botIndex++
+        }
+      }
+
       messages.value = mapped
 
       // Reconstruct selection markers from history by looking at each user message and the immediately preceding
@@ -402,11 +426,40 @@ export const useChatStore = defineStore('chat', () => {
         // ignore
       }
 
+      // Load feedback for this conversation AFTER messages are loaded and IDs assigned
+      try {
+        const feedbackRes: any = await $fetch('/api/chat/feedback', {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+          query: {
+            chat_id: chatId,
+            user_id: auth.user?.user_id,
+            channel: 'admin',
+          },
+        })
+
+        if (feedbackRes?.data) {
+          feedbackState.value = feedbackRes.data
+        }
+      } catch (e) {
+        console.warn('Failed to load feedback:', e)
+        // Don't fail if feedback retrieval fails
+      }
+
     } catch (err: any) {
       throw err
     } finally {
       loading.value = false
     }
+  }
+
+  function isAffirmativeReply(text: string): boolean {
+    const affirmativePatterns = [
+      /^\s*(yes|yep|yeah|yup|sure|ok|okay|fine|alright|go ahead|continue|proceed|please|list all|show all|tell me|give me|provide)\s*[.!?]*\s*$/i,
+      /^\s*✅\s*$/,
+    ]
+    const normalized = (text || '').trim().toLowerCase()
+    return affirmativePatterns.some(pattern => pattern.test(normalized))
   }
 
   async function sendMessage(payload: any) {
@@ -594,6 +647,95 @@ export const useChatStore = defineStore('chat', () => {
         }
       }
 
+      // Check if this is an affirmative reply to the last RAG response (follow-up flow)
+      if (lastRagResponse.value && lastRagResponse.value.response && isAffirmativeReply(textToCheck)) {
+        // This is a follow-up to a previous RAG response
+        // Send the previous response back to RAG API as a follow-up request
+        const previousResponse = lastRagResponse.value.response
+        const reframedQ = lastRagResponse.value.reframed_question || lastRagQuestion.value || ''
+
+        // Create follow-up payload with the previous response included
+        const followUpPayload = {
+          ...payload,
+          question: textToCheck, // The user's affirmative reply
+          previous_response: previousResponse, // Include the previous RAG response
+          reframed_question: reframedQ, // Include the reframed question
+        }
+
+        try {
+          // Call RAG API with follow-up payload
+          const followUpRes: any = await $fetch('/api/predict_rag', {
+            method: 'POST',
+            body: { ...followUpPayload, chat_id: chatId },
+            headers: { Authorization: `Bearer ${token}` },
+          })
+
+          const apiResponse = followUpRes || {}
+          let followUpContent = ''
+          let followUpDocSource = ''
+          let followUpReframedQ = ''
+
+          if (apiResponse.success) {
+            followUpContent = apiResponse.data?.response || ''
+            followUpDocSource = apiResponse.data?.document_source || ''
+            followUpReframedQ = apiResponse.data?.reframed_question || reframedQ || ''
+          } else if (apiResponse.status === 'success' && apiResponse.data) {
+            const d = apiResponse.data
+            followUpContent = d.response || d.answer || d.text || ''
+            followUpDocSource = d.document_source || ''
+            followUpReframedQ = d.reframed_question || reframedQ || ''
+          }
+
+          // Format the follow-up response
+          let finalContent = followUpContent
+          let finalHtml: string | undefined = undefined
+
+          if (!isUsageLimitMessage(finalContent)) {
+            const serverProvidedQA =
+              typeof finalContent === 'string' &&
+              (/^\s*Question\s*:/i.test(finalContent) || /\n\s*Answer\s*:/i.test(finalContent))
+
+            finalContent = serverProvidedQA
+              ? finalContent
+              : (followUpReframedQ ? `Question: ${followUpReframedQ}\n\nAnswer:\n${followUpContent}` : followUpContent)
+
+            finalHtml = formatResponseToHtml(finalContent)
+          }
+
+          // Count existing bot messages to get a consistent index
+          const botCount = messages.value.filter((m: any) => m.from === 'bot').length
+          const botMessage: any = {
+            from: 'bot',
+            content: finalContent,
+            contentHtml: finalHtml,
+            _id: `${chatId}_${botCount}`,
+          }
+
+          if (followUpDocSource) {
+            botMessage.citations = [followUpDocSource]
+          }
+
+          messages.value.push(botMessage)
+
+          // Store the new RAG response for potential next follow-up
+          lastRagResponse.value = {
+            response: followUpContent,
+            document_source: followUpDocSource,
+            reframed_question: followUpReframedQ,
+          }
+          lastRagQuestion.value = textToCheck
+
+          // Persist the follow-up interaction
+          try { await persistInteraction() } catch (e) { /* ignore */ }
+
+          return botMessage
+        } catch (err: any) {
+          // If follow-up fails, fall through to normal behavior
+          console.warn('Follow-up RAG call failed, proceeding with normal flow:', err)
+          // Continue to normal RAG prediction below
+        }
+      }
+
       // If the most recent bot message is an interactive agent_list and the user typed an agent name,
       // auto-select that category instead of calling RAG. This preserves exact user selection behavior.
       try {
@@ -626,21 +768,33 @@ export const useChatStore = defineStore('chat', () => {
       const apiResponse = res || {}
       let content = ''
       let docSource = ''
+      let reframedQuestion = ''
       if (apiResponse.success) {
         content = apiResponse.data?.response || ''
         docSource = apiResponse.data?.document_source || apiResponse.data?.documentSource || ''
+        reframedQuestion = apiResponse.data?.reframed_question || ''
         if (apiResponse.data?.chat_id) currentChatId.value = apiResponse.data.chat_id
       } else if (apiResponse.status === 'success' && apiResponse.data) {
         const d = apiResponse.data
         content = d.response || d.answer || d.text || ''
         docSource = d.document_source || d.documentSource || ''
+        reframedQuestion = d.reframed_question || ''
         if (d.chat_id) currentChatId.value = d.chat_id
       } else {
         content = JSON.stringify(apiResponse)
       }
 
+      // Store the RAG response for follow-up flow
+      lastRagResponse.value = {
+        response: content,
+        document_source: docSource,
+        reframed_question: reframedQuestion,
+      }
+      lastRagQuestion.value = userText
+
       // Present RAG response as a Question / Answer block for clarity
-      const userQuestion = String(userText || '').trim()
+      // Use reframed_question if available, otherwise use the original user question
+      const displayQuestion = reframedQuestion || String(userText || '').trim()
 
       let finalContent = content
       let finalHtml: string | undefined = undefined
@@ -655,15 +809,18 @@ export const useChatStore = defineStore('chat', () => {
 
         finalContent = serverProvidedQA
           ? content
-          : (userQuestion ? `Question: ${userQuestion}\n\nAnswer:\n${content}` : content)
+          : (displayQuestion ? `Question: ${displayQuestion}\n\nAnswer:\n${content}` : content)
 
         finalHtml = formatResponseToHtml(finalContent)
       }
 
+      // Count existing bot messages to get a consistent index
+      const botCount = messages.value.filter((m: any) => m.from === 'bot').length
       const botMessage: any = {
         from: 'bot',
         content: finalContent,
         contentHtml: finalHtml,
+        _id: `${chatId}_${botCount}`,
       }
 
       if (docSource) botMessage.citations = [docSource]
@@ -1119,6 +1276,9 @@ export const useChatStore = defineStore('chat', () => {
     messages.value = []
     selectedCategoryId.value = null
     selectedDocumentId.value = null
+    feedbackState.value = {}
+    lastRagResponse.value = null
+    lastRagQuestion.value = ''
     // create a fresh chat id immediately so subsequent actions use a new session id
     currentChatId.value = null
     ensureChatId()
@@ -1212,8 +1372,42 @@ export const useChatStore = defineStore('chat', () => {
     currentChatId.value = null
     selectedCategoryId.value = null
     selectedDocumentId.value = null
+    feedbackState.value = {}
+    lastRagResponse.value = null
+    lastRagQuestion.value = ''
     loading.value = false
     historyLoading.value = false
+    feedbackLoading.value = false
+  }
+
+  async function submitFeedback(payload: any) {
+    feedbackLoading.value = true
+    try {
+      if (!auth.user?.org_id || !auth.user?.user_id) {
+        throw new Error('User not authenticated')
+      }
+
+      const fullPayload = {
+        ...payload,
+        org_id: auth.user.org_id,
+        user_id: auth.user.user_id,
+      }
+
+      const response = await $fetch('/api/chat/feedback', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: fullPayload,
+      })
+
+      return response
+    } catch (error: any) {
+      console.error('Failed to submit feedback:', error)
+      throw error
+    } finally {
+      feedbackLoading.value = false
+    }
   }
 
   return {
@@ -1222,6 +1416,10 @@ export const useChatStore = defineStore('chat', () => {
     currentChatId,
     loading,
     historyLoading,
+    feedbackLoading,
+    feedbackState,
+    lastRagResponse,
+    lastRagQuestion,
     fetchConversations,
     loadConversation,
     sendMessage,
@@ -1239,5 +1437,7 @@ export const useChatStore = defineStore('chat', () => {
     setLoading,
     deleteConversation,
     clearChat,
+    submitFeedback,
+    isAffirmativeReply,
   }
 })

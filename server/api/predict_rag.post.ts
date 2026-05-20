@@ -219,6 +219,7 @@ export default defineEventHandler(async (event) => {
       data: {
         response: responseText,
         document_source: documentSource,
+        reframed_question: result?.reframed_question || result?.data?.reframed_question || null,
         chat_id,
       },
     }

@@ -262,7 +262,7 @@
 
                   <!-- Message Actions -->
                   <div
-                    class="flex items-center gap-3 mt-3 pt-3 border-t border-dark-700 text-gray-400"
+                    class="flex items-center gap-4 mt-3 pt-3 border-t border-dark-700 text-gray-400"
                   >
                     <!-- Copy (ALL bot messages) -->
                     <button
@@ -288,6 +288,29 @@
                         </span>
                       </transition>
                     </button>
+
+                    <!-- Feedback buttons -->
+                    <div v-if="shouldShowFeedback(message)" class="flex items-center gap-2 ml-auto">
+                      <button
+                        :disabled="!!feedbackState[message._id] || feedbackLoading"
+                        @click="handleFeedback(idx, 'helpful')"
+                        class="flex items-center gap-1 text-xs hover:text-green-400 disabled:opacity-50"
+                      >
+                        <span>👍</span>
+                        <span v-if="feedbackState[message._id] !== 'helpful'">Helpful</span>
+                        <span v-else class="text-green-400">Submitted</span>
+                      </button>
+
+                      <button
+                        :disabled="!!feedbackState[message._id] || feedbackLoading"
+                        @click="handleFeedback(idx, 'not_helpful')"
+                        class="flex items-center gap-1 text-xs hover:text-red-400 disabled:opacity-50"
+                      >
+                        <span>👎</span>
+                        <span v-if="feedbackState[message._id] !== 'not_helpful'">Not helpful</span>
+                        <span v-else class="text-red-400">Submitted</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -333,6 +356,13 @@
         </form>
       </div>
     </div>
+
+    <!-- Feedback Modal -->
+    <FeedbackModal
+      :isOpen="feedbackModalOpen"
+      @close="handleCloseModal"
+      @submit="handleFeedbackModalSubmit"
+    />
   </div>
 </template>
 
@@ -343,6 +373,7 @@ import { useChatStore } from '~/stores/chat/index'
 import { useArtefactsStore } from '~/stores/artefacts'
 import { useErrorStore } from '~/stores/error'
 import { formatResponseToHtml } from '~/utils/formatResponse'
+import FeedbackModal from '~/components/chat/FeedbackModal.vue'
 
 definePageMeta({
   layout: 'admin',
@@ -367,6 +398,7 @@ const artefactsStore = useArtefactsStore()
 const errorStore = useErrorStore()
 const route = useRoute()
 const router = useRouter()
+const { showSuccess } = useNotification()
 
 const inputMessage = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
@@ -379,8 +411,42 @@ const messages = computed(() => chatStore.messages || [])
 const loading = computed(() => chatStore.loading || false)
 const conversations = computed(() => chatStore.conversations || [])
 const historyLoading = computed(() => chatStore.historyLoading || false)
+const feedbackLoading = computed(() => chatStore.feedbackLoading || false)
+const feedbackState = computed(() => chatStore.feedbackState || {})
 const copiedIndex = ref<number | null>(null)
 const isLoading = computed(() => loading.value || isLoadingConversation.value)
+
+function shouldShowFeedback(message: any) {
+  if (!message) return false
+
+  // Only assistant messages
+  if (!['bot', 'assistant'].includes(message.from)) return false
+
+  // Skip special UI/system messages
+  if (message.meta?.type === 'agent_list') return false
+  if (message.meta?.type === 'document_list') return false
+
+  // Skip usage limit
+  if (isUsageLimitMessage(message.content)) return false
+
+  // ❗ ONLY skip if it's explicitly a greeting variant
+  const greetingVariants = [
+    "Hi there! 👋 I'm here to help.",
+    'Hello! 👋 I’m ready to help you out.',
+    "Hey! 🙌 I'm ready to help you.",
+    'Hi! 😊 Let’s get started.',
+  ]
+
+  if (greetingVariants.includes(message.content?.trim())) {
+    return false
+  }
+  return true
+}
+
+// Feedback tracking
+const feedbackModalOpen = ref(false)
+const feedbackMessageIndex = ref<number | null>(null)
+const pendingFeedback = ref<{ feedback: 'not_helpful'; messageIndex: number; messageId: string } | null>(null)
 
 async function copyToClipboard(text: string, index?: number) {
   try {
@@ -679,6 +745,12 @@ async function loadConversationFromUrl() {
   }
 }
 
+function handleCloseModal() {
+  feedbackModalOpen.value = false
+  pendingFeedback.value = null
+  feedbackMessageIndex.value = null
+}
+
 watch(
   () => chatStore.currentChatId,
   (newId) => {
@@ -727,6 +799,107 @@ watch(
     await scrollToBottom()
   },
 )
+
+function extractAnswer(content: string) {
+  if (!content) return ''
+
+  const match = content.match(/Answer:\s*([\s\S]*)/i)
+
+  if (match && match[1]) {
+    return match[1].trim()
+  }
+
+  return content.trim()
+}
+
+// Feedback handlers
+async function handleFeedback(messageIndex: number, feedback: 'helpful' | 'not_helpful') {
+  try {
+    const message = messages.value[messageIndex]
+    if (!message) return
+
+    // Get or create stable message ID
+    const messageId = message._id || `${currentChatId.value}_${messageIndex}_${Date.now()}`
+
+    // ❗ prevent double click
+    if (feedbackState.value[messageId]) return
+
+    const payload = {
+      channel: 'admin',
+      message_id: messageId,
+      question_text: getQuestionForMessage(messageIndex),
+      answer_text: extractAnswer(message.content),
+      feedback: feedback,
+      comment: undefined,
+      reason: undefined,
+      retrieved_context: message.meta || null,
+    }
+
+    if (feedback === 'not_helpful') {
+      pendingFeedback.value = { feedback: 'not_helpful', messageIndex, messageId }
+      feedbackMessageIndex.value = messageIndex
+      feedbackModalOpen.value = true
+    } else {
+      // ✅ optimistic UI
+      chatStore.feedbackState[messageId] = 'helpful'
+
+      try {
+        await chatStore.submitFeedback(payload)
+        showSuccess('Thank you for your feedback!')
+      } catch (error: any) {
+        // Error already handled in store
+      }
+    }
+  } catch (error: any) {
+    errorStore.showError(error?.message || 'Failed to submit feedback')
+  }
+}
+
+function getQuestionForMessage(messageIndex: number): string {
+  // Find the user message that precedes this bot message
+  for (let i = messageIndex - 1; i >= 0; i--) {
+    if (messages.value[i]?.from === 'user') {
+      return messages.value[i].content
+    }
+  }
+  return ''
+}
+
+async function handleFeedbackModalSubmit(data: { reason: string; comment: string }) {
+  if (!pendingFeedback.value) return
+
+  try {
+    const messageIndex = pendingFeedback.value.messageIndex
+    const messageId = pendingFeedback.value.messageId
+    const message = messages.value[messageIndex]
+    if (!message) return
+
+    const payload = {
+      channel: 'admin',
+      message_id: messageId,
+      question_text: getQuestionForMessage(messageIndex),
+      answer_text: extractAnswer(message.content),
+      feedback: 'not_helpful' as const,
+      reason: data.reason,
+      comment: data.comment,
+      retrieved_context: message.meta || null,
+    }
+
+    // ✅ optimistic UI
+    chatStore.feedbackState[messageId] = 'not_helpful'
+
+    try {
+      await chatStore.submitFeedback(payload)
+      errorStore.showSuccess?.('Thank you for your feedback!')
+    } finally {
+      feedbackModalOpen.value = false
+      pendingFeedback.value = null
+      feedbackMessageIndex.value = null
+    }
+  } catch (error: any) {
+    errorStore.showError(error?.message || 'Failed to submit feedback')
+  }
+}
 
 onMounted(async () => {
   try {

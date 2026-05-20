@@ -1,6 +1,12 @@
 import { query, getClient } from '../../../server/utils/db'
 import { logger } from '~/server/utils/logger'
 
+function normalizeToMidnight(date: Date): Date {
+  const normalized = new Date(date)
+  normalized.setUTCHours(0, 0, 0, 0)
+  return normalized
+}
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const site = config.chargebeeSite
@@ -62,15 +68,52 @@ export default defineEventHandler(async (event) => {
       const subscriptionId = sub.id || sub.subscription_id || null
       const customerId = sub.customer_id || sub.customer || (payload?.content?.customer?.id) || null
       const planChargebeeId = sub.plan_id || sub.plan_ids || null
+      const trialStatus = sub.status || null
+      const trialStart = sub.trial_start || null
+      const trialEnd = sub.trial_end || null
 
       if (planChargebeeId) {
         const planRow = await query('SELECT id FROM public.plans WHERE chargebee_plan_id = $1 LIMIT 1', [planChargebeeId])
         const localPlan = planRow?.rows?.[0]
         if (localPlan) {
-          const orgRow = await query('SELECT org_id FROM public.organizations WHERE chargebee_customer_id = $1 LIMIT 1', [customerId])
+          const orgRow = await query('SELECT org_id, has_used_trial FROM public.organizations WHERE chargebee_customer_id = $1 LIMIT 1', [customerId])
           const org = orgRow?.rows?.[0]
           if (org) {
-            await query('UPDATE public.organizations SET plan_id=$1, plan_start_date=NOW(), chargebee_subscription_id=$2 WHERE org_id=$3', [localPlan.id, subscriptionId, org.org_id])
+            const isTrialActive = trialStatus === 'in_trial'
+
+            // Normalize trial dates to midnight UTC
+            const trialStartDate = trialStart ? normalizeToMidnight(new Date(trialStart * 1000)) : null
+            const trialEndDate = trialEnd ? normalizeToMidnight(new Date(trialEnd * 1000)) : null
+
+            // If org has already used trial, don't update trial dates from Chargebee
+            // Keep the original trial dates and set is_trial to false
+            const shouldUpdateTrialDates = !org.has_used_trial
+            const finalTrialStartDate = shouldUpdateTrialDates ? trialStartDate : null
+            const finalTrialEndDate = shouldUpdateTrialDates ? trialEndDate : null
+            const finalIsTrialActive = shouldUpdateTrialDates ? isTrialActive : false
+
+            await query(
+              `UPDATE public.organizations
+               SET plan_id=$1,
+                   plan_start_date=NOW(),
+                   chargebee_subscription_id=$2,
+                   is_trial=$3,
+                   trial_start_date=$4,
+                   trial_end_date=$5,
+                   trial_expired=$6,
+                   has_used_trial=$7
+               WHERE org_id=$8`,
+              [
+                localPlan.id,
+                subscriptionId,
+                finalIsTrialActive,
+                finalTrialStartDate,
+                finalTrialEndDate,
+                false,
+                true,
+                org.org_id
+              ]
+            )
           }
         }
       }
@@ -84,18 +127,45 @@ export default defineEventHandler(async (event) => {
     if (renewalSub && (eventType === 'subscription_renewed' || eventType === 'subscription_updated')) {
       const subscriptionId = renewalSub.id || renewalSub.subscription_id || null
       const customerId = renewalSub.customer_id || renewalSub.customer || null
+      const trialStatus = renewalSub.status || null
+      const trialStart = renewalSub.trial_start || null
+      const trialEnd = renewalSub.trial_end || null
 
       if (subscriptionId && customerId) {
         try {
           // Find org by subscription ID
           const orgRes = await query(
-            'SELECT org_id FROM public.organizations WHERE chargebee_subscription_id = $1 LIMIT 1',
+            'SELECT org_id, has_used_trial FROM public.organizations WHERE chargebee_subscription_id = $1 LIMIT 1',
             [subscriptionId]
           )
 
           if (orgRes?.rows?.[0]) {
             const orgId = orgRes.rows[0].org_id
+            const hasUsedTrial = orgRes.rows[0].has_used_trial ?? false
             logger.info({ orgId }, 'Renewal webhook: Syncing subscription')
+
+            // Update trial fields if subscription is in trial AND org hasn't used trial yet
+            const isTrialActive = trialStatus === 'in_trial' && !hasUsedTrial
+
+            // Normalize trial dates to midnight UTC
+            const trialStartDate = (trialStart && !hasUsedTrial) ? normalizeToMidnight(new Date(trialStart * 1000)) : null
+            const trialEndDate = (trialEnd && !hasUsedTrial) ? normalizeToMidnight(new Date(trialEnd * 1000)) : null
+
+            await query(
+              `UPDATE public.organizations
+               SET is_trial=$1,
+                   trial_start_date=$2,
+                   trial_end_date=$3,
+                   trial_expired=$4
+               WHERE org_id=$5`,
+              [
+                isTrialActive,
+                trialStartDate,
+                trialEndDate,
+                false,
+                orgId
+              ]
+            )
 
             // Import and call the sync function
             const { getSubscriptionDetails } = await import('~/server/utlis/chargebee')
@@ -106,6 +176,43 @@ export default defineEventHandler(async (event) => {
         } catch (syncErr: any) {
           logger.error({ error: syncErr?.message }, 'Renewal sync error')
           // Don't fail the webhook, just log the error
+        }
+      }
+
+      return { success: true }
+    }
+
+    // === EVENT 3.5: SUBSCRIPTION TRIAL ENDED ===
+    // Handle trial expiration separately
+    if (eventType === 'subscription_trial_end') {
+      const trialEndSub = payload?.content?.subscription || payload?.event?.content?.subscription || null
+      if (trialEndSub) {
+        const subscriptionId = trialEndSub.id || trialEndSub.subscription_id || null
+
+        if (subscriptionId) {
+          try {
+            const orgRes = await query(
+              'SELECT org_id FROM public.organizations WHERE chargebee_subscription_id = $1 LIMIT 1',
+              [subscriptionId]
+            )
+
+            if (orgRes?.rows?.[0]) {
+              const orgId = orgRes.rows[0].org_id
+              logger.info({ orgId }, 'Trial end webhook: Marking trial as expired')
+
+              await query(
+                `UPDATE public.organizations
+                 SET is_trial=false,
+                     trial_expired=true
+                 WHERE org_id=$1`,
+                [orgId]
+              )
+
+              logger.info({ orgId }, 'Trial end webhook: Trial marked as expired')
+            }
+          } catch (syncErr: any) {
+            logger.error({ error: syncErr?.message }, 'Trial end sync error')
+          }
         }
       }
 

@@ -140,7 +140,7 @@ export default defineEventHandler(async (event) => {
     try {
       await query(`DELETE FROM document_departments WHERE document_id = $1;`, [documentId])
     } catch (e) {
-      console.error('Failed to delete department links:', e)
+      logError('Failed to delete department links:', e)
       // Continue even if department deletion fails
     }
 

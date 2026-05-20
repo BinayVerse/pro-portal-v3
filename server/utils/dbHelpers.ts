@@ -226,6 +226,8 @@ export async function updateOrganizationSubscription(
         [orgId]
       )
       // 🔵 BASE SUBSCRIPTION → OVERWRITE LIMITS
+      const trialData = metadata?.trialData || {}
+      const isTrialActive = trialData.is_trial ?? false
       const res = await query(
         `
                     UPDATE public.organizations
@@ -233,6 +235,11 @@ export async function updateOrganizationSubscription(
                         plan_id = $1,
                         plan_start_date = CURRENT_TIMESTAMP,
                         chargebee_subscription_id = $2,
+                        is_trial = $8,
+                        trial_start_date = $9,
+                        trial_end_date = $10,
+                        trial_expired = $11,
+                        has_used_trial = CASE WHEN $12 THEN true ELSE has_used_trial END,
 
                         -- ✅ RESET limits to BASE PLAN ONLY
                         org_users = $4,
@@ -251,7 +258,12 @@ export async function updateOrganizationSubscription(
           limits.users ?? null,
           limits.limit_requests ?? null,
           limits.storage_limit_gb ?? null,
-          limits.artefacts ?? null
+          limits.artefacts ?? null,
+          isTrialActive,
+          trialData.trial_start_date ?? null,
+          trialData.trial_end_date ?? null,
+          trialData.trial_expired ?? false,
+          isTrialActive
         ]
       )
 

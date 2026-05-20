@@ -14,34 +14,38 @@
           class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 flex-shrink-0"
         >
           <!-- AI Knowledge Gap Button -->
-          <button
-            @click="openKnowledgeGap"
-            :disabled="knowledgeGapLoading"
-            class="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-4 py-2 rounded-lg transition-all flex items-center justify-center sm:justify-start space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <UIcon
-              name="heroicons:chart-bar"
-              class="w-5 h-5"
-              :class="{ 'animate-pulse': knowledgeGapLoading }"
-            />
-            <span class="hidden sm:inline">Knowledge Enhancement Opportunities</span>
-            <span class="sm:hidden">Knowledge</span>
-          </button>
+          <AppTooltip :text="getTooltip('reports_keo')">
+            <button
+              @click="openKnowledgeGap"
+              :disabled="knowledgeGapLoading || !isEnabled('reports_keo')"
+              class="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-4 py-2 rounded-lg transition-all flex items-center justify-center sm:justify-start space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <UIcon
+                name="heroicons:chart-bar"
+                class="w-5 h-5"
+                :class="{ 'animate-pulse': knowledgeGapLoading }"
+              />
+              <span class="hidden sm:inline">Knowledge Enhancement Opportunities</span>
+              <span class="sm:hidden">Knowledge</span>
+            </button>
+          </AppTooltip>
 
           <!-- AI Actionable Button with Badge -->
-          <button
-            @click="openAIInsights"
-            :disabled="aiInsightsLoading"
-            class="relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all flex items-center justify-center sm:justify-start space-x-2 disabled:opacity-50 disabled:cursor-not-allowed group"
-          >
-            <UIcon
-              name="heroicons:light-bulb"
-              class="w-5 h-5"
-              :class="{ 'animate-pulse': aiInsightsLoading }"
-            />
-            <span class="hidden sm:inline">AI Signals</span>
-            <span class="sm:hidden">AI</span>
-          </button>
+          <AppTooltip :text="getTooltip('reports_ai_signals')">
+            <button
+              @click="openAIInsights"
+              :disabled="aiInsightsLoading || !isEnabled('reports_ai_signals')"
+              class="relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all flex items-center justify-center sm:justify-start space-x-2 disabled:opacity-50 disabled:cursor-not-allowed group"
+            >
+              <UIcon
+                name="heroicons:light-bulb"
+                class="w-5 h-5"
+                :class="{ 'animate-pulse': aiInsightsLoading }"
+              />
+              <span class="hidden sm:inline">AI Signals</span>
+              <span class="sm:hidden">AI</span>
+            </button>
+          </AppTooltip>
 
           <select v-model="selectedTimeRange" class="input-field">
             <option v-for="option in timeRangeOptions" :key="option.value" :value="option.value">
@@ -517,6 +521,7 @@ definePageMeta({
 
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useNotification } from '@/composables/useNotification'
+import { useFeatures } from '@/composables/useFeatures'
 import { useAnalyticsStore } from '@/stores/analytics'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
@@ -547,6 +552,7 @@ type MetricUsage = {
 }
 
 const { showNotification } = useNotification()
+const { isEnabled, getTooltip } = useFeatures()
 const analyticsStore = useAnalyticsStore()
 const authStore = useAuthStore()
 const profileStore = useProfileStore()

@@ -1,8 +1,16 @@
 import { defineEventHandler, readBody, setResponseStatus } from 'h3' // uses chargebee-typescript wrapper
 import { logError, logInfo, logWarn } from '../../../utils/logger'
 import { cancelSubscription, createChargebeeCustomer, createSubscription } from '~/server/utlis/chargebee'
+import { updateOrganizationCustomer, updateOrganizationSubscription, upsertBillingAddress } from '~/server/utils/dbHelpers'
+import { query } from '~/server/utils/db'
 import { z } from 'zod'
 import { ChargeBee } from 'chargebee-typescript'
+
+function normalizeToMidnight(date: Date): Date {
+  const normalized = new Date(date)
+  normalized.setUTCHours(0, 0, 0, 0)
+  return normalized
+}
 
 const CheckoutValidation = z.object({
   firstName: z.string().min(1),
@@ -196,10 +204,10 @@ export default defineEventHandler(async (event) => {
           throw new Error('Invariant violation: subscriptionObj should never exist for addon')
         }
 
-        // 🔁 Fetch existing active Chargebee subscription (if any)
+        // 🔁 Fetch existing active Chargebee subscription and trial status (if any)
         const existingSubRes = await query(
           `
-            SELECT chargebee_subscription_id
+            SELECT chargebee_subscription_id, has_used_trial
             FROM organizations
             WHERE org_id = $1
             LIMIT 1
@@ -209,6 +217,7 @@ export default defineEventHandler(async (event) => {
 
         const existingChargebeeSubscriptionId =
           existingSubRes.rows[0]?.chargebee_subscription_id || null
+        const hasUsedTrial = existingSubRes.rows[0]?.has_used_trial ?? false
 
 
         if (effectivePurchaseType === 'subscription') {
@@ -230,7 +239,7 @@ export default defineEventHandler(async (event) => {
             error: errorMessage,
             status: subStatus,
             statusCode: subStatusCode,
-          } = await createSubscription(subscriptionObj, orderDetails.customerId)
+          } = await createSubscription(subscriptionObj, orderDetails.customerId, hasUsedTrial)
 
           if (subStatus === 'Error') {
             throw new CustomError(
@@ -240,6 +249,20 @@ export default defineEventHandler(async (event) => {
           }
 
           chargebeeSubscriptionId = chargebeeSubscription.subscription.id
+
+          // Extract trial information from Chargebee subscription
+          const cbSub = chargebeeSubscription.subscription
+          const isTrialActive = cbSub.status === 'in_trial'
+          const trialStart = cbSub.trial_start ? normalizeToMidnight(new Date(cbSub.trial_start * 1000)) : null
+          const trialEnd = cbSub.trial_end ? normalizeToMidnight(new Date(cbSub.trial_end * 1000)) : null
+
+          // Store trial data in metadata for later use
+          orderDetails.trialData = {
+            is_trial: isTrialActive,
+            trial_start_date: trialStart,
+            trial_end_date: trialEnd,
+            trial_expired: false,
+          }
           // console.log('✅ Chargebee base subscription created:', chargebeeSubscriptionId)
         } else {
           // 🟣 ADD-ON → ONE-TIME INVOICE ONLY

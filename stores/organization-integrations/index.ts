@@ -330,6 +330,7 @@ export const useOrganizationIntegrationsStore = defineStore('organizationIntegra
       provider_id?: string
       agent_id?: string
       module_id?: string
+      org?: string | null
     }) {
       this.loadingIntegrations = true
       this.error = null
@@ -339,6 +340,7 @@ export const useOrganizationIntegrationsStore = defineStore('organizationIntegra
         if (filters?.provider_id) params.append('provider_id', filters.provider_id)
         if (filters?.agent_id) params.append('agent_id', filters.agent_id)
         if (filters?.module_id) params.append('module_id', filters.module_id)
+        if (filters?.org) params.append('org', filters.org)
 
         const url = `/api/organization-integrations${params.toString() ? `?${params.toString()}` : ''}`
 

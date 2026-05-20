@@ -770,6 +770,8 @@ const getActiveDepartments = (): Department[] => {
 }
 
 onMounted(() => {
-  departmentsStore.fetchDepartments()
+  // Get org ID from route query params (for superadmin selection)
+  const orgId = (route.query?.org || route.query?.org_id) as string | undefined
+  departmentsStore.fetchDepartments(orgId || null)
 })
 </script>

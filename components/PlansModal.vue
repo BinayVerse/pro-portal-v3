@@ -1,6 +1,6 @@
 <template>
   <teleport to="body">
-    <div v-if="visible" class="fixed inset-0 z-50 flex items-center justify-center">
+    <div v-if="visible" class="fixed inset-0 z-[9999] flex items-center justify-center">
       <div class="absolute inset-0 bg-black/50"></div>
       <div class="relative mx-auto w-full max-w-5xl px-2 sm:px-4">
         <div class="bg-dark-900 border border-dark-700 rounded-lg overflow-hidden shadow-xl">
@@ -251,7 +251,11 @@
 
                       <div class="flex justify-center mt-4 mb-6">
                         <AppTooltip
-                          v-if="!isUnlimitedPlanGroup(plan) && isFreePlanGroup(plan) && isFreePlanDisabled"
+                          v-if="
+                            !isUnlimitedPlanGroup(plan) &&
+                            isFreePlanGroup(plan) &&
+                            isFreePlanDisabled
+                          "
                           :text="
                             hasAvailedFreePlan
                               ? 'You have already used the Free plan. Please choose a paid plan to continue.'
@@ -323,11 +327,10 @@
 
                   <ul class="space-y-3 px-6 flex-grow">
                     <li
-                      v-for="feature in uiState.planCategory === 'addon'
-                        ? plan.options.month?.features || []
-                        : deriveFeatures(
-                            plan.options[period] || plan.options.month || plan.options.year,
-                          )"
+                      v-for="feature in getDisplayFeaturesForModal(
+                        plan,
+                        plan.options[period] || plan.options.month || plan.options.year,
+                      )"
                       :key="feature"
                       class="flex items-start"
                     >
@@ -338,6 +341,14 @@
                       <span class="text-gray-300">{{ feature }}</span>
                     </li>
                   </ul>
+
+                  <!-- Professional plan disclaimer -->
+                  <div
+                    v-if="plan.name === 'Professional'"
+                    class="px-6 pt-4 border-t border-dark-700 mt-6"
+                  >
+                    <p class="text-xs text-gray-400">* Additional fee for custom integration</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -671,6 +682,24 @@ function getOptionPrice(planGroup: any) {
 function getOptionCurrency(planGroup: any) {
   const opt = planGroup.options[period.value] || planGroup.options.month || planGroup.options.year
   return opt ? opt.currency || opt.price_currency || 'USD' : 'USD'
+}
+
+function getDisplayFeaturesForModal(plan: any, opt: any) {
+  // For add-on plans, show only explicit features
+  if (uiState.planCategory === 'addon') {
+    return opt?.features || []
+  }
+
+  // For Professional plan, show "Application Integration*" as the first feature
+  if (opt) {
+    const features = Array.isArray(opt.features) ? opt.features : []
+    // Otherwise, construct the display
+    const derived = deriveFeatures(opt, plan.name)
+    // derived features won't include artifacts for Professional
+    return [...derived]
+  }
+
+  return deriveFeatures(opt, plan.name)
 }
 
 const hasActiveSubscription = computed(() => {

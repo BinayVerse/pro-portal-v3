@@ -4,6 +4,7 @@ import { defineEventHandler, getQuery } from 'h3'
 import { CustomError } from '../../utils/custom.error'
 import { query } from '../../utils/db'
 import { logError } from '../../utils/logger'
+import { flattenFeatureFlags } from '../../utils/featureHelper'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -60,12 +61,16 @@ export default defineEventHandler(async (event) => {
      * BASE PLAN (ORG + PLAN)
      * -------------------------------- */
     const orgPlanSql = `
-      SELECT 
+      SELECT
         o.org_id,
         o.org_name,
         o.source,
         o.plan_id,
         o.plan_start_date,
+        o.is_trial,
+        o.trial_start_date,
+        o.trial_end_date,
+        o.trial_expired,
 
         -- ORG OVERRIDES
         o.org_limit_requests,
@@ -85,7 +90,8 @@ export default defineEventHandler(async (event) => {
         p.support_level,
         p.artefacts,
         p.metadata,
-        p.features
+        p.features,
+        p.feature_flags
       FROM organizations o
       LEFT JOIN plans p ON o.plan_id = p.id
       WHERE o.org_id = $1
@@ -259,6 +265,20 @@ export default defineEventHandler(async (event) => {
     // Check if plan has unlimited flag in metadata
     const isUnlimited = metadata?.unlimited === true
 
+    // Parse and flatten feature flags
+    let featureFlags = {}
+    try {
+      if (typeof row.feature_flags === 'object') {
+        featureFlags = row.feature_flags || {}
+      } else if (typeof row.feature_flags === 'string') {
+        featureFlags = JSON.parse(row.feature_flags) || {}
+      }
+    } catch (e) {
+      // ignore parsing errors
+    }
+
+    const flattenedFeatureFlags = flattenFeatureFlags(featureFlags)
+
     const basePlan = hasActiveBasePlan
       ? {
         id: row.plan_id,
@@ -278,6 +298,8 @@ export default defineEventHandler(async (event) => {
         support_level: row.support_level ?? null,
         metadata,
         features,
+        featureFlags: featureFlags,
+        flattenedFeatureFlags: flattenedFeatureFlags,
       }
       : null
 
@@ -360,6 +382,31 @@ export default defineEventHandler(async (event) => {
 
 
     /* --------------------------------
+     * TRIAL INFORMATION
+     * -------------------------------- */
+    let trialInfo = null
+    if (row.is_trial && row.trial_end_date) {
+      const trialEndDate = new Date(row.trial_end_date)
+      const now = new Date()
+      const daysLeftMs = trialEndDate.getTime() - now.getTime()
+      const daysLeft = Math.ceil(daysLeftMs / (1000 * 60 * 60 * 24))
+
+      trialInfo = {
+        is_trial: true,
+        trial_start_date: row.trial_start_date,
+        trial_end_date: row.trial_end_date,
+        trial_expired: row.trial_expired,
+        days_left: Math.max(0, daysLeft),
+      }
+    } else if (row.trial_expired) {
+      trialInfo = {
+        is_trial: false,
+        trial_expired: true,
+        days_left: 0,
+      }
+    }
+
+    /* --------------------------------
      * FINAL RESPONSE
      * -------------------------------- */
     return {
@@ -371,6 +418,7 @@ export default defineEventHandler(async (event) => {
         source: row.source,
         aws_auto_renewal_status: awsAutoRenewalStatus,
         plan_start_date: hasActiveBasePlan ? row.plan_start_date : null,
+        trial: trialInfo,
         addons,
         subscription_details: subscriptionDetails
           ? {

@@ -189,7 +189,7 @@
                   "
                   readonly
                   icon="heroicons:key"
-                  :type="showAppSecret ? 'text' : 'password'"
+                  :type="whatsappConfig.appSecret ? (showAppSecret ? 'text' : 'password') : 'text'"
                   placeholder="No app secret configured"
                 />
                 <UInput

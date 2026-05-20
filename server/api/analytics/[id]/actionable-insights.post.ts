@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     return response.data
 
   } catch (error: any) {
-    console.error('Actionable Insights Error:', error?.response?.data || error.message)
+    logError('Actionable Insights Error:', error?.response?.data || error.message)
 
     setResponseStatus(event, error?.response?.status || 500)
 

@@ -1,10 +1,59 @@
 <template>
-  <nav>
+  <nav :class="{ 'mobile-open': mobileMenuOpen }">
     <NuxtLink to="/" class="nav-logo">
       <img src="/images/logo.svg" alt="provento.ai" style="height: 32px; width: 32px" />
       <span>provento.ai</span>
     </NuxtLink>
-    <ul>
+    <div class="flex items-center gap-2">
+      <UDropdown
+        v-if="auth.isAuthenticated"
+        :items="profileItems"
+        :popper="{ placement: 'bottom-end' }"
+        class="block lg:hidden"
+        @click="mobileMenuOpen = false"
+      >
+        <template #default="{ open }">
+          <UButton
+            variant="ghost"
+            trailing-icon="heroicons:chevron-down"
+            size="sm"
+            class="text-xs"
+            :class="{ 'bg-dark-800': open }"
+          >
+            <UAvatar
+              src=""
+              :alt="profileStore.userProfile?.name?.toUpperCase()"
+              size="xs"
+              :ui="{ background: 'bg-primary-500' }"
+            />
+            <span class="ml-2 hidden sm:inline">
+              {{ profileStore.userProfile?.name || profileStore.userProfile?.email || 'User' }}
+            </span>
+          </UButton>
+        </template>
+
+        <template #item="{ item }">
+          <div style="padding: 10px 16px !important">
+            <div class="flex items-center gap-2">
+              <UIcon :name="item.icon" class="w-4 h-4" />
+              <span>{{ item.label }}</span>
+            </div>
+          </div>
+        </template>
+      </UDropdown>
+      <!-- Mobile Menu Button -->
+      <button
+        class="nav-mobile-toggle"
+        @click="mobileMenuOpen = !mobileMenuOpen"
+        aria-label="Toggle menu"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <!-- Desktop Nav -->
+    <ul :class="{ 'mobile-open': mobileMenuOpen }">
       <li>
         <button
           type="button"
@@ -50,9 +99,17 @@
           Team
         </button>
       </li>
-      <li><NuxtLink to="/book-meeting" class="nav-demo">Book a Demo</NuxtLink></li>
-      <li v-if="auth.isAuthenticated">
-        <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end' }">
+      <li>
+        <NuxtLink to="/book-meeting" class="nav-demo" @click="mobileMenuOpen = false"
+          >Book a Demo</NuxtLink
+        >
+      </li>
+      <li v-if="auth.isAuthenticated" class="nav-profile-item hidden md:block">
+        <UDropdown
+          :items="profileItems"
+          :popper="{ placement: 'bottom-end' }"
+          @click="mobileMenuOpen = false"
+        >
           <template #default="{ open }">
             <UButton
               variant="ghost"
@@ -83,7 +140,9 @@
           </template>
         </UDropdown>
       </li>
-      <li v-else><NuxtLink to="/login" class="nav-login">Login</NuxtLink></li>
+      <li v-if="!auth.isAuthenticated" class="nav-login-item">
+        <NuxtLink to="/login" class="nav-login" @click="mobileMenuOpen = false">Login</NuxtLink>
+      </li>
     </ul>
   </nav>
 </template>
@@ -97,6 +156,7 @@ const router = useRouter()
 const auth = useAuthStore()
 const profileStore = useProfileStore()
 const activeSection = ref('')
+const mobileMenuOpen = ref(false)
 let sectionObserver: IntersectionObserver | null = null
 
 const isProfileComplete = computed(() => {
@@ -141,6 +201,7 @@ async function goToSection(sectionId: string) {
   }
 
   scrollToSection(sectionId)
+  mobileMenuOpen.value = false
 }
 
 const observeSections = async () => {
@@ -189,7 +250,7 @@ const profileItems = computed(() => [
   [
     {
       label: 'Dashboard',
-      icon: 'i-heroicons-user',
+      icon: 'heroicons:squares-2x2',
       to: auth.user?.role_id === 0 ? '/admin/superadmin' : '/admin/dashboard',
     },
     {
@@ -209,7 +270,28 @@ const profileItems = computed(() => [
 
 watch(() => route.path, observeSections, { immediate: true })
 
+// Lock body scroll when mobile menu is open
+watch(
+  () => mobileMenuOpen.value,
+  (isOpen) => {
+    if (typeof window !== 'undefined') {
+      if (isOpen) {
+        document.documentElement.style.overflow = 'hidden'
+        document.body.style.overflow = 'hidden'
+      } else {
+        document.documentElement.style.overflow = ''
+        document.body.style.overflow = ''
+      }
+    }
+  },
+)
+
 onBeforeUnmount(() => {
   sectionObserver?.disconnect()
+  // Clean up scroll lock on unmount
+  if (typeof window !== 'undefined') {
+    document.documentElement.style.overflow = ''
+    document.body.style.overflow = ''
+  }
 })
 </script>

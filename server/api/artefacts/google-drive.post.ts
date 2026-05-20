@@ -75,7 +75,7 @@ export default defineEventHandler(async (event) => {
           departments = []
         }
       } catch (e: any) {
-        console.error('Failed to parse departments:', departmentsFromBody, 'error:', e.message)
+        logError('Failed to parse departments:', departmentsFromBody, 'error:', e.message)
         departments = []
       }
     } else {
@@ -130,7 +130,7 @@ export default defineEventHandler(async (event) => {
         }
       } catch (e: any) {
         if (e instanceof CustomError) throw e
-        console.error('Failed to validate Department Admin scope:', e)
+        logError('Failed to validate Department Admin scope:', e)
         throw new CustomError('Failed to validate department permissions', 500)
       }
     }
@@ -337,7 +337,7 @@ export default defineEventHandler(async (event) => {
           }
           console.log(`[google-drive.post.ts] Successfully assigned departments to document ${documentId}`)
         } catch (e: any) {
-          console.error('Failed to assign departments to document:', e)
+          logError('Failed to assign departments to document:', e)
           // Don't fail the upload if department assignment fails
         }
       } else {

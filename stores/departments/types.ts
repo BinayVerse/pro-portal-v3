@@ -22,4 +22,6 @@ export interface DepartmentsState {
 
     departmentLoading: boolean
     departmentError: string | null
+
+    currentOrgId: string | null
 }

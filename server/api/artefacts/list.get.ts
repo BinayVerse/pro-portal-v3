@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
           docQueryParams.push(deptIds)
         }
       } catch (e) {
-        console.error('Failed to fetch department assignments for Department Admin:', e)
+        logError('Failed to fetch department assignments for Department Admin:', e)
       }
     }
 

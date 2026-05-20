@@ -1,10 +1,11 @@
 import { query } from '../../utils/db'
 import { logError } from '../../utils/logger'
+import { flattenFeatureFlags } from '../../utils/featureHelper'
 
 export default defineEventHandler(async (event) => {
   try {
     const q = `
-      SELECT id, title, price_currency, price_amount, duration, users, limit_requests, features, created_at, updated_at, chargebee_plan_id, active, public, trial_period_days, storage_limit_gb, support_level, contact_sales, display_order, recommended, metadata, artefacts, plan_type
+      SELECT id, title, price_currency, price_amount, duration, users, limit_requests, features, created_at, updated_at, chargebee_plan_id, active, public, trial_period_days, storage_limit_gb, support_level, contact_sales, display_order, recommended, metadata, artefacts, plan_type, feature_flags
       FROM public.plans
       WHERE active = true AND public = true
       ORDER BY display_order ASC, price_amount ASC
@@ -58,6 +59,19 @@ export default defineEventHandler(async (event) => {
           r.contact_sales !== true &&
           metadata?.free_plan === true
 
+        // Parse and flatten feature flags
+        let featureFlags = {}
+        try {
+          if (typeof r.feature_flags === 'object') {
+            featureFlags = r.feature_flags || {}
+          } else if (typeof r.feature_flags === 'string') {
+            featureFlags = JSON.parse(r.feature_flags) || {}
+          }
+        } catch (e) {
+          // ignore parsing errors
+        }
+
+        const flattenedFeatureFlags = flattenFeatureFlags(featureFlags)
 
         return {
           id: r.id,
@@ -82,7 +96,8 @@ export default defineEventHandler(async (event) => {
           contact_sales: !!r.contact_sales,
           is_free: isFreePlan,
           metadata: metadata || {},
-          // _raw: r,
+          featureFlags: featureFlags,
+          flattenedFeatureFlags: flattenedFeatureFlags,
         }
       })
       .filter(Boolean)

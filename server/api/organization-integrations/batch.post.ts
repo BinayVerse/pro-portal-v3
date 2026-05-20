@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, setResponseStatus } from 'h3'
 import { query } from '../../utils/db'
 import { CustomError } from '../../utils/custom.error'
+import { logError } from '~/server/utils/logger'
 import jwt from 'jsonwebtoken'
 import { createOrganizationIntegration, createIntegrationAuditLog } from '../../utils/dbHelpers'
 
@@ -188,7 +189,7 @@ export default defineEventHandler(async (event) => {
       message: `Integration(s) created successfully!`
     }
   } catch (error: any) {
-    console.error('Organization Integration Batch Create Error:', error)
+    logError('Organization Integration Batch Create Error:', error)
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)

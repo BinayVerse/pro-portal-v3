@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, setResponseStatus } from 'h3'
 import { CustomError } from '../../utils/custom.error'
 import { createUserValidation } from '../../utils/validations'
 import { query } from '../../utils/db'
+import { logError } from '~/server/utils/logger'
 import jwt from 'jsonwebtoken'
 import {
   generateRandomPassword,
@@ -191,7 +192,7 @@ export default defineEventHandler(async (event) => {
           console.log(`[create.post.ts] Auto-assigned "Common" department to user ${newUserId}`)
         }
       } catch (e) {
-        console.error('Failed to fetch Common department for auto-assignment:', e)
+        logError('Failed to fetch Common department for auto-assignment:', e)
         // Continue without auto-assignment if it fails
       }
     }
@@ -208,7 +209,7 @@ export default defineEventHandler(async (event) => {
         }
         console.log(`[create.post.ts] Assigned ${departmentsToAssign.length} departments to user ${newUserId}`)
       } catch (e) {
-        console.error('Failed to assign departments to user:', e)
+        logError('Failed to assign departments to user:', e)
       }
     }
 
@@ -259,7 +260,7 @@ export default defineEventHandler(async (event) => {
           console.info('No channels connected for org; skipping user addition email for', normalizedEmail)
         }
       } catch (e) {
-        console.error('Failed to determine integrations or send user addition email to user:', normalizedEmail, e?.message || e)
+        logError('Failed to determine integrations or send user addition email to user:', normalizedEmail, e?.message || e)
       }
     }
 

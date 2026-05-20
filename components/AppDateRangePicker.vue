@@ -35,12 +35,10 @@ const selected = ref({
 
 // ---------- Presets ----------
 const ranges = [
-  { label: 'Last 7 days', duration: { days: 7 } },
-  { label: 'Last 14 days', duration: { days: 14 } },
-  { label: 'Last 30 days', duration: { days: 30 } },
-  { label: 'Last 3 months', duration: { months: 3 } },
-  { label: 'Last 6 months', duration: { months: 6 } },
-  { label: 'Last year', duration: { years: 1 } },
+  { label: 'Last 7 days', duration: { days: 6 } },
+  { label: 'Last 14 days', duration: { days: 13 } },
+  { label: 'Last 30 days', duration: { days: 29 } },
+  { label: 'Last 60 days', duration: { days: 59 } },
 ]
 
 function isRangeSelected(duration: Duration) {

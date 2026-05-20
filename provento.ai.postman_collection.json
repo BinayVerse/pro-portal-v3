@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "9a73cf30-8bdb-4b76-a7ea-8dd9e74e6eb7",
     "name": "Provento.ai",
-    "description": "Updated Postman collection for Provento.ai API endpoints matching current server structure",
+    "description": "Complete Postman collection for Provento.ai API endpoints",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "24987320"
   },
@@ -232,6 +232,95 @@
       ]
     },
     {
+      "name": "Authentication - 2FA",
+      "item": [
+        {
+          "name": "Setup 2FA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"temp_token\": \"temp-jwt-token\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/2fa/setup",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "2fa", "setup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify 2FA Setup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"temp_token\": \"temp-jwt-token\",\n  \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/2fa/verify-setup",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "2fa", "verify-setup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify 2FA Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_email\": \"user@example.com\",\n  \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/2fa/verify",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "2fa", "verify"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Artifacts (Documents)",
       "item": [
         {
@@ -401,6 +490,45 @@
           "response": []
         },
         {
+          "name": "Summarize Document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/summarize/{{document_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "summarize", "{{document_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reprocess Document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/reprocess/{{document_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "reprocess", "{{document_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Document Departments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/artefacts/{{document_id}}/departments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "artefacts", "{{document_id}}", "departments"]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Categories - Add",
           "request": {
             "method": "POST",
@@ -463,32 +591,6 @@
               "raw": "{{base_url}}/api/artefacts/category/{{category_id}}",
               "host": ["{{base_url}}"],
               "path": ["api", "artefacts", "category", "{{category_id}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Summarize Document",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/artefacts/summarize/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "artefacts", "summarize", "{{document_id}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Reprocess Document",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/artefacts/reprocess/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "artefacts", "reprocess", "{{document_id}}"]
             }
           },
           "response": []
@@ -555,26 +657,20 @@
               "path": ["api", "chat", "history"]
             }
           },
-          "response": [
-            {
-              "name": "201 Created",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": ""
-                },
-                "url": {
-                  "raw": "{{base_url}}/api/chat/history",
-                  "host": ["{{base_url}}"],
-                  "path": ["api", "chat", "history"]
-                }
-              },
-              "status": "Created",
-              "code": 201
+          "response": []
+        },
+        {
+          "name": "Delete Chat History",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/chat/history/{{chat_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat", "history", "{{chat_id}}"]
             }
-          ]
+          },
+          "response": []
         },
         {
           "name": "Ask RAG Question",
@@ -602,26 +698,7 @@
               "path": ["api", "predict_rag"]
             }
           },
-          "response": [
-            {
-              "name": "201 Created",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": ""
-                },
-                "url": {
-                  "raw": "{{base_url}}/api/predict_rag",
-                  "host": ["{{base_url}}"],
-                  "path": ["api", "predict_rag"]
-                }
-              },
-              "status": "Created",
-              "code": 201
-            }
-          ]
+          "response": []
         }
       ]
     },
@@ -739,6 +816,19 @@
           "response": []
         },
         {
+          "name": "Get User Departments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}/departments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_id}}", "departments"]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Get User Roles",
           "request": {
             "method": "GET",
@@ -816,6 +906,203 @@
               "raw": "{{base_url}}/api/users/bulk-users",
               "host": ["{{base_url}}"],
               "path": ["api", "users", "bulk-users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Assign Departments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_ids\": [\"user-uuid-1\", \"user-uuid-2\"],\n  \"department_ids\": [\"dept-uuid-1\", \"dept-uuid-2\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/bulk-assign-departments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "bulk-assign-departments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Unassign Departments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_ids\": [\"user-uuid-1\", \"user-uuid-2\"],\n  \"department_ids\": [\"dept-uuid-1\", \"dept-uuid-2\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/bulk-unassign-departments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "bulk-unassign-departments"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Departments",
+      "item": [
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sales Department\",\n  \"description\": \"Department description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/departments/create",
+              "host": ["{{base_url}}"],
+              "path": ["api", "departments", "create"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Departments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/departments/all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "departments", "all"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Department",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Department Name\",\n  \"description\": \"Updated description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/departments/{{department_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "departments", "{{department_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Department",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/departments/{{department_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "departments", "{{department_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Department Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/departments/{{department_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "departments", "{{department_id}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organization Departments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/departments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "departments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Organization Departments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/all-departments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "all-departments"]
             }
           },
           "response": []
@@ -1055,6 +1342,347 @@
       ]
     },
     {
+      "name": "Organization Integrations",
+      "item": [
+        {
+          "name": "Get All Organization Integrations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organization-integrations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-integrations"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Organization Integration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider_id\": \"provider-uuid\",\n  \"agent_id\": \"agent-uuid\",\n  \"module_id\": \"module-uuid\",\n  \"client_id\": \"client-id\",\n  \"client_secret\": \"secret\",\n  \"api_key\": \"api-key\",\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organization-integrations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-integrations"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organization Integration",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organization-integrations/{{integration_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-integrations", "{{integration_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Organization Integration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\",\n  \"metadata_json\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organization-integrations/{{integration_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-integrations", "{{integration_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Organization Integration",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organization-integrations/{{integration_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-integrations", "{{integration_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Batch Create Integrations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"provider_id\": \"provider-uuid\",\n    \"agent_id\": \"agent-uuid\",\n    \"module_id\": \"module-uuid\",\n    \"client_id\": \"client-id\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organization-integrations/batch",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-integrations", "batch"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Batch Delete Integrations",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"integration_ids\": [\"id-1\", \"id-2\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organization-integrations/batch",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-integrations", "batch"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Batch Update Integration Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"integration_ids\": [\"id-1\", \"id-2\"],\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organization-integrations/batch-status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-integrations", "batch-status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Batch Sync Integrations",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"integration_ids\": [\"id-1\", \"id-2\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organization-integrations/batch-sync",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-integrations", "batch-sync"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Provider Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider_id\": \"provider-uuid\",\n  \"request_data\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organization-integrations/provider-requests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-integrations", "provider-requests"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Attendance",
+      "item": [
+        {
+          "name": "Get Attendance Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/attendance/report?fromDate=2024-01-01&toDate=2024-01-31&employeeIds=&source=Keka&org=",
+              "host": ["{{base_url}}"],
+              "path": ["api", "attendance", "report"],
+              "query": [
+                {
+                  "key": "fromDate",
+                  "value": "2024-01-01",
+                  "description": "Start date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "toDate",
+                  "value": "2024-01-31",
+                  "description": "End date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "employeeIds",
+                  "value": "",
+                  "description": "Comma-separated employee IDs (optional)"
+                },
+                {
+                  "key": "source",
+                  "value": "Keka",
+                  "description": "Source: Keka or Provento (optional)"
+                },
+                {
+                  "key": "org",
+                  "value": "",
+                  "description": "Organization ID (optional)"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Export Attendance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromDate\": \"2024-01-01\",\n  \"toDate\": \"2024-01-31\",\n  \"format\": \"csv\",\n  \"employeeIds\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/attendance/export",
+              "host": ["{{base_url}}"],
+              "path": ["api", "attendance", "export"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Attendance Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipient_email\": \"user@example.com\",\n  \"fromDate\": \"2024-01-01\",\n  \"toDate\": \"2024-01-31\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/attendance/send-email",
+              "host": ["{{base_url}}"],
+              "path": ["api", "attendance", "send-email"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Analytics",
       "item": [
         {
@@ -1183,34 +1811,209 @@
             }
           },
           "response": []
-        }
-      ]
-    },
-    {
-      "name": "Plans & Pricing",
-      "item": [
+        },
         {
-          "name": "Get All Plans",
+          "name": "Get Department Analytics",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/plans",
+              "raw": "{{base_url}}/api/analytics/{{org_id}}/department-analytics",
               "host": ["{{base_url}}"],
-              "path": ["api", "plans"]
+              "path": ["api", "analytics", "{{org_id}}", "department-analytics"]
             }
           },
           "response": []
         },
         {
-          "name": "Get Organization Plan",
+          "name": "Get Knowledge Gap",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start_date\": \"2024-01-01\",\n  \"end_date\": \"2024-01-31\",\n  \"bucket\": \"weekly\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/analytics/{{org_id}}/knowledge-gap",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "{{org_id}}", "knowledge-gap"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Actionable Insights",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start_date\": \"2024-01-01\",\n  \"end_date\": \"2024-01-31\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/analytics/{{org_id}}/actionable-insights",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "{{org_id}}", "actionable-insights"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Insights Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipient_email\": \"user@example.com\",\n  \"insights_data\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/analytics/{{org_id}}/send-insights-email",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "{{org_id}}", "send-insights-email"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Knowledge Gap Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipient_email\": \"user@example.com\",\n  \"knowledge_gap_data\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/analytics/{{org_id}}/send-knowledge-gap-email",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "{{org_id}}", "send-knowledge-gap-email"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Billing & Invoices",
+      "item": [
+        {
+          "name": "Get Invoices",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/organizations/plan",
+              "raw": "{{base_url}}/api/billing/invoices?startDate=2024-01-01&endDate=2024-12-31&dateRange=All%20Time&selectedPlan=All%20Plans",
               "host": ["{{base_url}}"],
-              "path": ["api", "organizations", "plan"]
+              "path": ["api", "billing", "invoices"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01",
+                  "description": "Start date for filtering"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31",
+                  "description": "End date for filtering"
+                },
+                {
+                  "key": "dateRange",
+                  "value": "All Time",
+                  "description": "Date range label"
+                },
+                {
+                  "key": "selectedPlan",
+                  "value": "All Plans",
+                  "description": "Filter by plan name"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sync Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/billing/sync-subscription",
+              "host": ["{{base_url}}"],
+              "path": ["api", "billing", "sync-subscription"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Download Invoice",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/billing/invoices/{{invoice_id}}/download",
+              "host": ["{{base_url}}"],
+              "path": ["api", "billing", "invoices", "{{invoice_id}}", "download"]
             }
           },
           "response": []
@@ -1290,6 +2093,75 @@
           "response": []
         },
         {
+          "name": "Cancel Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction_id\": \"transaction-id\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "cancel"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Free Plan Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": \"plan-uuid\",\n  \"org_id\": \"org-uuid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/free",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "free"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get 3DS Client Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/user/3ds/client.token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "user", "3ds", "client.token"]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Validate Chargebee Price",
           "request": {
             "method": "POST",
@@ -1354,6 +2226,37 @@
               "raw": "{{base_url}}/api/chargebee/webhook",
               "host": ["{{base_url}}"],
               "path": ["api", "chargebee", "webhook"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Plans & Pricing",
+      "item": [
+        {
+          "name": "Get All Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "plans"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organization Plan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/plan",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "plan"]
             }
           },
           "response": []
@@ -1466,6 +2369,30 @@
       "value": "your-category-id",
       "type": "string",
       "description": "Category UUID"
+    },
+    {
+      "key": "chat_id",
+      "value": "your-chat-id",
+      "type": "string",
+      "description": "Chat ID for chat operations"
+    },
+    {
+      "key": "integration_id",
+      "value": "your-integration-id",
+      "type": "string",
+      "description": "Organization integration UUID"
+    },
+    {
+      "key": "department_id",
+      "value": "your-department-id",
+      "type": "string",
+      "description": "Department UUID"
+    },
+    {
+      "key": "invoice_id",
+      "value": "your-invoice-id",
+      "type": "string",
+      "description": "Invoice ID from Chargebee"
     }
   ]
 }

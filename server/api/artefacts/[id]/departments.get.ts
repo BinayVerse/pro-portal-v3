@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
       })),
     }
   } catch (err: any) {
-    console.error('Error fetching artifact departments:', err)
+    logError('Error fetching artifact departments:', err)
     setResponseStatus(event, 500)
     throw new CustomError('Failed to fetch artifact departments', 500)
   }

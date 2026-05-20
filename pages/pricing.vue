@@ -168,7 +168,7 @@
                 <!-- BASE PLANS: derived features -->
                 <template v-else>
                   <li
-                    v-for="feature in deriveFeatures(getOption(group))"
+                    v-for="feature in getDisplayFeatures(group, getOption(group))"
                     :key="feature"
                     class="flex items-start"
                   >
@@ -180,6 +180,11 @@
                   </li>
                 </template>
               </ul>
+
+              <!-- Professional plan disclaimer -->
+              <div v-if="group.name === 'Professional'" class="pt-4 border-t border-dark-700">
+                <p class="text-xs text-gray-400">* Additional fee for custom integration</p>
+              </div>
             </div>
           </div>
         </template>
@@ -382,6 +387,19 @@ function getSelectedKey(group: any) {
   if (group.options.month) return 'month'
   if (group.options.year) return 'year'
   return key
+}
+
+function getDisplayFeatures(group: any, opt: any) {
+  // For Professional plan, show "Application Integration*" as the first feature
+  // instead of the derived artifacts feature
+  if (opt) {
+    const features = Array.isArray(opt.features) ? opt.features : []
+    // Otherwise, construct the display
+    const derived = deriveFeatures(opt, group.name)
+    // derived features won't include artifacts for Professional
+    return [...derived]
+  }
+  return deriveFeatures(opt, group.name)
 }
 
 import { fmtPrice, deriveFeatures } from '~/utils/pricingHelpers'

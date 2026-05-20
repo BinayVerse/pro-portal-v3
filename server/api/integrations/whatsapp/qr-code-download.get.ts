@@ -1,6 +1,7 @@
 import { defineEventHandler, setResponseStatus } from 'h3'
 import { query } from '../../../utils/db'
 import { CustomError } from '../../../utils/custom.error'
+import { logError } from '~/server/utils/logger'
 import jwt from 'jsonwebtoken'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 
@@ -111,7 +112,7 @@ export default defineEventHandler(async (event) => {
       message: 'QR code fetched via proxy',
     }
   } catch (error: any) {
-    console.error('Error in qr-code-download:', error)
+    logError('Error in qr-code-download:', error)
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)
       return {

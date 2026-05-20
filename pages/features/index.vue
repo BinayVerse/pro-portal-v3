@@ -2,12 +2,12 @@
 <template>
   <div class="min-h-screen bg-black text-white">
     <!-- Top Menu Navigation Tabs -->
-    <div class="flex flex-wrap justify-center gap-2 pt-12 pb-8">
+    <div class="flex flex-wrap justify-center gap-2 pt-8 pb-6 sm:pt-12 sm:pb-8 px-4">
       <NuxtLink
         v-for="feature in features"
         :key="feature.slug"
         :to="`/features/${feature.slug}`"
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        class="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
         :class="
           $route.path === `/features/${feature.slug}`
             ? 'bg-primary-500 text-white'
@@ -21,22 +21,22 @@
     </div>
 
     <!-- Features Overview Content -->
-    <section class="pt-8 pb-24 px-4 sm:px-6 lg:px-8">
+    <section class="pt-6 sm:pt-8 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8">
       <div class="max-w-7xl mx-auto">
         <!-- Header -->
-        <div class="text-center mb-16">
-          <h1 class="text-4xl sm:text-5xl font-bold text-white mb-6">
+        <div class="text-center mb-12 sm:mb-16">
+          <h1 class="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
             Powerful Features for
             <span class="text-primary-400">Smart Artifacts Management</span>
           </h1>
-          <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+          <p class="text-base sm:text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
             Discover how provento.ai transforms your artifacts workflow with cutting-edge AI
             technology and seamless integrations.
           </p>
         </div>
 
         <!-- Feature Cards Grid -->
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
           <div
             v-for="feature in enabledFeatures"
             :key="feature.slug"
@@ -61,18 +61,18 @@
 
         <!-- CTA Section -->
         <div
-          class="mt-20 text-center bg-gradient-to-r from-primary-900/20 to-primary-800/20 rounded-xl p-16"
+          class="mt-12 sm:mt-20 text-center bg-gradient-to-r from-primary-900/20 to-primary-800/20 rounded-lg sm:rounded-xl p-8 sm:p-12 md:p-16"
         >
-          <h2 class="text-3xl font-bold text-white mb-4">Ready to Experience These Features?</h2>
-          <p class="text-xl text-gray-300 mb-12">
+          <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">Ready to Experience These Features?</h2>
+          <p class="text-base sm:text-lg md:text-xl text-gray-300 mb-8 sm:mb-12">
             Join thousands of teams already using provento.ai to transform their artifacts
             workflows.
           </p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <NuxtLink to="/book-meeting" class="btn-primary text-lg px-8 py-4">
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <NuxtLink to="/book-meeting" class="btn-primary text-sm sm:text-base md:text-lg px-6 sm:px-8 py-3 sm:py-4">
               Book a Demo
             </NuxtLink>
-            <NuxtLink to="/signup" class="btn-outline text-lg px-8 py-4">
+            <NuxtLink to="/signup" class="btn-outline text-sm sm:text-base md:text-lg px-6 sm:px-8 py-3 sm:py-4">
               Start Free Trial
             </NuxtLink>
           </div>

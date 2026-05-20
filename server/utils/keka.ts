@@ -211,3 +211,102 @@ export async function getKekaAttendanceData(params: {
     throw new CustomError(`Keka API error: ${message}`, error?.response?.status || 500)
   }
 }
+
+/**
+ * Fetch leave requests from Keka API
+ * Status: 0=Pending, 1=Approved, 2=Rejected, 3=Cancelled, 4=InApprovalProcess
+ */
+export async function getKekaLeaveData(params: {
+  fromDate: string // YYYY-MM-DD
+  toDate: string // YYYY-MM-DD
+}): Promise<any> {
+  const config = useRuntimeConfig()
+  const kekaBaseUrl = config.kekaBaseUrl
+
+  if (!kekaBaseUrl) {
+    logError('Keka base URL not configured', null)
+    throw new CustomError('Keka base URL not configured', 500)
+  }
+
+  const token = await getKekaToken()
+
+  try {
+    const fromDateTime = new Date(params.fromDate)
+    fromDateTime.setHours(0, 0, 0, 0)
+    const toDateTime = new Date(params.toDate)
+    toDateTime.setHours(23, 59, 59, 999)
+
+    const queryParams = new URLSearchParams({
+      from: fromDateTime.toISOString(),
+      to: toDateTime.toISOString(),
+      limit: '1000',
+      offset: '0',
+    })
+
+    const url = `${kekaBaseUrl}/api/v1/time/leaverequests?${queryParams.toString()}`
+
+    const response = await axios.get(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 15000,
+    })
+
+    return response.data
+  } catch (error: any) {
+    logError('Leave request API error:', error)
+
+    if (error?.response?.status === 401) {
+      invalidateKekaToken()
+    }
+
+    const message = error?.response?.data?.message || error?.message || 'Failed to fetch leave data'
+    throw new CustomError(`Keka API error: ${message}`, error?.response?.status || 500)
+  }
+}
+
+/**
+ * Fetch employee data from Keka API
+ * EmploymentStatus: 0=Working, 1=Relieved
+ * ExitType: 0=None, 1=Resignation, 2=CompanyAction
+ */
+export async function getKekaEmployeeData(): Promise<any> {
+  const config = useRuntimeConfig()
+  const kekaBaseUrl = config.kekaBaseUrl
+
+  if (!kekaBaseUrl) {
+    logError('Keka base URL not configured', null)
+    throw new CustomError('Keka base URL not configured', 500)
+  }
+
+  const token = await getKekaToken()
+
+  try {
+    const queryParams = new URLSearchParams({
+      limit: '1000',
+      offset: '0',
+    })
+
+    const url = `${kekaBaseUrl}/api/v1/hris/employees?${queryParams.toString()}`
+
+    const response = await axios.get(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 15000,
+    })
+
+    return response.data
+  } catch (error: any) {
+    logError('Employee API error:', error)
+
+    if (error?.response?.status === 401) {
+      invalidateKekaToken()
+    }
+
+    const message = error?.response?.data?.message || error?.message || 'Failed to fetch employee data'
+    throw new CustomError(`Keka API error: ${message}`, error?.response?.status || 500)
+  }
+}

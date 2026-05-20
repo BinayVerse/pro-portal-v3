@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-black h-screen flex flex-col">
     <!-- Header Navigation (fixed height) -->
-    <header class="fixed top-0 left-0 right-0 bg-black border-b border-dark-700 h-16 z-50">
+    <header class="fixed top-0 left-0 right-0 bg-black border-b border-dark-700 h-16 z-[100] relative">
       <nav class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 h-16">
         <div class="flex justify-between items-center h-16">
           <!-- Logo and brand -->
@@ -135,7 +135,7 @@
             </NuxtLink>
 
             <template v-if="auth.isAuthenticated">
-              <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end' }">
+              <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end', strategy: 'fixed' }" :ui="{ base: 'z-[99999] relative', menu: 'z-[99999]' }">
                 <UButton
                   variant="ghost"
                   trailing-icon="heroicons:chevron-down"

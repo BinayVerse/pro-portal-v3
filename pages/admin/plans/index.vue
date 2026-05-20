@@ -18,32 +18,41 @@
                   <!-- BASE PLAN -->
                   <div class="lg:col-span-2">
                     <div class="flex items-center justify-between mb-2">
-                      <h3 class="text-lg font-semibold text-white flex">
+                      <h3 class="text-lg font-semibold text-white flex items-center gap-2">
                         {{ currentPlan.plan.title }}
-                        <!-- <UTooltip :text="renewalInfoText" class="mt-2 ml-4"> -->
-                        <!-- <UIcon
-                          name="i-heroicons-information-circle"
-                          :title="renewalInfoText"
-                          color="red"
-                          class="w-4 h-4 cursor-pointer mt-2 ml-4 text-primary-500"
-                        /> -->
-                        <AppTooltip :text="renewalInfoText">
-                          <UBadge
-                            v-if="!isCurrentPlanFree && !isCurrentPlanUnlimited"
-                            :color="isSubscriptionCancelled ? 'gray' : 'primary'"
-                            variant="soft"
-                            class="ml-2"
-                            size="xs"
-                          >
-                            {{ isSubscriptionCancelled ? 'Auto-renewal off' : 'Auto-renewal on' }}
-                          </UBadge>
-                        </AppTooltip>
-
-                        <!-- </UTooltip> -->
+                        <div class="flex items-center gap-2">
+                          <!-- Trial Badge -->
+                           <AppTooltip :text="trialInfo?.is_trial ? `Your free trial ends in ${trialInfo.days_left} day(s).` : trialInfo?.trial_expired ? 'Your free trial has expired.' : 'This is your current plan.'">
+                             <UBadge
+                               v-if="trialInfo?.is_trial"
+                               color="amber"
+                               variant="soft"
+                               size="xs"
+                             >
+                               Trial
+                             </UBadge>
+                             <UBadge
+                               v-else-if="trialInfo?.trial_expired"
+                               color="red"
+                               variant="soft"
+                               size="xs"
+                             >
+                               Trial Expired
+                             </UBadge>
+                           </AppTooltip>
+                          <!-- Auto-renewal Badge -->
+                          <AppTooltip :text="renewalInfoText">
+                            <UBadge
+                              v-if="!isCurrentPlanFree && !isCurrentPlanUnlimited"
+                              :color="isSubscriptionCancelled ? 'gray' : 'green'"
+                              variant="soft"
+                              size="xs"
+                            >
+                              {{ isSubscriptionCancelled ? 'Auto-renewal off' : 'Auto-renewal on' }}
+                            </UBadge>
+                          </AppTooltip>
+                        </div>
                       </h3>
-                      <!-- <span class="text-xs px-2 py-1 rounded bg-primary-600 text-white">
-                        Base Plan
-                      </span> -->
                     </div>
 
                     <p class="text-gray-400 text-sm">Started: {{ formattedPlanStart }}</p>
@@ -67,9 +76,11 @@
                       v-if="!isCurrentPlanUnlimited"
                       class="mt-4 text-xs"
                       :class="
-                        planDaysLeft !== null && planDaysLeft > 7
-                          ? 'text-green-500'
-                          : 'text-red-500'
+                        trialInfo?.is_trial || trialInfo?.trial_expired
+                          ? 'text-red-500'
+                          : planDaysLeft !== null && planDaysLeft > 7
+                            ? 'text-green-500'
+                            : 'text-red-500'
                       "
                     >
                       {{ planEndsInText }}
@@ -290,6 +301,10 @@ const addons = computed(() => {
   return currentPlan.value?.addons || []
 })
 
+const trialInfo = computed(() => {
+  return currentPlan.value?.trial || null
+})
+
 const hasAddons = computed(() => addons.value.length > 0)
 
 const subscriptionDetails = computed(() => {
@@ -454,6 +469,19 @@ const planDaysLeft = computed(() => {
 })
 
 const planEndsInText = computed(() => {
+  // If user is in trial, show trial end date instead
+  if (trialInfo.value?.is_trial) {
+    const daysLeft = trialInfo.value.days_left
+    if (daysLeft === 0) return 'Trial ends today - Upgrade to continue'
+    return `Free trial ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`
+  }
+
+  // If trial expired, show message
+  if (trialInfo.value?.trial_expired) {
+    return 'Trial has expired - Upgrade to continue'
+  }
+
+  // Otherwise show regular plan end date
   const daysLeft = planDaysLeft.value
   if (daysLeft === null) return ''
   if (daysLeft < 0) return 'Plan has ended'

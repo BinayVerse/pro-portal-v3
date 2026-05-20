@@ -1,7 +1,8 @@
 import { defineEventHandler, getQuery } from 'h3'
 import { CustomError } from '~/server/utils/custom.error'
 import { query } from '~/server/utils/db'
-import { getKekaAttendanceData } from '~/server/utils/keka'
+import { getKekaAttendanceData, getKekaLeaveData, getKekaEmployeeData } from '~/server/utils/keka'
+import { logWarn, logError } from '~/server/utils/logger'
 import jwt from 'jsonwebtoken'
 
 // Keka Enum Mappings
@@ -117,6 +118,59 @@ export default defineEventHandler(async (event) => {
 
     const attendanceRecords = kekaResponse.data || []
 
+    // 🏥 Fetch leave data and employee data for filtering
+    let leaveMap: Record<string, any[]> = {}
+    let activeEmployeeIds: Set<string> = new Set()
+
+    try {
+      // Fetch leave requests (status 1 = Approved)
+      const leaveResponse = await getKekaLeaveData({ fromDate, toDate })
+      const leaveRecords = leaveResponse.data || []
+
+      leaveMap = leaveRecords.reduce((acc: any, leave: any) => {
+        // Only include approved leaves (status = 1)
+        if (leave.status === 1) {
+          const empId = leave.employeeIdentifier
+          if (!acc[empId]) acc[empId] = []
+          acc[empId].push({
+            fromDate: leave.fromDate,
+            toDate: leave.toDate,
+            leaveType: leave.leaveType,
+          })
+        }
+        return acc
+      }, {})
+    } catch (leaveError: any) {
+      logWarn('Failed to fetch leave data, continuing without leave filtering', leaveError?.message)
+    }
+
+    try {
+      // Fetch employee data to check active status
+      const employeeResponse = await getKekaEmployeeData()
+      const employees = employeeResponse.data || []
+
+      // Map active employees (employmentStatus = 0 means Working/Active)
+      activeEmployeeIds = new Set(
+        employees
+          .filter((emp: any) => emp.employmentStatus === 0)
+          .map((emp: any) => emp.id)
+      )
+    } catch (empError: any) {
+      logWarn('Failed to fetch employee data, continuing without inactive employee filtering', empError?.message)
+    }
+
+    // Helper to check if employee is on leave for a given date
+    const isEmployeeOnLeave = (employeeId: string, dateStr: string): boolean => {
+      if (!leaveMap[employeeId]) return false
+
+      const checkDate = new Date(dateStr)
+      return leaveMap[employeeId].some((leave: any) => {
+        const leaveStart = new Date(leave.fromDate)
+        const leaveEnd = new Date(leave.toDate)
+        return checkDate >= leaveStart && checkDate <= leaveEnd
+      })
+    }
+
     // 🔗 Map employee IDs to user details using employee_mapping and users tables
     const recordEmployeeIds = Array.from(new Set(attendanceRecords.map((r: any) => r.employeeIdentifier)))
     let employeeMapping: Record<string, any> = {}
@@ -174,6 +228,18 @@ export default defineEventHandler(async (event) => {
 
         if (!mapping) return []
 
+        // ❌ Filter 1: Exclude inactive employees
+        if (activeEmployeeIds.size > 0 && !activeEmployeeIds.has(record.employeeIdentifier)) {
+          return []
+        }
+
+        // ❌ Filter 2: Exclude non-working days (holidays, weekends)
+        // DayType: 0=WorkingDay, 1=Holiday, 2=FullDayWeeklyOff, 3=FirstHalfWeeklyOff, 4=SecondHalfWeeklyOff
+        const dayType = Number(record.dayType)
+        if (dayType !== 0) {
+          return []
+        }
+
         const rows: any[] = []
 
         // ✅ CHECK-IN
@@ -181,6 +247,12 @@ export default defineEventHandler(async (event) => {
           const ts = new Date(record.firstInOfTheDay.timestamp)
 
           if (!isWithinDateRange(ts)) return []
+
+          // ❌ Filter 3: Exclude employees on approved leave
+          const dateStr = ts.toISOString().split('T')[0]
+          if (isEmployeeOnLeave(record.employeeIdentifier, dateStr)) {
+            return []
+          }
 
           const logSource = record.firstInOfTheDay.attendanceLogSource
           const manualType = record.firstInOfTheDay.manualClockinType
@@ -205,6 +277,8 @@ export default defineEventHandler(async (event) => {
 
             source: getSystemSource(logSource),
 
+            day_type: DAY_TYPE_MAP[dayType] || 'Unknown',
+            day_type_value: dayType,
             attendance_log_source: ATTENDANCE_LOG_SOURCE_MAP[logSource] || 'Unknown',
             manual_clockin_type: MANUAL_CLOCKIN_TYPE_MAP[manualType] || 'None',
 
@@ -218,6 +292,12 @@ export default defineEventHandler(async (event) => {
           const ts = new Date(record.lastOutOfTheDay.timestamp)
 
           if (!isWithinDateRange(ts)) return []
+
+          // ❌ Filter 3: Exclude employees on approved leave
+          const dateStr = ts.toISOString().split('T')[0]
+          if (isEmployeeOnLeave(record.employeeIdentifier, dateStr)) {
+            return []
+          }
 
           const logSource = record.lastOutOfTheDay.attendanceLogSource
           const manualType = record.lastOutOfTheDay.manualClockinType
@@ -241,6 +321,8 @@ export default defineEventHandler(async (event) => {
             status: 'Check-out',
             source: getSystemSource(logSource),
 
+            day_type: DAY_TYPE_MAP[dayType] || 'Unknown',
+            day_type_value: dayType,
             attendance_log_source: ATTENDANCE_LOG_SOURCE_MAP[logSource] || 'Unknown',
             manual_clockin_type: MANUAL_CLOCKIN_TYPE_MAP[manualType] || 'None',
 
@@ -253,6 +335,12 @@ export default defineEventHandler(async (event) => {
           const ts = new Date(record.shiftStartTime || record.attendanceDate)
 
           if (!isWithinDateRange(ts)) return []
+
+          // ❌ Filter 3: Exclude employees on approved leave
+          const dateStr = ts.toISOString().split('T')[0]
+          if (isEmployeeOnLeave(record.employeeIdentifier, dateStr)) {
+            return []
+          }
 
           rows.push({
             employee_id: record.employeeIdentifier || '',
@@ -273,6 +361,8 @@ export default defineEventHandler(async (event) => {
             status: 'No Log',
             source: 'Keka',
 
+            day_type: DAY_TYPE_MAP[dayType] || 'Unknown',
+            day_type_value: dayType,
             attendance_log_source: 'Unknown',
             manual_clockin_type: 'None',
 
@@ -330,7 +420,7 @@ export default defineEventHandler(async (event) => {
       },
     }
   } catch (error: any) {
-    console.error('Attendance report error:', error)
+    logError('Attendance report error:', error)
 
     if (error instanceof CustomError) {
       throw error

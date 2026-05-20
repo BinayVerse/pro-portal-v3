@@ -563,7 +563,7 @@
     >
       <!-- Top header (fixed height) -->
       <header
-        class="bg-dark-900 border-b border-dark-700 px-3 md:px-6 h-16 flex items-center"
+        class="bg-dark-900 border-b border-dark-700 px-3 md:px-6 h-16 flex items-center relative z-10"
         :class="{
           'fixed top-0 left-0 right-0 w-full': isMobile || isTablet,
           'sticky top-0': !isMobile && !isTablet,
@@ -607,7 +607,7 @@
               <!-- Spacer -->
               <div class="flex-1"></div>
 
-              <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end' }">
+              <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end', strategy: 'fixed' }" :ui="{ base: 'z-[99999] relative', menu: 'z-[99999]' }">
                 <UButton variant="ghost" trailing-icon="heroicons:chevron-down">
                   <UAvatar
                     src=""
@@ -747,7 +747,7 @@
                 </template>
               </div>
 
-              <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end' }">
+              <UDropdown :items="profileItems" :popper="{ placement: 'bottom-end', strategy: 'fixed' }" :ui="{ base: 'z-[99999] relative', menu: 'z-[99999]' }">
                 <UButton variant="ghost" trailing-icon="heroicons:chevron-down">
                   <UAvatar
                     src=""
@@ -1350,9 +1350,5 @@ aside {
   height: 16px;
   color: #cbd5e1;
   stroke-width: 2.5;
-}
-
-header {
-  z-index: 50;
 }
 </style>

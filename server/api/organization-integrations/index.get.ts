@@ -1,5 +1,6 @@
 import { defineEventHandler, setResponseStatus } from 'h3'
 import { query } from '../../utils/db'
+import { logError } from '~/server/utils/logger'
 import { CustomError } from '../../utils/custom.error'
 import jwt from 'jsonwebtoken'
 
@@ -22,14 +23,15 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Get user's organization
-    const userOrgRow = await query('SELECT org_id FROM users WHERE user_id = $1', [userId])
+    // Get user's organization and role
+    const userOrgRow = await query('SELECT org_id, role_id FROM users WHERE user_id = $1', [userId])
     if (!userOrgRow?.rows?.length) {
       setResponseStatus(event, 404)
       throw new CustomError('User not found or organization not assigned', 404)
     }
 
-    const orgId = userOrgRow.rows[0].org_id
+    const userOrgId = userOrgRow.rows[0].org_id
+    const userRole = userOrgRow.rows[0].role_id
 
     // Get query parameters for filtering
     const q = getQuery(event) as Record<string, any>
@@ -37,6 +39,10 @@ export default defineEventHandler(async (event) => {
     const providerId = q?.provider_id
     const agentId = q?.agent_id
     const moduleId = q?.module_id
+
+    // Allow superadmin to request specific org via query param
+    const requestedOrg = q?.org || q?.org_id || null
+    const orgId = userRole === 0 && requestedOrg ? String(requestedOrg) : userOrgId
 
     // Build dynamic SQL query
     let sql = `
@@ -110,7 +116,7 @@ export default defineEventHandler(async (event) => {
       message: 'Organization integrations fetched successfully'
     }
   } catch (error: any) {
-    console.error('Organization Integrations Error:', error)
+    logError('Organization Integrations Error:', error)
 
     if (error instanceof CustomError) {
       setResponseStatus(event, error.statusCode)

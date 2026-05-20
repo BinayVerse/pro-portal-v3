@@ -82,6 +82,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // ✅ Admin / User / Super Admin → all departments (including system departments for filtering)
+    // ✅ Super Admin has no restrictions and can see all departments of selected organization
     const result = await query(
       `
       SELECT dept_id, org_id, name, description, status, created_at, updated_at, is_system

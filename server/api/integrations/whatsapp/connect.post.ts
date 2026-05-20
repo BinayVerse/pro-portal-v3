@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, setResponseStatus } from 'h3'
 import { query } from '../../../utils/db'
 import { CustomError } from '../../../utils/custom.error'
+import { logError } from '~/server/utils/logger'
 import { businessWhatsAppAccount } from '~/server/utils/validations'
 import jwt from 'jsonwebtoken'
 import { generateQRCode } from '~/server/utils/generate_qr'
@@ -28,8 +29,8 @@ export default defineEventHandler(async (event) => {
     // Fetch user's org and role from DB
     const userRow = await query('SELECT org_id, role_id FROM users WHERE user_id = $1', [userId])
     if (!userRow?.rows?.length) {
-      setResponseStatus(event, 404)
-      throw new CustomError('User not found', 404)
+        setResponseStatus(event, 404)
+        throw new CustomError('User not found', 404)
     }
     const tokenUserOrg = userRow.rows[0].org_id
     const tokenUserRole = userRow.rows[0].role_id
@@ -140,13 +141,13 @@ export default defineEventHandler(async (event) => {
                     try {
                         await sendChannelAvailableMail(u.name, u.email, 'whatsapp', qrCode, orgId)
                     } catch (e) {
-                        console.error('Failed to send WhatsApp available notification to', u.email, e?.message || e)
+                        logError('Failed to send WhatsApp available notification to', u.email, e?.message || e)
                     }
                 }
                 await markChannelNotified(orgId, 'whatsapp')
             }
         } catch (e) {
-            console.error('Failed to fetch users for WhatsApp notification', e?.message || e)
+            logError('Failed to fetch users for WhatsApp notification', e?.message || e)
         }
 
         setResponseStatus(event, 201)

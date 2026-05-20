@@ -131,20 +131,6 @@ export default defineEventHandler(async (event) => {
 
         const artifactCountsResult = await query(artifactCountsQuery, [org_id, params[1], params[2], params[3]]);
 
-        // Get common artifacts (no department assigned)
-        const commonArtifactsQuery = `
-            SELECT COUNT(DISTINCT od.id)::int AS artifact_count
-            FROM organization_documents od
-            WHERE od.org_id = $1
-                AND NOT EXISTS (
-                    SELECT 1 FROM document_departments dd
-                    WHERE dd.document_id = od.id
-                )
-                AND ($2::text IS NULL OR ((od.created_at AT TIME ZONE 'UTC') AT TIME ZONE $4)::date BETWEEN $2::date AND $3::date)
-        `;
-
-        const commonArtifactsResult = await query(commonArtifactsQuery, [org_id, params[1], params[2], params[3]]);
-        
         // Build artifact count map
         const artifactCountMap = new Map();
         artifactCountsResult.rows.forEach(row => {
@@ -155,14 +141,14 @@ export default defineEventHandler(async (event) => {
         
         // Build bar chart data
         const barChartData = [];
-        
+
         // For each department, count users (including admins)
         deptResult.rows.forEach(dept => {
             // Count users in this department:
             // 1. All admins (they have access to all departments)
             // 2. Non-admin users assigned to this department
             let userCount = adminUsers.length; // Start with all admins
-            
+
             // Add non-admin users assigned to this department
             nonAdminUsers.forEach(user => {
                 const userDepts = userDeptMap.get(user.user_id) || [];
@@ -170,7 +156,7 @@ export default defineEventHandler(async (event) => {
                     userCount++;
                 }
             });
-            
+
             barChartData.push({
                 department_id: dept.dept_id,
                 department_name: dept.name,
@@ -179,28 +165,13 @@ export default defineEventHandler(async (event) => {
             });
         });
         
-        // FIXED: Common users should be ALL users (since everyone can access Common artifacts)
-        // This includes both admins AND non-admin users
-        const commonUserCount = allUsers.length; // All non-superadmin users
-        
-        const commonArtifactCount = parseInt(commonArtifactsResult.rows[0]?.artifact_count || '0');
-        
-        // Add Common department if there are any common artifacts
-        // Common always has ALL users, even if artifact count is 0
-        barChartData.push({
-            department_id: null,
-            department_name: 'Common',
-            user_count: commonUserCount, // Now includes admins!
-            artifact_count: commonArtifactCount
-        });
-        
         // Calculate total users for percentage calculations
         const totalUsers = allUsers.length;
         
         // Build pie chart data
         const pieChartData = [];
-        
-        // Add regular departments
+
+        // Add all departments
         deptResult.rows.forEach(dept => {
             // Find the corresponding bar chart data for this department
             const deptData = barChartData.find(d => d.department_id === dept.dept_id);
@@ -211,13 +182,6 @@ export default defineEventHandler(async (event) => {
                     percentage: totalUsers > 0 ? ((deptData.user_count / totalUsers) * 100).toFixed(1) : '0.0'
                 });
             }
-        });
-        
-        // Add Common users (now includes admins)
-        pieChartData.push({
-            name: 'Common',
-            users: commonUserCount,
-            percentage: totalUsers > 0 ? ((commonUserCount / totalUsers) * 100).toFixed(1) : '0.0'
         });
         
         // Sort pie chart data by user count descending
